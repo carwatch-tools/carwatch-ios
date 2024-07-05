@@ -9,7 +9,7 @@ import Foundation
 
 // Immutable struct to prevent unintended modification of app data
 // Updates can only be performed through update functions
-struct Alarm : Identifiable {
+struct Alarm : Identifiable, Codable {
     let id: String
     let isActive: Bool
     let isScanned: Bool

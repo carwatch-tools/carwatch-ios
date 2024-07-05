@@ -5,7 +5,7 @@ struct AlarmView: View {
     @EnvironmentObject var avm: AlarmViewModel
     
     @State var alarmActive: Bool
-    @State var alarmTime: Date = Date()
+    @State var alarmTime: Date
     @State private var showTimeToNextAlarmToast: Bool = false
     
     @Binding public var alarmsList: [String]
@@ -42,7 +42,7 @@ struct AlarmView: View {
                 DatePicker("", selection: $alarmTime, displayedComponents: .hourAndMinute)
                     .onChange(of: alarmTime, perform: { _ in
                         avm.updateAlarmTime(time: alarmTime)
-                        if(avm.getCurrentAlarm().isActive) {
+                        if(avm.alarm.isActive) {
                             showTimeToNextAlarmToast = true
                         }
                     })
@@ -102,5 +102,5 @@ struct AlarmView: View {
     var avm = AlarmViewModel()
     @State var alarmsList = ["12:00", "13:00"]
     
-    return AlarmView(alarmActive: avm.getCurrentAlarm().isActive, alarmsList: $alarmsList, alarmsActive: false).environmentObject(avm)
+    return AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsActive: false).environmentObject(avm)
 }

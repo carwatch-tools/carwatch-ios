@@ -18,7 +18,7 @@ struct MainView: View {
                         Label("Wakeup", systemImage: "sun.max")
                     }.tag(0)
                 
-                AlarmView(alarmActive: avm.getCurrentAlarm().isActive, alarmsList: $alarmsList)
+                AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList)
                     .tabItem {
                         Label("Alarm", systemImage: "alarm")
                     }.tag(1)

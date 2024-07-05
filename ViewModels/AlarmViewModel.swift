@@ -2,14 +2,25 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var alarm: Alarm
+    @Published var alarm: Alarm = Alarm(id: "initial", isActive: false, isScanned: false, salivaId: -1) {
+        didSet {
+            saveAlarm()
+        }
+    }
+    let alarmDataKey = "alarm"
     
     init() {
-        alarm = Alarm(id: "initial", isActive: false, isScanned: false, salivaId: -1)
+        getCurrentAlarm()
     }
     
-    func getCurrentAlarm() -> Alarm {
-        return alarm
+    func getCurrentAlarm() {
+        guard
+            let alarmData = UserDefaults.standard.data(forKey: alarmDataKey),
+            let savedAlarm = try? JSONDecoder().decode(Alarm.self, from: alarmData)
+        else { 
+            return
+        }
+        alarm = savedAlarm
     }
     
     func getTimeUntilNextAlarm() -> (Int, Int) {
@@ -34,5 +45,11 @@ class AlarmViewModel : ObservableObject {
             newTime = time
         }
         alarm = alarm.updateTime(newTime: newTime)
+    }
+    
+    func saveAlarm() {
+        if let encodedAlarm = try? JSONEncoder().encode(alarm) {
+            UserDefaults.standard.set(encodedAlarm, forKey: alarmDataKey)
+        }
     }
 }
