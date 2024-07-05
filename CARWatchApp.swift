@@ -1,10 +1,3 @@
-//
-//  CARWatchApp.swift
-//  CARWatch
-//
-//  Created by Anni on 18.06.24.
-//
-
 import SwiftUI
 
 @main

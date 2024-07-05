@@ -1,10 +1,3 @@
-//
-//  MainViewToolbarMenu.swift
-//  CARWatch
-//
-//  Created by Admin on 02.07.24.
-//
-
 import SwiftUI
 
 struct MainViewToolbarMenu: View {

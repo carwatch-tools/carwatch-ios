@@ -1,10 +1,3 @@
-//
-//  AlarmViewModel.swift
-//  CARWatch
-//
-//  Created by Admin on 02.07.24.
-//
-
 import Foundation
 
 class AlarmViewModel : ObservableObject {
