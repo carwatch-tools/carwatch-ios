@@ -29,22 +29,34 @@ class NotificationManager {
         }
     }
     
-    func scheduleNotification() {
+    func scheduleCalendarBasedNotification(id: String, hour: Int, minute: Int) {
+        // repeats every day at the given time
         let content = UNMutableNotificationContent()
-        content.title = "This is a notification example"
-        content.subtitle = "This is the subtitle"
+        content.title = "This is a calendar-based notification"
+        content.subtitle = "Time: \(hour)\(minute), ID: \(id)"
         content.sound = .defaultCriticalSound(withAudioVolume: 1)
         
-        // time-based notification
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-        // calendar-based notifications - repeats every day at the given time
         var dateComponents = DateComponents()
-        dateComponents.hour = 22
-        dateComponents.minute = 54
-        // let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        // TODO: this will only be shown when the app is not open - do we want that? otherwise: https://sarunw.com/posts/notification-in-foreground/
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+        
+        print("Notification scheduled: Time: \(hour)\(minute), ID: \(id)")
+    }
+    
+    func scheduleIntervalBasedNotification(id: String, intervalSeconds: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = "This is a calendar-based notification"
+        content.subtitle = "Interval in sec: \(intervalSeconds), ID: \(id)"
+        content.sound = .defaultCriticalSound(withAudioVolume: 1)
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+        
+        print("Notification scheduled: Interval in sec: \(intervalSeconds), ID: \(id)")
     }
     
     func cancelAllNotifications() {

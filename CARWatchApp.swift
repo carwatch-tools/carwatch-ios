@@ -14,6 +14,7 @@ struct CARWatchApp: App {
             MainView()
                 .environmentObject(userDataViewModel)
                 .environmentObject(alarmViewModel)
+                .environmentObject(appDelegate)
                 .onAppear(){
                     checkNotificationPermission()
                 }

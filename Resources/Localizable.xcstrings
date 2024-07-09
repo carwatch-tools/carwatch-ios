@@ -106,6 +106,9 @@
         }
       }
     },
+    "Go to App Settings" : {
+
+    },
     "Good Evening" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -128,7 +131,7 @@
         }
       }
     },
-    "Grant Permission now" : {
+    "Hello, World!" : {
 
     },
     "Info" : {
@@ -268,7 +271,7 @@
         }
       }
     },
-    "Unfortunately, CARWatch won't work when Notification Permission is not granted." : {
+    "Unfortunately, CARWatch won't work when Notifications are turned off. Please activate all Notifications in the app settings." : {
 
     },
     "Unknown" : {

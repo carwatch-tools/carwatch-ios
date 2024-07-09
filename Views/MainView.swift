@@ -3,6 +3,7 @@ import SwiftUI
 struct MainView: View {
     @EnvironmentObject var uvm: UserDataViewModel
     @EnvironmentObject var avm: AlarmViewModel
+    @EnvironmentObject var appDelegate: AppDelegate
     
     @State private var selectedTab = 0
     @State private var alarmActive: Bool = true
@@ -12,27 +13,31 @@ struct MainView: View {
     @State private var appVersion: String? = nil
     var body: some View {
         if uvm.userData.notificationPermissionGranted {
-            NavigationStack{
-                TabView(selection: $selectedTab){
-                    WakeupView()
-                        .tabItem {
-                            Label("Wakeup", systemImage: "sun.max")
-                        }.tag(0)
-                    
-                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList)
-                        .tabItem {
-                            Label("Alarm", systemImage: "alarm")
-                        }.tag(1)
-                    
-                    BedtimeView()
-                        .tabItem {
-                            Label("Bedtime", systemImage: "bed.double")
-                        }.tag(2)
-                }
-                .navigationBarTitle(Text(tabTitle))
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
+            if appDelegate.openedFromNotification {
+                BarcodeScannerView()
+            } else {
+                NavigationStack{
+                    TabView(selection: $selectedTab){
+                        WakeupView()
+                            .tabItem {
+                                Label("Wakeup", systemImage: "sun.max")
+                            }.tag(0)
+                        
+                        AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList)
+                            .tabItem {
+                                Label("Alarm", systemImage: "alarm")
+                            }.tag(1)
+                        
+                        BedtimeView()
+                            .tabItem {
+                                Label("Bedtime", systemImage: "bed.double")
+                            }.tag(2)
+                    }
+                    .navigationBarTitle(Text(tabTitle))
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
+                        }
                     }
                 }
             }

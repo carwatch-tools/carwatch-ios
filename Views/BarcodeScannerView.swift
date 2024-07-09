@@ -1,10 +1,3 @@
-//
-//  BarcodeScannerView.swift
-//  CARWatch
-//
-//  Created by Admin on 09.07.24.
-//
-
 import SwiftUI
 
 struct BarcodeScannerView: View {
