@@ -24,4 +24,11 @@ struct Alarm : Identifiable, Codable {
     func toggleIsActive() -> Alarm {
         return Alarm(id: id, isActive: !isActive, isScanned: isScanned, salivaId: salivaId, time: time)
     }
+    
+    func getHourAndMinuteFromAlarm() -> (Int, Int) {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: time)
+        let minute = calendar.component(.minute, from: time)
+        return (hour, minute)
+    }
 }

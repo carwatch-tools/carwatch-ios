@@ -17,7 +17,7 @@ class AlarmViewModel : ObservableObject {
         guard
             let alarmData = UserDefaults.standard.data(forKey: alarmDataKey),
             let savedAlarm = try? JSONDecoder().decode(Alarm.self, from: alarmData)
-        else { 
+        else {
             return
         }
         alarm = savedAlarm
@@ -35,21 +35,23 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmTime(time: Date) {
-        var newTime: Date
-        print("updating alarm time")
-        if time.timeIntervalSinceNow.sign == .minus {
-            print("sign is minus")
-            // if selected date is in the past, select next day
-            newTime = time.addingTimeInterval(3600 * 24)
-        } else {
-            newTime = time
+        let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
+        // make sure no date in the past is used, but rather the next time the selected time occurs
+        if let diffDays = difference.day {
+            if let newTime = Calendar.current.date(byAdding: .day, value: -diffDays, to: time) {
+                alarm = alarm.updateTime(newTime: newTime)
+            }
         }
-        alarm = alarm.updateTime(newTime: newTime)
     }
     
     func saveAlarm() {
         if let encodedAlarm = try? JSONEncoder().encode(alarm) {
             UserDefaults.standard.set(encodedAlarm, forKey: alarmDataKey)
         }
+        let (hour, minute) = alarm.getHourAndMinuteFromAlarm()
+        // cancel all previous alarms
+        NotificationManager.instance.cancelAllNotifications()
+        // set notifications for every day at the given alarm time
+        NotificationManager.instance.scheduleCalendarBasedNotification(id: alarm.id, hour: hour, minute: minute)
     }
 }
