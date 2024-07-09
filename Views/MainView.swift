@@ -38,7 +38,7 @@ struct MainView: View {
             }
         } else {
             if uvm.userData.notificationPermissionDialogHandled {
-                PermissionRequestView()//.environmentObject(uvm)
+                NotificationsDisabledView()
             } else {
                 EmptyView()
             }

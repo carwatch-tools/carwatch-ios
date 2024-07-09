@@ -5,7 +5,6 @@ class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
     
-    //    https://stackoverflow.com/questions/71822197/calling-an-asynchronous-method-getnotificationsettings-in-the-onappear-metho
     func reloadAuthorizationStatus(completion: @escaping (Bool) -> ()) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
