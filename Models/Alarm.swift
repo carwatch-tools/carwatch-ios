@@ -1,10 +1,3 @@
-//
-//  Alarm.swift
-//  CARWatch
-//
-//  Created by Admin on 02.07.24.
-//
-
 import Foundation
 
 // Immutable struct to prevent unintended modification of app data

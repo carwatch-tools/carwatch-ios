@@ -128,6 +128,9 @@
         }
       }
     },
+    "Grant Permission now" : {
+
+    },
     "Info" : {
       "localizations" : {
         "de" : {
@@ -264,6 +267,9 @@
           }
         }
       }
+    },
+    "Unfortunately, CARWatch won't work when Notification Permission is not granted." : {
+
     },
     "Unknown" : {
       "extractionState" : "manual",
