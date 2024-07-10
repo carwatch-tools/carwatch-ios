@@ -4,13 +4,13 @@ struct WakeupView: View {
     var body: some View {
         VStack {
             Image(systemName: "sun.max.fill")
-                .font(.system(size: 70))
+                .font(.system(size: StyleConstants.mainScreenIconSize))
                 .foregroundStyle(.blue)
-                .opacity(0.3)
+                .opacity(StyleConstants.mainScreenIconOpacity)
             Text("Good Morning")
-                .font(.system(size: 30))
+                .font(.system(size: StyleConstants.mainScreenFontSize))
             Text("Did you just wake up?")
-                .font(.system(size: 30))
+                .font(.system(size: StyleConstants.mainScreenFontSize))
                 .multilineTextAlignment(.center)
             HStack{
                 Button("YES") {

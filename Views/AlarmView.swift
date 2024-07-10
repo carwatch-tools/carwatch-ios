@@ -13,28 +13,28 @@ struct AlarmView: View {
     var body: some View {
         VStack {
             Image(systemName: "alarm")
-                .font(.system(size: 70))
+                .font(.system(size: StyleConstants.mainScreenIconSize))
                 .foregroundStyle(.blue)
-                .opacity(0.3)
+                .opacity(StyleConstants.mainScreenIconOpacity)
             Text("Please set your desired alarm time for tomorrow.")
-                .font(.system(size: 30))
+                .font(.system(size: StyleConstants.mainScreenFontSize))
                 .multilineTextAlignment(.center)
-                .font(.system(size: 30))
+                .font(.system(size: StyleConstants.mainScreenFontSize))
             HStack{
                 if #available(iOS 17.0, *) {
                     // signature of onChange function was updated
                     Toggle("", isOn: $alarmActive)
                         .labelsHidden()
-                        .padding(30)
-                        .font(.system(size: 30))
+                        .padding(StyleConstants.edgePadding)
+                        .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: alarmActive, { _, _ in
                             avm.toggleCurrentAlarm()
                         })
                 } else {
                     Toggle("", isOn: $alarmActive)
                         .labelsHidden()
-                        .padding(30)
-                        .font(.system(size: 30))
+                        .padding(StyleConstants.edgePadding)
+                        .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: alarmActive, perform: { _ in
                             avm.toggleCurrentAlarm()
                         })
@@ -55,23 +55,23 @@ struct AlarmView: View {
                 .padding(.bottom)
             ScrollView(showsIndicators: false, content: {
                 Text("Saliva sample alarms")
-                    .font(.system(size: 20))
+                    .font(.system(size: StyleConstants.explanationFontSize))
                 ForEach(Array(alarmsList.enumerated()), id: \.1) {
                     index, alarm in
                     HStack{
                         Text("S\(index+1):")
-                            .font(.system(size: 20))
+                            .font(.system(size: StyleConstants.explanationFontSize))
                         Toggle("", isOn: $alarmsActive)
                             .labelsHidden()
                         Text(alarm)
-                            .font(.system(size: 20))
+                            .font(.system(size: StyleConstants.explanationFontSize))
                         Button(action: {
                             // change to scan view
                             print("scan button pressed")
                         })
                         {
                             Image(systemName: "barcode.viewfinder")
-                                .font(.system(size: 20))
+                                .font(.system(size: StyleConstants.explanationFontSize))
                                 .foregroundStyle(.gray)
                         }
                         .buttonStyle(.bordered)
@@ -80,7 +80,7 @@ struct AlarmView: View {
                             print("repeat button pressed")
                         }) {
                             Image(systemName: "repeat")
-                                .font(.system(size: 20))
+                                .font(.system(size: StyleConstants.explanationFontSize))
                                 .foregroundStyle(.orange)
                         }
                         .buttonStyle(.bordered)
