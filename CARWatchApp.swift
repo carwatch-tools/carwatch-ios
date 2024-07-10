@@ -4,7 +4,7 @@ import SwiftUI
 struct CARWatchApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
-    @StateObject var userDataViewModel: UserDataViewModel = UserDataViewModel()
+    @StateObject var permissionViewModel: PermissionDataViewModel = PermissionDataViewModel()
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     
     @Environment(\.scenePhase) var scenePhase
@@ -12,39 +12,52 @@ struct CARWatchApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
-                .environmentObject(userDataViewModel)
+                .environmentObject(permissionViewModel)
                 .environmentObject(alarmViewModel)
                 .environmentObject(appDelegate)
                 .onAppear(){
                     checkNotificationPermission()
+                    checkCameraPermission()
                 }
                 .onBackground {
                     // print("background")
+                    // TODO: let's see if there's something useful that can be done here, otherwise remove
                 }
                 .onForeground {
                     checkNotificationPermission()
+                    checkCameraPermission()
                 }
         }
     }
     
     func checkNotificationPermission() {
+        // prompt is only displayed on first launch, function is executed every time
         NotificationManager.instance.requestAuthorization { isDone in
-            print("auth request dialog handling done")
-            userDataViewModel.setNotificationPermissionDialogHandled()
+            permissionViewModel.setNotificationPermissionDialogHandled()
+            // update status every time
             NotificationManager.instance.reloadAuthorizationStatus { isDone in
-                print("is done")
                 switch NotificationManager.instance.authorizationStatus {
                 case .authorized:
-                    print("permissions authorized")
-                    userDataViewModel.setNotificationPermission(isGranted: true)
+                    permissionViewModel.setNotificationPermission(isGranted: true)
                     break
                 default:
-                    userDataViewModel.setNotificationPermission(isGranted: false)
+                    permissionViewModel.setNotificationPermission(isGranted: false)
                     print(NotificationManager.instance.authorizationStatus.rawValue)
                     break
                 }
             }
         }
+    }
+    
+    func checkCameraPermission() {
+        // reload status every time
+        CameraManager.instance.reloadCameraPermission()
+        permissionViewModel.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
+        // permission prompt only shown at first launch
+        CameraManager.instance.requestPermission { isDone in
+            permissionViewModel.setCameraPermissionDialogHandled()
+        }
+       
     }
 }
 

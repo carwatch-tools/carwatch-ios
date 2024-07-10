@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MainView: View {
-    @EnvironmentObject var uvm: UserDataViewModel
+    @EnvironmentObject var pvm: PermissionDataViewModel
     @EnvironmentObject var avm: AlarmViewModel
     @EnvironmentObject var appDelegate: AppDelegate
     
@@ -12,7 +12,7 @@ struct MainView: View {
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
     var body: some View {
-        if uvm.userData.notificationPermissionGranted {
+        if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
             if appDelegate.openedFromNotification {
                 BarcodeScannerView()
             } else {
@@ -41,9 +41,15 @@ struct MainView: View {
                     }
                 }
             }
+        } else if pvm.permissionData.notificationPermissionGranted {
+            if pvm.permissionData.cameraPermissionDialogHandled {
+                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
+            } else {
+                EmptyView()
+            }
         } else {
-            if uvm.userData.notificationPermissionDialogHandled {
-                NotificationsDisabledView()
+            if pvm.permissionData.notificationPermissionDialogHandled {
+                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
             } else {
                 EmptyView()
             }
@@ -62,5 +68,5 @@ struct MainView: View {
 }
 
 #Preview(body: {
-    MainView().environmentObject(AlarmViewModel()).environmentObject(UserDataViewModel())
+    MainView().environmentObject(AlarmViewModel()).environmentObject(PermissionDataViewModel())
 })

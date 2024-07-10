@@ -131,9 +131,6 @@
         }
       }
     },
-    "Hello, World!" : {
-
-    },
     "Info" : {
       "localizations" : {
         "de" : {
@@ -238,6 +235,9 @@
         }
       }
     },
+    "Scan Barcode Here" : {
+
+    },
     "Share Logs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -271,7 +271,10 @@
         }
       }
     },
-    "Unfortunately, CARWatch won't work when Notifications are turned off. Please activate all Notifications in the app settings." : {
+    "Unfortunately, CARWatch won't work when camera access is not granted. Please activate camera usage in the app settings." : {
+
+    },
+    "Unfortunately, CARWatch won't work when notifications are turned off. Please activate all notifications in the app settings." : {
 
     },
     "Unknown" : {
