@@ -34,8 +34,7 @@ class NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = "This is a calendar-based notification"
         content.subtitle = "Time: \(hour)\(minute), ID: \(id)"
-        content.sound = .defaultCriticalSound(withAudioVolume: 1)
-        
+        content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         var dateComponents = DateComponents()
         dateComponents.hour = hour
         dateComponents.minute = minute
