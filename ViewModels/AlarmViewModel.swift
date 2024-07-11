@@ -37,9 +37,17 @@ class AlarmViewModel : ObservableObject {
     func updateAlarmTime(time: Date) {
         let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
         // make sure no date in the past is used, but rather the next time the selected time occurs
-        if let diffDays = difference.day {
-            if let newTime = Calendar.current.date(byAdding: .day, value: -diffDays, to: time) {
-                alarm = alarm.updateTime(newTime: newTime)
+        if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
+            if diffHours < 0 || diffMins < 0 {
+                // selected time is in the past -> add one day
+                if let newTime = Calendar.current.date(byAdding: .day, value: 1, to: time) {
+                    alarm = alarm.updateTime(newTime: newTime)
+                }
+            } else {
+                // selected date is in the future, but selected time still occurs on the same day
+                if let newTime = Calendar.current.date(byAdding: .day, value: -diffDays, to: time) {
+                    alarm = alarm.updateTime(newTime: newTime)
+                }
             }
         }
     }
