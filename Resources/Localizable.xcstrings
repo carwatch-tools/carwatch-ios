@@ -37,19 +37,15 @@
         }
       }
     },
-    "App version:" : {
-      "extractionState" : "stale",
+    "App version: %@" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Version der App:"
+            "value" : "Version der App: %@"
           }
         }
       }
-    },
-    "App version: %@" : {
-
     },
     "Are you going to bed?" : {
       "extractionState" : "manual",
@@ -107,7 +103,14 @@
       }
     },
     "Go to App Settings" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu den Einstellungen"
+          }
+        }
+      }
     },
     "Good Evening" : {
       "extractionState" : "manual",
@@ -141,19 +144,15 @@
         }
       }
     },
-    "Kill Alarms" : {
-      "extractionState" : "stale",
+    "Kill all Notifications" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alarme löschen"
+            "value" : "Alle Benachrichtigungen löschen"
           }
         }
       }
-    },
-    "Kill all Notifications" : {
-
     },
     "LIGHTS OUT!" : {
       "extractionState" : "manual",
@@ -210,6 +209,9 @@
         }
       }
     },
+    "Please set your desired wakeup time for tomorrow." : {
+
+    },
     "Reregister" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -222,7 +224,14 @@
       }
     },
     "S%lld:" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S%lld"
+          }
+        }
+      }
     },
     "Saliva sample alarms" : {
       "extractionState" : "manual",
@@ -230,12 +239,28 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wecker für Speichelproben"
+            "value" : "Erinnerungen für Speichelproben"
           }
         }
       }
     },
+    "Saliva sample reminders" : {
+
+    },
     "Scan Barcode Here" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barcode hier scannen"
+          }
+        }
+      }
+    },
+    "scanner view" : {
+
+    },
+    "Schedule" : {
 
     },
     "Share Logs" : {
@@ -260,6 +285,9 @@
         }
       }
     },
+    "Take sample" : {
+
+    },
     "Title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -272,10 +300,24 @@
       }
     },
     "Unfortunately, CARWatch won't work when camera access is not granted. Please activate camera usage in the app settings." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARWatch funktioniert leider nicht ohne Kamerazugriff. Bitte geben Sie die Kamera in den Appeinstellungen frei."
+          }
+        }
+      }
     },
     "Unfortunately, CARWatch won't work when notifications are turned off. Please activate all notifications in the app settings." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARWatch funktioniert leider nicht ohne Benachrichtigungen. Bitte erlauben Sie das Senden von Benachrichtigungen in den Appeinstellungen."
+          }
+        }
+      }
     },
     "Unknown" : {
       "extractionState" : "manual",

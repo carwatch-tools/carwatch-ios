@@ -9,6 +9,8 @@ struct MainView: View {
     @State private var alarmActive: Bool = true
     @State private var alarmTime: Date = Date()
     @State private var alarmsList: [String] = ["10:10", "10:20", "10:30", "10:40", "10:50", "11:00", "12:00", "13:00", "14:00"]
+    @State private var alarmsScanned: [Bool] = [true, false, false, false, false, false, false, false, false]
+    
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
     var body: some View {
@@ -22,12 +24,11 @@ struct MainView: View {
                             .tabItem {
                                 Label("Wakeup", systemImage: "sun.max")
                             }.tag(0)
-                        
-                        AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList)
+                            .padding(StyleConstants.edgePadding)
+                        AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
                             .tabItem {
-                                Label("Alarm", systemImage: "alarm")
+                                Label("Schedule", systemImage: "alarm")
                             }.tag(1)
-                        
                         BedtimeView()
                             .tabItem {
                                 Label("Bedtime", systemImage: "bed.double")
@@ -54,12 +55,11 @@ struct MainView: View {
                 EmptyView()
             }
         }
-        
     }
     private var tabTitle: String {
         switch selectedTab {
         case 0: return String(localized: "Wakeup")
-        case 1: return String(localized: "Alarm")
+        case 1: return String(localized: "Schedule")
         case 2: return String(localized: "Bedtime")
         default: return String(localized: "Title")
         }
@@ -67,6 +67,9 @@ struct MainView: View {
     
 }
 
-#Preview(body: {
-    MainView().environmentObject(AlarmViewModel()).environmentObject(PermissionDataViewModel())
-})
+#Preview{
+    let pvm = PermissionDataViewModel()
+    pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)
+    pvm.permissionData = pvm.permissionData.setNotificationPermission(isGranted: true)
+    return MainView().environmentObject(AlarmViewModel()).environmentObject(pvm).environmentObject(AppDelegate())
+}
