@@ -248,6 +248,7 @@
 
     },
     "Scan Barcode Here" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
