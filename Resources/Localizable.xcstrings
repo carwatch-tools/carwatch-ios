@@ -258,7 +258,7 @@
         }
       }
     },
-    "scanner view" : {
+    "Scan succesful! Barcode data: %@" : {
 
     },
     "Schedule" : {
