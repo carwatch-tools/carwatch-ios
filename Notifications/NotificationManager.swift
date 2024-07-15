@@ -29,20 +29,20 @@ class NotificationManager {
         }
     }
     
-    func scheduleCalendarBasedNotification(id: String, hour: Int, minute: Int) {
-        // repeats every day at the given time
+    func scheduleCalendarBasedNotification(id: String, day: Int,  hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
         content.title = "This is a calendar-based notification"
         content.subtitle = "Time: \(hour)\(minute), ID: \(id)"
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         var dateComponents = DateComponents()
+        dateComponents.day = day
         dateComponents.hour = hour
         dateComponents.minute = minute
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
         
-        print("Notification scheduled: Time: \(hour)\(minute), ID: \(id)")
+        print("Notification scheduled - Day: \(day), Time: \(hour):\(minute), ID: \(id)")
     }
     
     func scheduleIntervalBasedNotification(id: String, intervalSeconds: Int) {

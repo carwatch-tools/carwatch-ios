@@ -30,7 +30,7 @@ struct AlarmView: View {
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: alarmActive, { _, _ in
-                            avm.toggleCurrentAlarm()
+                            toggleCurrentAlarm()
                         })
                 } else {
                     Toggle("", isOn: $alarmActive)
@@ -38,7 +38,7 @@ struct AlarmView: View {
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: alarmActive, perform: { _ in
-                            avm.toggleCurrentAlarm()
+                            toggleCurrentAlarm()
                         })
                 }
                 DatePicker("", selection: $alarmTime, displayedComponents: .hourAndMinute)
@@ -97,6 +97,14 @@ struct AlarmView: View {
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
             }
             Spacer()
+        }
+    }
+    
+    func toggleCurrentAlarm(){
+        avm.toggleCurrentAlarm()
+        print("toggle alarm in view - \(avm.alarm.isActive)")
+        if(avm.alarm.isActive) {
+            showTimeToNextAlarmToast = true
         }
     }
 }

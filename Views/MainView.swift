@@ -15,8 +15,11 @@ struct MainView: View {
     @State private var appVersion: String? = nil
     var body: some View {
         if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
-            if appDelegate.openedFromNotification {
-                BarcodeScannerView()
+            if appDelegate.openedFromNotification || avm.isScanRequired() {
+//            if true {
+                BarcodeScannerView().onForeground {
+                    avm.setAlarmTriggered()
+                }
             } else {
                 NavigationStack{
                     TabView(selection: $selectedTab){
@@ -56,6 +59,7 @@ struct MainView: View {
             }
         }
     }
+    
     private var tabTitle: String {
         switch selectedTab {
         case 0: return String(localized: "Wakeup")
@@ -64,7 +68,6 @@ struct MainView: View {
         default: return String(localized: "Title")
         }
     }
-    
 }
 
 #Preview{

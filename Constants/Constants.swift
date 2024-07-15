@@ -8,6 +8,11 @@ struct PermissionConstants {
     static let appSettingsUrl = URL(string: UIApplication.openSettingsURLString)
 }
 
+struct NotificationConstants {
+    static let numberOfSubsequentNotifications = 3
+    static let minutesBetweenNotifications = 1
+}
+
 struct ScannerConstants {
     enum CodeType {
         case ean8, qr

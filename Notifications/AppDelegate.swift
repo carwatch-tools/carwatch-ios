@@ -18,8 +18,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound])
     }
     
+    // handle notification when app is in the background
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        // handle notification when app is in the background
         openedFromNotification = true
     }
 }
