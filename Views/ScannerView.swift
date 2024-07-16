@@ -9,6 +9,9 @@ struct ScannerView: View {
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
     
+    private let rotationChangePublisher = NotificationCenter.default
+        .publisher(for: UIDevice.orientationDidChangeNotification)
+    
     var body: some View {
         GeometryReader { geometry in
             let width: CGFloat = geometry.size.width/ScannerConstants.overlayWidthFactor
@@ -17,7 +20,6 @@ struct ScannerView: View {
             let xPos = (geometry.size.width - width) / 2.0
             let yPos = (geometry.size.height - height) / 2.0
             ZStack{
-                //            CodeScannerView(codeTypes: [.ean8], simulatedData: "1234567", completion: handleScanResult)
                 CodeScanner(completion: handleScanResult, barcodeAreaWidth: width, barcodeAreaHeight: height, barcodeAreaXPos: xPos, barcodeAreaYPos: yPos, codeType: codeType)
                 ScanOverlayView(barcodeAreaWidth: width, barcodeAreaHeight: height, barcodeAreaXPos: xPos, barcodeAreaYPos: yPos)
             }
@@ -33,7 +35,6 @@ struct ScannerView: View {
                   )
             )
         }
-    }
     
     func handleScanResult(result: Result<String, ScanError>){
         switch result {
