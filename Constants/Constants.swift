@@ -36,4 +36,5 @@ struct StyleConstants {
     static let roundedCornerRadius: CGFloat = 15
     static let roundedCornerStrokeLength: CGFloat = 15
 }
+ 
 

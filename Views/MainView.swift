@@ -17,53 +17,54 @@ struct MainView: View {
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
     var body: some View {
-        if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
-            NavigationStack{
-                TabView(selection: $selectedTab){
-                    WakeupView()
-                        .tabItem {
-                            Label("Wakeup", systemImage: "sun.max")
-                        }.tag(0)
-                        .padding(StyleConstants.edgePadding)
-                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
-                        .tabItem {
-                            Label("Schedule", systemImage: "alarm")
-                        }.tag(1)
-                    BedtimeView()
-                        .tabItem {
-                            Label("Bedtime", systemImage: "bed.double")
-                        }.tag(2)
-                }
-                .navigationBarTitle(Text(tabTitle))
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
-                    }
-                }
-            }
-            .onForeground {
-                checkAlarmStatus()
-                avm.setAlarmTriggered()
-            }
-            .sheet(isPresented: $isScannerPresented) {
-                BarcodeScannerViewWithOverlay(isPresented: $isScannerPresented, isSuccessful: $isScanSuccessful)
-                    .interactiveDismissDisabled()
-            }
-            
-        } else if pvm.permissionData.notificationPermissionGranted {
-            if pvm.permissionData.cameraPermissionDialogHandled {
-                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
-            } else {
-                EmptyView()
-            }
-        } else {
-            if pvm.permissionData.notificationPermissionDialogHandled {
-                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
-            } else {
-                EmptyView()
-            }
-        }
+        ScannerView(isPresented: $isScannerPresented, isSuccessful: $isScanSuccessful, codeType: ScannerConstants.CodeType.qr)
     }
+//        if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
+//            NavigationStack{
+//                TabView(selection: $selectedTab){
+//                    WakeupView()
+//                        .tabItem {
+//                            Label("Wakeup", systemImage: "sun.max")
+//                        }.tag(0)
+//                        .padding(StyleConstants.edgePadding)
+//                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
+//                        .tabItem {
+//                            Label("Schedule", systemImage: "alarm")
+//                        }.tag(1)
+//                    BedtimeView()
+//                        .tabItem {
+//                            Label("Bedtime", systemImage: "bed.double")
+//                        }.tag(2)
+//                }
+//                .navigationBarTitle(Text(tabTitle))
+//                .toolbar {
+//                    ToolbarItem(placement: .navigationBarTrailing) {
+//                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
+//                    }
+//                }
+//            }
+//            .onForeground {
+//                checkAlarmStatus()
+//                avm.setAlarmTriggered()
+//            }
+//            .sheet(isPresented: $isScannerPresented) {
+//                BarcodeScannerViewWithOverlay(isPresented: $isScannerPresented, isSuccessful: $isScanSuccessful)
+//                    .interactiveDismissDisabled()
+//            }
+//        } else if pvm.permissionData.notificationPermissionGranted {
+//            if pvm.permissionData.cameraPermissionDialogHandled {
+//                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
+//            } else {
+//                EmptyView()
+//            }
+//        } else {
+//            if pvm.permissionData.notificationPermissionDialogHandled {
+//                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
+//            } else {
+//                EmptyView()
+//            }
+//        }
+//    }
     
     private var tabTitle: String {
         switch selectedTab {
