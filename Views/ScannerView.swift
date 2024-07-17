@@ -1,10 +1,9 @@
 import SwiftUI
 
 struct ScannerView: View {
-    //    TODO: prevent roation in scanning mode
     @EnvironmentObject var avm: AlarmViewModel
     
-    @Binding var isPresented: Bool
+    @Binding var isPresented: Bool // TODO: make persistent so that scanner view is still presented after app was in the background
     @Binding var isSuccessful: Bool
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
@@ -14,14 +13,10 @@ struct ScannerView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let width: CGFloat = geometry.size.width/ScannerConstants.overlayWidthFactor
             let overlayWidthHeightRatio = codeType == ScannerConstants.CodeType.ean8 ? ScannerConstants.barcodeWidthHeightRatio : ScannerConstants.defaultWidthHeightRatio
-            let height: CGFloat = width / overlayWidthHeightRatio
-            let xPos = (geometry.size.width - width) / 2.0
-            let yPos = (geometry.size.height - height) / 2.0
             ZStack{
-                CodeScanner(completion: handleScanResult, barcodeAreaWidth: width, barcodeAreaHeight: height, barcodeAreaXPos: xPos, barcodeAreaYPos: yPos, codeType: codeType)
-                ScanOverlayView(barcodeAreaWidth: width, barcodeAreaHeight: height, barcodeAreaXPos: xPos, barcodeAreaYPos: yPos)
+                CodeScanner(completion: handleScanResult, codeType: codeType, overlayWidthHeightRatio: overlayWidthHeightRatio)
+                ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
             }
         }
         .alert(isPresented: $isSuccessful) {
@@ -35,6 +30,7 @@ struct ScannerView: View {
                   )
             )
         }
+    }
     
     func handleScanResult(result: Result<String, ScanError>){
         switch result {

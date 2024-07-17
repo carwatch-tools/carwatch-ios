@@ -1,39 +1,41 @@
 import SwiftUI
 
 struct ScanOverlayView: View {
-    let barcodeAreaWidth: CGFloat
-    let barcodeAreaHeight: CGFloat
-    let barcodeAreaXPos: CGFloat
-    let barcodeAreaYPos: CGFloat
-    // inspired from:
-    // https://stackoverflow.com/questions/65447683/swiftui-qr-code-scan-reactangle-with-border-corner
+    
+    let overlayWidthHeightRatio: CGFloat
+    
     var body: some View {
-        GeometryReader { _ in
+        GeometryReader { geometry in
+            let width: CGFloat = geometry.size.width / ScannerConstants.overlayWidthFactor
+            let height: CGFloat = width / overlayWidthHeightRatio
             ZStack {
                 Rectangle()
                     .fill(Color.black.opacity(StyleConstants.overlayOpacity))
                 
                 RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius)
                     .fill(Color.black)
-                    .frame(width: barcodeAreaWidth, height: barcodeAreaHeight, alignment: .center)
+                    .frame(width: width, height: height, alignment: .center)
                     .blendMode(.destinationOut)
             }.compositingGroup()
             
             Path { path in
                 
-                let barcodeAreaXPosEnd = barcodeAreaXPos + barcodeAreaWidth
-                let barcodeAreaYPosEnd = barcodeAreaYPos + barcodeAreaHeight
+                let xPos = (geometry.size.width - width) / 2.0
+                let yPos = (geometry.size.height - height) / 2.0
+                
+                let xPosEnd = xPos + width
+                let yPosEnd = yPos + height
                 
                 path.addPath(
                     createCornersPath(
-                        xStart: barcodeAreaXPos, yStart: barcodeAreaYPos,
-                        xEnd: barcodeAreaXPosEnd, yEnd: barcodeAreaYPosEnd,
+                        xStart: xPos, yStart: yPos,
+                        xEnd: xPosEnd, yEnd: yPosEnd,
                         cornerRadius: StyleConstants.roundedCornerRadius, cornerLength: StyleConstants.roundedCornerStrokeLength
                     )
                 )
             }
             .stroke(Color.blue, lineWidth: StyleConstants.overlayStrokeWidth)
-            .frame(width: barcodeAreaWidth, height: barcodeAreaHeight, alignment: .center)
+            .frame(width: width, height: height, alignment: .center)
             .aspectRatio(1, contentMode: .fit)
         }
     }

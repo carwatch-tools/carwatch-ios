@@ -16,50 +16,41 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
     
     // Parent view required for completion function
     var parentView: CodeScanner!
+    
     // Camera view
     var cameraView: AVCaptureVideoPreviewLayer?
     // AV capture session and dispatch queue
     let captureSession = AVCaptureSession()
-    let sessionQueue = DispatchQueue(label: AVCaptureSession.self.description(), attributes: [], target: nil)
     
-    // Active Viewfinder
-    var barcodeAreaView: UIView?
-    var barcodeArea: CGRect
-    var barcodeAreaWidth: CGFloat = 0
-    var barcodeAreaHeight: CGFloat = 0
-    var barcodeAreaXPos: CGFloat = 0
-    var barcodeAreaYPos: CGFloat = 0
+    var codeType: ScannerConstants.CodeType
+    var codeWidthHeightRatio: CGFloat
     
-    var codeType: ScannerConstants.CodeType = ScannerConstants.CodeType.ean8
-    let metadataOutput = AVCaptureMetadataOutput()
-    
-    public init(parentView: CodeScanner!, cameraView: AVCaptureVideoPreviewLayer? = nil, barcodeAreaView: UIView? = nil, codeType: ScannerConstants.CodeType, barcodeAreaWidth: CGFloat, barcodeAreaHeight: CGFloat, barcodeAreaXPos: CGFloat, barcodeAreaYPos: CGFloat) {
+    public init(parentView: CodeScanner!, cameraView: AVCaptureVideoPreviewLayer? = nil, codeType: ScannerConstants.CodeType, codeWidthHeightRatio: CGFloat) {
         self.parentView = parentView
         self.cameraView = cameraView
         self.codeType = codeType
-        self.barcodeAreaView = barcodeAreaView
-        self.barcodeAreaWidth = barcodeAreaWidth
-        self.barcodeAreaHeight = barcodeAreaHeight
-        self.barcodeAreaXPos = barcodeAreaXPos
-        self.barcodeAreaYPos = barcodeAreaYPos
-        self.barcodeArea = CGRect(x: barcodeAreaXPos, y: barcodeAreaYPos, width: barcodeAreaWidth, height: barcodeAreaHeight)
+        self.codeWidthHeightRatio = codeWidthHeightRatio
         super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
-        self.barcodeArea = CGRect(x: barcodeAreaXPos, y: barcodeAreaYPos, width: barcodeAreaWidth, height: barcodeAreaHeight)
+        self.codeType = ScannerConstants.CodeType.ean8
+        self.codeWidthHeightRatio = ScannerConstants.defaultWidthHeightRatio
         super.init(coder: coder)
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        barcodeAreaView = UIView()
-        // uncomment the next two lines for debugging viewfinder
-        barcodeAreaView?.layer.borderColor = UIColor.red.cgColor
-        barcodeAreaView?.layer.borderWidth = 1
-        barcodeAreaView?.frame = barcodeArea
-        view.addSubview(barcodeAreaView!)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setupSession()
+    }
+    
+    private func setupSession() {
+        if cameraView == nil {
+            cameraView = AVCaptureVideoPreviewLayer(session: captureSession)
+        }
+        cameraView?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        cameraView?.frame = view.layer.bounds
+        view.layer.addSublayer(cameraView!)
         
         captureSession.beginConfiguration()
         
@@ -69,7 +60,6 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         }
         
         let videoDeviceInput: AVCaptureDeviceInput
-        
         do {
             videoDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
         } catch {
@@ -79,35 +69,42 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         
         if captureSession.canAddInput(videoDeviceInput) {
             captureSession.addInput(videoDeviceInput)
+        } else {
+            parentView.completion(.failure(.badInput))
         }
         
+        let metadataOutput = AVCaptureMetadataOutput()
         if captureSession.canAddOutput(metadataOutput) {
             captureSession.addOutput(metadataOutput)
             let supportedCodeTypes = codeType == ScannerConstants.CodeType.ean8 ? [ AVMetadataObject.ObjectType.ean8] : [ AVMetadataObject.ObjectType.qr]
             metadataOutput.metadataObjectTypes = supportedCodeTypes
             metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            
-            cameraView = AVCaptureVideoPreviewLayer(session: captureSession)
-            cameraView?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-            cameraView?.frame = view.layer.bounds
-            
-            metadataOutput.rectOfInterest = cameraView!.metadataOutputRectConverted(fromLayerRect: barcodeArea)
-            view.layer.addSublayer(cameraView!)
+            addRectOfInterest(metadataOutput)
+        } else {
+            parentView.completion(.failure(.badOutput))
+            return
         }
         
         captureSession.commitConfiguration()
-        view.bringSubviewToFront(barcodeAreaView!)
+        
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.captureSession.startRunning()
+        }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
+    private func addRectOfInterest(_ metadataOutput: AVCaptureMetadataOutput) {
+        print("w,h: \(view.frame.size.width), \(view.frame.size.height)")
+        let barcodeArea = calculateScannerRectOfInterest(width:  view.frame.size.width, height:  view.frame.size.height, widthHeightRatio: codeWidthHeightRatio)
+        metadataOutput.rectOfInterest = cameraView!.metadataOutputRectConverted(fromLayerRect: barcodeArea)
         
-        super.viewWillAppear(animated)
-        
-        // Start AV capture session
-        sessionQueue.async {
-            self.captureSession.startRunning()
-            self.metadataOutput.rectOfInterest = self.cameraView!.metadataOutputRectConverted(fromLayerRect: self.barcodeArea)
-        }
+        let barcodeAreaView = UIView()
+        // TODO: remove border
+        // uncomment the next two lines for debugging viewfinder
+        // barcodeAreaView.layer.borderColor = UIColor.red.cgColor
+        // barcodeAreaView.layer.borderWidth = 2
+        barcodeAreaView.frame = barcodeArea
+        view.addSubview(barcodeAreaView)
+        view.bringSubviewToFront(barcodeAreaView)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -115,13 +112,12 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         super.viewWillDisappear(animated)
         
         // Stop AV capture session
-        sessionQueue.async {
+        DispatchQueue.global(qos: .userInteractive).async {
             self.captureSession.stopRunning()
         }
     }
     
     public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        print("capturing output ")
         
         guard let metadataObject = metadataObjects.first,
               let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
@@ -129,9 +125,23 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
             parentView.completion(.failure(.badOutput))
             return
         }
+        
+        // Vibration on successful scan
         AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-        print(stringValue)
+        
+        // Stop AV capture session
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.captureSession.stopRunning()
+        }
         parentView.completion(.success(stringValue))
     }
+}
+
+func calculateScannerRectOfInterest(width: CGFloat, height: CGFloat, widthHeightRatio: CGFloat) -> CGRect {
+    let rectWidth = width / ScannerConstants.overlayWidthFactor;
+    let rectHeight = rectWidth / widthHeightRatio;
+    let xPos = (width - rectWidth) / 2.0
+    let yPos = (height - rectHeight) / 2.0
+    return CGRect(x: xPos, y: yPos, width: rectWidth, height: rectHeight)
 }
 

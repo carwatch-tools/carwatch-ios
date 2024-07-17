@@ -4,6 +4,16 @@
     "" : {
 
     },
+    "%lf, %lf" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lf, %2$lf"
+          }
+        }
+      }
+    },
     "Alarm" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -68,6 +78,9 @@
           }
         }
       }
+    },
+    "Click" : {
+
     },
     "Delete Logs" : {
       "extractionState" : "manual",

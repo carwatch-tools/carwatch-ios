@@ -5,14 +5,11 @@ struct CodeScanner : UIViewControllerRepresentable {
     typealias UIViewControllerType = CodeScannerViewController
     public var completion: (Result<String, ScanError>) -> Void
     
-    let barcodeAreaWidth: CGFloat
-    let barcodeAreaHeight: CGFloat
-    let barcodeAreaXPos: CGFloat
-    let barcodeAreaYPos: CGFloat
     let codeType: ScannerConstants.CodeType
+    let overlayWidthHeightRatio: CGFloat
     
     func makeUIViewController(context: Context) -> CodeScannerViewController {
-        return CodeScannerViewController(parentView: self, codeType: codeType, barcodeAreaWidth: barcodeAreaWidth, barcodeAreaHeight: barcodeAreaHeight, barcodeAreaXPos: barcodeAreaXPos, barcodeAreaYPos: barcodeAreaYPos)
+        return CodeScannerViewController(parentView: self, codeType: codeType, codeWidthHeightRatio: overlayWidthHeightRatio)
     }
     
     func updateUIViewController(_ uiViewController: CodeScannerViewController, context: Context) {
