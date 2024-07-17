@@ -4,16 +4,6 @@
     "" : {
 
     },
-    "%lf, %lf" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lf, %2$lf"
-          }
-        }
-      }
-    },
     "Alarm" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -78,9 +68,6 @@
           }
         }
       }
-    },
-    "Click" : {
-
     },
     "Delete Logs" : {
       "extractionState" : "manual",
@@ -210,6 +197,9 @@
           }
         }
       }
+    },
+    "Please point your camera at a barcode!" : {
+
     },
     "Please set your desired alarm time for tomorrow." : {
       "extractionState" : "manual",

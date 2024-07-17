@@ -98,7 +98,6 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         metadataOutput.rectOfInterest = cameraView!.metadataOutputRectConverted(fromLayerRect: barcodeArea)
         
         let barcodeAreaView = UIView()
-        // TODO: remove border
         // uncomment the next two lines for debugging viewfinder
         // barcodeAreaView.layer.borderColor = UIColor.red.cgColor
         // barcodeAreaView.layer.borderWidth = 2

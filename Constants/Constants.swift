@@ -32,6 +32,7 @@ struct StyleConstants {
     static let alertDuration: Double = 8.0
     
     static let overlayOpacity: Double = 0.5
+    static let textBackgroundOpacity: Double = 0.7
     static let overlayStrokeWidth: CGFloat = 5
     static let roundedCornerRadius: CGFloat = 15
     static let roundedCornerStrokeLength: CGFloat = 15

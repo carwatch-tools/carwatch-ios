@@ -16,6 +16,16 @@ struct ScanOverlayView: View {
                     .fill(Color.black)
                     .frame(width: width, height: height, alignment: .center)
                     .blendMode(.destinationOut)
+                VStack {
+                    Spacer()
+                    Text("Please point your camera at a barcode!")
+                        .padding()
+                            .background(.black)
+                            .opacity(StyleConstants.textBackgroundOpacity)
+                            .foregroundStyle(.white)
+                            .cornerRadius(StyleConstants.roundedCornerRadius)
+                            .padding()
+                }
             }.compositingGroup()
             
             Path { path in
