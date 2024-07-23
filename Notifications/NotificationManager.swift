@@ -5,30 +5,6 @@ class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
     
-    func reloadAuthorizationStatus(completion: @escaping (Bool) -> ()) {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            DispatchQueue.main.async {
-                self.authorizationStatus = settings.authorizationStatus
-                completion(true)
-            }
-        }
-    }
-    
-    func requestAuthorization(completion: @escaping (Bool) -> ()) {
-        let options: UNAuthorizationOptions = [.alert, .sound]
-        
-        UNUserNotificationCenter.current().requestAuthorization(options: options) { success, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Error during notification permission request: \(error)")
-                } else {
-                    print("Sucess granting notification")
-                }
-                completion(true)
-            }
-        }
-    }
-    
     func scheduleCalendarBasedNotification(id: String, day: Int,  hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
         content.title = "This is a calendar-based notification"
@@ -61,5 +37,22 @@ class NotificationManager {
     func cancelAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    // handle notification when app is in the foreground (as they are ignored per default)
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        print("Notification received with identifier \(notification.request.identifier)")
+        openedFromNotification = true
+        // display a banner and play the notification sound even if the app is in foreground
+        completionHandler([.banner, .sound])
+    }
+    
+    // handle notification when app is in the background
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        openedFromNotification = true
+        // inform the app that notification was tapped
+        NotificationCenter.default.post(name: NSNotification.Name("NotificationTapped"), object: nil)
     }
 }
