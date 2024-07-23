@@ -3,8 +3,8 @@ import SwiftUI
 struct ScannerView: View {
     @EnvironmentObject var avm: AlarmViewModel
     
-    @Binding var isPresented: Bool // TODO: make persistent so that scanner view is still presented after app was in the background
-    @Binding var isSuccessful: Bool
+    @Binding var isPresented: Bool
+    @State var isSuccessful: Bool = false
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
     
@@ -48,9 +48,8 @@ struct ScannerView: View {
 
 #Preview {
     @State var isPresented = true
-    @State var isSuccessful = false
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     
-    return ScannerView(isPresented: $isPresented, isSuccessful: $isSuccessful, codeType: ScannerConstants.CodeType.ean8).environmentObject(alarmViewModel)
+    return ScannerView(isPresented: $isPresented, codeType: ScannerConstants.CodeType.ean8).environmentObject(alarmViewModel)
 }
 

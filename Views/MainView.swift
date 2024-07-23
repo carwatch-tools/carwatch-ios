@@ -17,54 +17,55 @@ struct MainView: View {
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
     var body: some View {
-        ScannerView(isPresented: $isScannerPresented, isSuccessful: $isScanSuccessful, codeType: ScannerConstants.CodeType.qr)
+        if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
+            NavigationStack{
+                TabView(selection: $selectedTab){
+                    WakeupView()
+                        .tabItem {
+                            Label("Wakeup", systemImage: "sun.max")
+                        }.tag(0)
+                        .padding(StyleConstants.edgePadding)
+                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
+                        .tabItem {
+                            Label("Schedule", systemImage: "alarm")
+                        }.tag(1)
+                    BedtimeView()
+                        .tabItem {
+                            Label("Bedtime", systemImage: "bed.double")
+                        }.tag(2)
+                }
+                .navigationBarTitle(Text(tabTitle))
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
+                    }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
+                print("opened from notification")
+                checkAlarmStatus()
+            }
+            .onForeground {
+                checkAlarmStatus()
+            }
+            .sheet(isPresented: $isScannerPresented) {
+                ScannerView(isPresented: $isScannerPresented, codeType: ScannerConstants.CodeType.ean8)
+                    .interactiveDismissDisabled()
+            }
+        } else if pvm.permissionData.notificationPermissionGranted {
+            if pvm.permissionData.cameraPermissionDialogHandled {
+                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
+            } else {
+                EmptyView()
+            }
+        } else {
+            if pvm.permissionData.notificationPermissionDialogHandled {
+                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
+            } else {
+                EmptyView()
+            }
+        }
     }
-//        if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
-//            NavigationStack{
-//                TabView(selection: $selectedTab){
-//                    WakeupView()
-//                        .tabItem {
-//                            Label("Wakeup", systemImage: "sun.max")
-//                        }.tag(0)
-//                        .padding(StyleConstants.edgePadding)
-//                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
-//                        .tabItem {
-//                            Label("Schedule", systemImage: "alarm")
-//                        }.tag(1)
-//                    BedtimeView()
-//                        .tabItem {
-//                            Label("Bedtime", systemImage: "bed.double")
-//                        }.tag(2)
-//                }
-//                .navigationBarTitle(Text(tabTitle))
-//                .toolbar {
-//                    ToolbarItem(placement: .navigationBarTrailing) {
-//                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
-//                    }
-//                }
-//            }
-//            .onForeground {
-//                checkAlarmStatus()
-//                avm.setAlarmTriggered()
-//            }
-//            .sheet(isPresented: $isScannerPresented) {
-//                BarcodeScannerViewWithOverlay(isPresented: $isScannerPresented, isSuccessful: $isScanSuccessful)
-//                    .interactiveDismissDisabled()
-//            }
-//        } else if pvm.permissionData.notificationPermissionGranted {
-//            if pvm.permissionData.cameraPermissionDialogHandled {
-//                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
-//            } else {
-//                EmptyView()
-//            }
-//        } else {
-//            if pvm.permissionData.notificationPermissionDialogHandled {
-//                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
-//            } else {
-//                EmptyView()
-//            }
-//        }
-//    }
     
     private var tabTitle: String {
         switch selectedTab {
@@ -76,7 +77,9 @@ struct MainView: View {
     }
     
     func checkAlarmStatus() {
+        print("checking alarm status")
         if appDelegate.openedFromNotification {
+            print("opened from notification")
             // unhandled notification is present
             avm.setAlarmTriggered()
             isScannerPresented = true
@@ -85,6 +88,7 @@ struct MainView: View {
             // no successful scan yet
             isScannerPresented = true
         }
+        print("scanner presented: \(isScannerPresented)")
     }
 }
 
