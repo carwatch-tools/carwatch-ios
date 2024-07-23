@@ -21,6 +21,7 @@ class AlarmViewModel : ObservableObject {
             return
         }
         alarm = savedAlarm
+        updateAlarmTime(time: alarm.time)
     }
     
     func getTimeUntilNextAlarm() -> (Int, Int) {
@@ -44,32 +45,43 @@ class AlarmViewModel : ObservableObject {
         alarm = alarm.setScanned()
         // cancel all remaining alarms
         NotificationManager.instance.cancelAllNotifications()
+        print("set scanned: \(alarm.isScanned)")
+        print("notifications canceled")
         // TODO: schedule subsequent reminders/alarm for next day
     }
     
     func isScanRequired() -> Bool {
+        print("is scanned: \(alarm.isScanned)")
+        print("is triggered: \(alarm.isTriggered)")
+        print("return isReq: \(!alarm.isScanned && alarm.isTriggered)")
         return !alarm.isScanned && alarm.isTriggered
     }
     
     func updateAlarmTime(time: Date) {
+        print("update time")
         let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
+        print(difference.day!)
+        print(difference.hour!)
+        print(difference.minute!)
+        var newTime = time
         // make sure no date in the past is used, but rather the next time the selected time occurs
         if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
+            // set day to today
+            if let time = Calendar.current.date(byAdding: .day, value: -diffDays, to: newTime) {
+                newTime = time
+                print("new time: \(newTime)")
+            }
             if diffHours < 0 || diffMins < 0 {
-                // selected time is in the past -> add respective number of days
-                if let newTime = Calendar.current.date(byAdding: .day, value: diffDays + 1, to: time) {
-                    alarm = alarm.updateTime(newTime: newTime)
-                }
-            } else {
-                // selected date is in the future, but selected time still occurs on the same day
-                if let newTime = Calendar.current.date(byAdding: .day, value: -diffDays, to: time) {
-                    alarm = alarm.updateTime(newTime: newTime)
+                // selected time is in the past -> add one more day
+                if let time = Calendar.current.date(byAdding: .day, value: 1, to: newTime) {
+                    newTime = time
+                    print("new time tmrw: \(newTime)")
                 }
             }
         }
-        if alarm.isActive {
-            scheduleAlarmWithBackupNotifications()
-        }
+        alarm = alarm.updateTime(newTime: newTime)
+        scheduleAlarmWithBackupNotifications()
+        
     }
     
     func saveAlarm() {
@@ -79,7 +91,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func scheduleAlarmWithBackupNotifications() {
-        print("schedule backup notifications")
+        print("schedule alarm with backup notifications")
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
         // do not schedule new notifications if alarm toggle is set inactive
@@ -93,7 +105,7 @@ class AlarmViewModel : ObservableObject {
                 return
             }
             
-            let (day, hour, minute) = Alarm.getHourAndMinuteFromTime(time: notificationTime)
+            let (day, hour, minute) = getHourAndMinuteFromTime(time: notificationTime)
             // set notification for next day at the given alarm time
             NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", day: day, hour: hour, minute: minute)
         }

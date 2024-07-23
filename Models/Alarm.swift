@@ -24,23 +24,15 @@ struct Alarm : Identifiable, Codable {
     }
     
     func toggleIsActive() -> Alarm {
-        return Alarm(id: id, isActive: !isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId, time: time)
+        return Alarm(id: id, isActive: !isActive, isScanned: false, isTriggered: false, salivaId: salivaId, time: time)
     }
     
     func setTriggered() -> Alarm {
-        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: true, salivaId: salivaId)
+        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId)
     }
     
     func setScanned() -> Alarm {
-        return Alarm(id: id, isActive: isActive, isScanned: true, isTriggered: isTriggered, salivaId: salivaId)
-    }
-    
-    static func getHourAndMinuteFromTime(time: Date) -> (Int, Int, Int) {
-        let calendar = Calendar.current
-        let hour = calendar.component(.hour, from: time)
-        let minute = calendar.component(.minute, from: time)
-        let day = calendar.component(.day, from: time)
-        return (day, hour, minute)
+        return Alarm(id: id, isActive: false, isScanned: true, isTriggered: isTriggered, salivaId: salivaId)
     }
     
     func getCurrentAlarmTimePlusInterval(numMinutes: Int) -> Date? {
