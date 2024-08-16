@@ -36,6 +36,10 @@ struct Alarm : Identifiable, Codable, Hashable {
         return Alarm(id: id, isActive: !isActive, isScanned: false, isTriggered: false, salivaId: salivaId, time: time)
     }
     
+    func setIsActive(isActive: Bool) -> Alarm {
+        return Alarm(id: id, isActive: isActive, isScanned: false, isTriggered: false, salivaId: salivaId, time: time)
+    }
+    
     func setTriggered() -> Alarm {
         return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId)
     }

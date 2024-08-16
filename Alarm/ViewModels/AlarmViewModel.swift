@@ -2,18 +2,12 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var timedAlarms: [Alarm] = [Alarm(id: "timed_0", isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
+    @Published var timedAlarms: [Alarm] = [Alarm(id: "initial", isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
         didSet {
             saveTimedAlarms()
         }
     }
-    @Published var initialAlarm: Alarm = Alarm(id: "initial", isActive: false, isScanned: false, isTriggered: false, salivaId: -1) {
-        didSet {
-            saveInitialAlarm()
-        }
-    }
     
-    let initialAlarmDataKey = "alarm"
     let timedAlarmDataKey = "alarmsList"
     
     init() {
@@ -22,24 +16,21 @@ class AlarmViewModel : ObservableObject {
     
     func getAlarmData() {
         guard
-            let initialAlarmData = UserDefaults.standard.data(forKey: initialAlarmDataKey),
-            let savedInitialAlarm = try? JSONDecoder().decode(Alarm.self, from: initialAlarmData)
-        else {
-            return
-        }
-        guard
             let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
             let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData)
         else {
             return
         }
-        initialAlarm = savedInitialAlarm
-        updateAlarmTime(time: initialAlarm.time)
         timedAlarms = savedTimedAlarms
+        updateAlarmTime(time: getInitialAlarm().time)
     }
     
-    func getInitialAlarm() {
-        // TODO
+    func getInitialAlarm() -> Alarm {
+        return timedAlarms[0]
+    }
+    
+    func setInitialAlarm(alarm: Alarm) {
+        timedAlarms[0] = alarm
     }
     
     func getNextAlarm() {
@@ -55,40 +46,41 @@ class AlarmViewModel : ObservableObject {
     }
     
     func getTimeUntilNextInitialAlarm() -> (Int, Int) {
-        let timeInterval = NSInteger(initialAlarm.time.timeIntervalSinceNow)
+        let timeInterval = NSInteger(getInitialAlarm().time.timeIntervalSinceNow)
         let minutes = (timeInterval / 60) % 60
         let hours = (timeInterval / 3600)
         return (hours, minutes)
     }
     
-    func toggleInitialAlarm() {
-        initialAlarm = initialAlarm.toggleIsActive()
-        updateAlarmTime(time: initialAlarm.time)
+    func setInitialAlarmActivity(isActive: Bool) {
+        setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
+        updateAlarmTime(time: getInitialAlarm().time)
+
     }
     
-    func toggleTimedAlarm(index: Int) {
+    func setTimedAlarmActivity(index: Int, isActive: Bool) {
         timedAlarms[index] = timedAlarms[index].toggleIsActive()
         print("toggled: \(timedAlarms[index].isActive)")
     }
     
-    func setAlarmTriggered() {
-        initialAlarm = initialAlarm.setTriggered()
+    func setInitialAlarmTriggered() {
+        setInitialAlarm(alarm: getInitialAlarm().setTriggered())
     }
     
-    func setAlarmScanned() {
-        initialAlarm = initialAlarm.setScanned()
+    func setInitialAlarmScanned() {
+        setInitialAlarm(alarm: getInitialAlarm().setScanned())
         // cancel all remaining alarms
         NotificationManager.instance.cancelAllNotifications()
-        print("set scanned: \(initialAlarm.isScanned)")
+        print("set scanned: \(getInitialAlarm().isScanned)")
         print("notifications canceled")
         // TODO: schedule subsequent reminders/alarm for next day
     }
     
     func isScanRequired() -> Bool {
-        print("is scanned: \(initialAlarm.isScanned)")
-        print("is triggered: \(initialAlarm.isTriggered)")
-        print("return isReq: \(!initialAlarm.isScanned && initialAlarm.isTriggered)")
-        return !initialAlarm.isScanned && initialAlarm.isTriggered
+        // TODO: needs to be checked for all alarms
+        print("is scanned: \(getInitialAlarm().isScanned)")
+        print("is triggered: \(getInitialAlarm().isTriggered)")
+        return !getInitialAlarm().isScanned && getInitialAlarm().isTriggered
     }
     
     func updateAlarmTime(time: Date) {
@@ -114,7 +106,7 @@ class AlarmViewModel : ObservableObject {
                 }
             }
         }
-        initialAlarm = initialAlarm.updateTime(newTime: newTime)
+        setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
         scheduleAlarmWithBackupNotifications()
         updateTimedAlarms()
     }
@@ -122,22 +114,29 @@ class AlarmViewModel : ObservableObject {
     func updateTimedAlarms() {
         // TODO: access intervals from study configuration
         // TODO: make sure the initial alarm is also included
+        // TODO: only allow when no scanning procedure is ongoing?
         var dummyIntervals = [0, 15, 30, 45]
-        var updatedTimedAlarms = [Alarm]()
-        for (index, interval) in dummyIntervals.enumerated() {
-            updatedTimedAlarms.append(Alarm(id: "timed_\(index)", isActive: initialAlarm.isActive, salivaId: index, time: initialAlarm.time.addingTimeInterval(TimeInterval(interval * 60))))
-            print("updated alarm time: \(updatedTimedAlarms[index].time)")
+        if dummyIntervals.count != timedAlarms.count {
+            // if timed alarms is set for the first time -> create entire array
+            var updatedTimedAlarms = [Alarm]()
+            for (index, interval) in dummyIntervals.enumerated() {
+                let id = index == 0 ? "initial" : "timed_\(index)"
+                updatedTimedAlarms.append(Alarm(id: id, isActive: getInitialAlarm().isActive, salivaId: index, time: getInitialAlarm().time.addingTimeInterval(TimeInterval(interval * 60))))
+            }
+            timedAlarms = updatedTimedAlarms
+
+        // if timed alarm was set before -> only update entries
+        } else {
+            for (index, interval) in dummyIntervals.enumerated() {
+                let currentAlarm = timedAlarms[index]
+                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, salivaId: currentAlarm.salivaId, time: getInitialAlarm().time.addingTimeInterval(TimeInterval(interval * 60)))
+            }
         }
-        timedAlarms = updatedTimedAlarms
-    }
-    
-    func saveInitialAlarm() {
-        if let encodedInitialAlarm = try? JSONEncoder().encode(initialAlarm) {
-            UserDefaults.standard.set(encodedInitialAlarm, forKey: initialAlarmDataKey)
-        }
+        
     }
     
     func saveTimedAlarms() {
+        print("save is called")
         if let encodedTimedAlarms = try? JSONEncoder().encode(timedAlarms) {
             UserDefaults.standard.set(encodedTimedAlarms, forKey: timedAlarmDataKey)
         }
@@ -148,19 +147,19 @@ class AlarmViewModel : ObservableObject {
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
         // do not schedule new notifications if alarm toggle is set inactive
-        if !initialAlarm.isActive {
+        if !getInitialAlarm().isActive {
             return
         }
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
             // calculate notification time
-            guard let notificationTime = initialAlarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
+            guard let notificationTime = getInitialAlarm().getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 print("scheduling backup notifications failed at notification \(i)")
                 return
             }
             
             let (day, hour, minute) = getDayHourMinuteFromTime(time: notificationTime)
             // set notification for next day at the given alarm time
-            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(initialAlarm.id)_\(i)", day: day, hour: hour, minute: minute)
+            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(getInitialAlarm().id)_\(i)", day: day, hour: hour, minute: minute)
         }
     }
 }

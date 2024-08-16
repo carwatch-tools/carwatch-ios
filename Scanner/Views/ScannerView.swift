@@ -38,7 +38,7 @@ struct ScannerView: View {
             isSuccessful = true
             print("scan successful. result: \(result)")
             scanResult = result
-            avm.setAlarmScanned()
+            avm.setInitialAlarmScanned()
             
         case .failure(let error):
             print("Scanning failed: \(error.localizedDescription)")

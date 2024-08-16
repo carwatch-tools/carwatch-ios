@@ -29,7 +29,7 @@ struct AlarmView: View {
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: initialAlarmActive, { _, _ in
-                            toggleInitialAlarm()
+                            setInitialAlarmActivity(isActive: initialAlarmActive)
                         })
                 } else {
                     Toggle("", isOn: $initialAlarmActive)
@@ -37,13 +37,13 @@ struct AlarmView: View {
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
                         .onChange(of: initialAlarmActive, perform: { _ in
-                            toggleInitialAlarm()
+                            setInitialAlarmActivity(isActive: initialAlarmActive)
                         })
                 }
                 DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                     .onChange(of: initialAlarmTime, perform: { _ in
                         avm.updateAlarmTime(time: initialAlarmTime)
-                        if(avm.initialAlarm.isActive) {
+                        if(avm.getInitialAlarm().isActive) {
                             showTimeToNextAlarmToast = true
                         }
                     })
@@ -68,13 +68,13 @@ struct AlarmView: View {
                                 Toggle("", isOn: $timedAlarmActive[index])
                                     .labelsHidden()
                                     .onChange(of: timedAlarmActive[index], { _, _ in
-                                        toggleTimedAlarm(index: index)
+                                        toggleTimedAlarm(index: index, isActive: timedAlarmActive[index])
                                     })
                             } else {
                                 Toggle("", isOn: $timedAlarmActive[index])
                                     .labelsHidden()
                                     .onChange(of: timedAlarmActive[index], perform: { _ in
-                                        toggleTimedAlarm(index: index)
+                                        toggleTimedAlarm(index: index, isActive: timedAlarmActive[index])
                                     })
                             }
                             Text(getHourMinFormattedString(time: alarm.time))
@@ -111,21 +111,27 @@ struct AlarmView: View {
         }
     }
     
-    func toggleInitialAlarm(){
-        avm.toggleInitialAlarm()
-        print("toggle initial alarm in view - \(avm.initialAlarm.isActive)")
-        if(avm.initialAlarm.isActive) {
+    func setInitialAlarmActivity(isActive: Bool){
+        avm.setInitialAlarmActivity(isActive: isActive)
+        print("toggle initial alarm in view - \(avm.getInitialAlarm().isActive)")
+        if(avm.getInitialAlarm().isActive) {
+            // if initial alarm is activated, automatically activate all others
+            for (index, _) in avm.timedAlarms.enumerated() {
+                avm.setTimedAlarmActivity(index: index, isActive: isActive)
+                timedAlarmActive[index] = isActive
+            }
             showTimeToNextAlarmToast = true
         }
     }
     
-    func toggleTimedAlarm(index: Int){
-        avm.toggleTimedAlarm(index: index)
+    func toggleTimedAlarm(index: Int, isActive: Bool){
+        avm.setTimedAlarmActivity(index: index, isActive: isActive)
+        // TODO: what to do when initial alarm is deactivated here?
     }
 }
 
 #Preview {
     let avm = AlarmViewModel()
     
-    return AlarmView(initialAlarmActive: avm.initialAlarm.isActive, initialAlarmTime: avm.initialAlarm.time, timedAlarmActive: [Bool](repeating: false, count: avm.timedAlarms.count)).environmentObject(avm)
+    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, timedAlarmActive: [Bool](repeating: false, count: avm.timedAlarms.count)).environmentObject(avm)
 }

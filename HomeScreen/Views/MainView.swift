@@ -23,7 +23,7 @@ struct MainView: View {
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
                     
-                    AlarmView(initialAlarmActive: avm.initialAlarm.isActive, initialAlarmTime: avm.initialAlarm.time, timedAlarmActive: avm.getAlarmActiveInfo())
+                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, timedAlarmActive: avm.getAlarmActiveInfo())
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)
@@ -79,7 +79,7 @@ struct MainView: View {
         if appDelegate.openedFromNotification {
             print("opened from notification")
             // unhandled notification is present
-            avm.setAlarmTriggered()
+            avm.setInitialAlarmTriggered()
             isScannerPresented = true
         }
         if avm.isScanRequired() {
