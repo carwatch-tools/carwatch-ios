@@ -6,10 +6,7 @@ struct MainView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     
     @State private var selectedTab = 0
-    @State private var alarmActive: Bool = true
-    @State private var alarmTime: Date = Date()
-    @State private var alarmsList: [String] = ["10:10", "10:20", "10:30", "10:40", "10:50", "11:00", "12:00", "13:00", "14:00"]
-    @State private var alarmsScanned: [Bool] = [true, false, false, false, false, false, false, false, false]
+    var numAlarms = 4 // TODO: calculate based on config
     
     @State private var isScannerPresented = false
     @State private var isScanSuccessful = false
@@ -25,7 +22,8 @@ struct MainView: View {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
-                    AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned)
+                    
+                    AlarmView(initialAlarmActive: avm.initialAlarm.isActive, initialAlarmTime: avm.initialAlarm.time, timedAlarmActive: avm.getAlarmActiveInfo())
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)

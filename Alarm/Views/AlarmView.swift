@@ -5,13 +5,12 @@ struct AlarmView: View {
     @EnvironmentObject var avm: AlarmViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var alarmActive: Bool
-    @State var alarmTime: Date
+    @State var initialAlarmActive: Bool
+    @State var initialAlarmTime: Date
+    @State var timedAlarmActive: [Bool]
+    
     @State private var showTimeToNextAlarmToast: Bool = false
     
-    @Binding public var alarmsList: [String]
-    @Binding public var alarmsScanned: [Bool]
-    @State var alarmsActive: Bool = false
     var body: some View {
         VStack {
             Image(systemName: "alarm")
@@ -25,26 +24,26 @@ struct AlarmView: View {
             HStack{
                 if #available(iOS 17.0, *) {
                     // signature of onChange function was updated
-                    Toggle("", isOn: $alarmActive)
+                    Toggle("", isOn: $initialAlarmActive)
                         .labelsHidden()
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
-                        .onChange(of: alarmActive, { _, _ in
-                            toggleCurrentAlarm()
+                        .onChange(of: initialAlarmActive, { _, _ in
+                            toggleInitialAlarm()
                         })
                 } else {
-                    Toggle("", isOn: $alarmActive)
+                    Toggle("", isOn: $initialAlarmActive)
                         .labelsHidden()
                         .padding(StyleConstants.edgePadding)
                         .font(.system(size: StyleConstants.mainScreenFontSize))
-                        .onChange(of: alarmActive, perform: { _ in
-                            toggleCurrentAlarm()
+                        .onChange(of: initialAlarmActive, perform: { _ in
+                            toggleInitialAlarm()
                         })
                 }
-                DatePicker("", selection: $alarmTime, displayedComponents: .hourAndMinute)
-                    .onChange(of: alarmTime, perform: { _ in
-                        avm.updateAlarmTime(time: alarmTime)
-                        if(avm.alarm.isActive) {
+                DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
+                    .onChange(of: initialAlarmTime, perform: { _ in
+                        avm.updateAlarmTime(time: initialAlarmTime)
+                        if(avm.initialAlarm.isActive) {
                             showTimeToNextAlarmToast = true
                         }
                     })
@@ -59,16 +58,28 @@ struct AlarmView: View {
                 VStack (alignment: .leading) {
                     Text("Saliva sample reminders")
                         .font(.system(size: StyleConstants.explanationFontSize))
-                    ForEach(Array(alarmsList.enumerated()), id: \.1) {
+                    ForEach(Array(avm.timedAlarms.enumerated()), id: \.1) {
                         index, alarm in
                         HStack{
-                            Text("S\(index+1):")
+                            Text("S\(alarm.salivaId):")
                                 .font(.system(size: StyleConstants.explanationFontSize))
-                            Toggle("", isOn: $alarmsActive)
-                                .labelsHidden()
-                            Text(alarm)
+                            if #available(iOS 17.0, *) {
+                                // signature of onChange function was updated
+                                Toggle("", isOn: $timedAlarmActive[index])
+                                    .labelsHidden()
+                                    .onChange(of: timedAlarmActive[index], { _, _ in
+                                        toggleTimedAlarm(index: index)
+                                    })
+                            } else {
+                                Toggle("", isOn: $timedAlarmActive[index])
+                                    .labelsHidden()
+                                    .onChange(of: timedAlarmActive[index], perform: { _ in
+                                        toggleTimedAlarm(index: index)
+                                    })
+                            }
+                            Text(getHourMinFormattedString(time: alarm.time))
                                 .font(.system(size: StyleConstants.explanationFontSize))
-                            if alarmsScanned[index] {
+                            if alarm.isScanned {
                                 Image(systemName: "checkmark.circle")
                                     .font(.system(size: StyleConstants.explanationFontSize))
                                     .foregroundStyle(.green)
@@ -91,7 +102,7 @@ struct AlarmView: View {
             })
             .frame(maxWidth: .infinity)
             .toast(isPresenting: $showTimeToNextAlarmToast, duration: StyleConstants.alertDuration) {
-                let (diffHours, diffMinutes) = avm.getTimeUntilNextAlarm()
+                let (diffHours, diffMinutes) = avm.getTimeUntilNextInitialAlarm()
                 let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
                 let color = Color(UIColor.secondarySystemBackground)
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
@@ -100,19 +111,21 @@ struct AlarmView: View {
         }
     }
     
-    func toggleCurrentAlarm(){
-        avm.toggleCurrentAlarm()
-        print("toggle alarm in view - \(avm.alarm.isActive)")
-        if(avm.alarm.isActive) {
+    func toggleInitialAlarm(){
+        avm.toggleInitialAlarm()
+        print("toggle initial alarm in view - \(avm.initialAlarm.isActive)")
+        if(avm.initialAlarm.isActive) {
             showTimeToNextAlarmToast = true
         }
+    }
+    
+    func toggleTimedAlarm(index: Int){
+        avm.toggleTimedAlarm(index: index)
     }
 }
 
 #Preview {
     let avm = AlarmViewModel()
-    @State var alarmsList = ["12:00", "13:00"]
-    @State var alarmsScanned = [true, false]
     
-    return AlarmView(alarmActive: avm.alarm.isActive, alarmTime: avm.alarm.time, alarmsList: $alarmsList, alarmsScanned: $alarmsScanned, alarmsActive: false).environmentObject(avm)
+    return AlarmView(initialAlarmActive: avm.initialAlarm.isActive, initialAlarmTime: avm.initialAlarm.time, timedAlarmActive: [Bool](repeating: false, count: avm.timedAlarms.count)).environmentObject(avm)
 }

@@ -2,7 +2,7 @@ import Foundation
 
 // Immutable struct to prevent unintended modification of app data
 // Updates can only be performed through update functions
-struct Alarm : Identifiable, Codable {
+struct Alarm : Identifiable, Codable, Hashable {
     let id: String
     let isActive: Bool
     let isScanned: Bool
@@ -17,6 +17,15 @@ struct Alarm : Identifiable, Codable {
         self.isTriggered = isTriggered
         self.salivaId = salivaId
         self.time = time
+    }
+    
+    init(id: String, isActive: Bool, salivaId: Int, time: Date) {
+        self.id = id
+        self.isActive = isActive
+        self.salivaId = salivaId
+        self.time = time
+        self.isScanned = false
+        self.isTriggered = false
     }
     
     func updateTime(newTime: Date) -> Alarm {
