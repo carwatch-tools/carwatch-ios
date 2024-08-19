@@ -113,9 +113,10 @@ struct AlarmView: View {
     
     func setInitialAlarmActivity(isActive: Bool){
         avm.setInitialAlarmActivity(isActive: isActive)
-        print("toggle initial alarm in view - \(avm.getInitialAlarm().isActive)")
+        timedAlarmActive = avm.getAlarmActiveInfo()
         if(avm.getInitialAlarm().isActive) {
             // if initial alarm is activated, automatically activate all others
+            print(avm.timedAlarms)
             for (index, _) in avm.timedAlarms.enumerated() {
                 avm.setTimedAlarmActivity(index: index, isActive: isActive)
                 timedAlarmActive[index] = isActive

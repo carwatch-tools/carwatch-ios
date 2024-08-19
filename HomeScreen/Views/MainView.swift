@@ -9,7 +9,6 @@ struct MainView: View {
     var numAlarms = 4 // TODO: calculate based on config
     
     @State private var isScannerPresented = false
-    @State private var isScanSuccessful = false
     
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
@@ -79,7 +78,7 @@ struct MainView: View {
         if appDelegate.openedFromNotification {
             print("opened from notification")
             // unhandled notification is present
-            avm.setInitialAlarmTriggered()
+            avm.setUpcomingAlarmTriggered()
             isScannerPresented = true
         }
         if avm.isScanRequired() {

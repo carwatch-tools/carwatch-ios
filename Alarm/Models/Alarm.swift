@@ -28,12 +28,12 @@ struct Alarm : Identifiable, Codable, Hashable {
         self.isTriggered = false
     }
     
-    func updateTime(newTime: Date) -> Alarm {
-        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId, time: newTime)
+    var description: String {
+        return "Alarm ID: \(id), time: \(getHourMinFormattedString(time: time)), isActive: \(isActive), isTriggered: \(isTriggered), isScanned: \(isScanned), saliva ID: \(salivaId)"
     }
     
-    func toggleIsActive() -> Alarm {
-        return Alarm(id: id, isActive: !isActive, isScanned: false, isTriggered: false, salivaId: salivaId, time: time)
+    func updateTime(newTime: Date) -> Alarm {
+        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId, time: newTime)
     }
     
     func setIsActive(isActive: Bool) -> Alarm {
@@ -41,7 +41,7 @@ struct Alarm : Identifiable, Codable, Hashable {
     }
     
     func setTriggered() -> Alarm {
-        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: isTriggered, salivaId: salivaId)
+        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: true, salivaId: salivaId)
     }
     
     func setScanned() -> Alarm {

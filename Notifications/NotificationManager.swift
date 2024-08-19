@@ -34,6 +34,16 @@ class NotificationManager {
         print("Notification scheduled: Interval in sec: \(intervalSeconds), ID: \(id)")
     }
     
+    func cancelNotificationsById(alarmId: String) {
+        var notificationIds = [String]()
+        for i in 1...NotificationConstants.numberOfSubsequentNotifications {
+            let notificationId = "\(alarmId)_\(i)"
+            notificationIds.append(notificationId)
+        }
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
+    }
+    
     func cancelAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()

@@ -33,8 +33,43 @@ class AlarmViewModel : ObservableObject {
         timedAlarms[0] = alarm
     }
     
-    func getNextAlarm() {
-        // TODO
+    func modifyAlarmById(alarm: Alarm) {
+        if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarm.id }) {
+            print("modifying alarm with index \(alarmIdx)")
+            print(alarm)
+            timedAlarms[alarmIdx] = alarm
+        }
+        else {
+            print("Alarm \(alarm.id) does not exist in alarms list")
+        }
+    }
+    
+    func getNextUpcomingAlarm() -> Alarm? {
+        for alarm in timedAlarms {
+            if alarm.isActive && !alarm.isScanned {
+                return alarm
+            }
+        }
+        return nil
+    }
+    
+    func getCurrentlyTriggeredAlarm() -> Alarm? {
+        for alarm in timedAlarms {
+            print(alarm)
+            if alarm.isActive && alarm.isTriggered && !alarm.isScanned{
+                return alarm
+            }
+        }
+        return nil
+    }
+    
+    func isDayFinished() -> Bool {
+        for alarm in timedAlarms {
+            if !alarm.isScanned {
+                return false
+            }
+        }
+        return true
     }
     
     func getAlarmActiveInfo() -> [Bool] {
@@ -55,32 +90,44 @@ class AlarmViewModel : ObservableObject {
     func setInitialAlarmActivity(isActive: Bool) {
         setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
         updateAlarmTime(time: getInitialAlarm().time)
-
+        
     }
     
     func setTimedAlarmActivity(index: Int, isActive: Bool) {
-        timedAlarms[index] = timedAlarms[index].toggleIsActive()
+        timedAlarms[index] = timedAlarms[index].setIsActive(isActive: isActive)
         print("toggled: \(timedAlarms[index].isActive)")
     }
     
-    func setInitialAlarmTriggered() {
-        setInitialAlarm(alarm: getInitialAlarm().setTriggered())
+    func setUpcomingAlarmTriggered() {
+        print("set upcoming alarm triggered")
+        if let alarm = getNextUpcomingAlarm() {
+            print(alarm)
+            modifyAlarmById(alarm: alarm.setTriggered())
+        }
     }
     
-    func setInitialAlarmScanned() {
-        setInitialAlarm(alarm: getInitialAlarm().setScanned())
-        // cancel all remaining alarms
-        NotificationManager.instance.cancelAllNotifications()
-        print("set scanned: \(getInitialAlarm().isScanned)")
-        print("notifications canceled")
-        // TODO: schedule subsequent reminders/alarm for next day
+    func setCurrentAlarmScanned() {
+        print("trying to set Alarm scanned")
+        if let alarm = getCurrentlyTriggeredAlarm() {
+            modifyAlarmById(alarm: alarm.setScanned())
+            // cancel all remaining alarms
+            NotificationManager.instance.cancelNotificationsById(alarmId: alarm.id)
+            print("set scanned: \(alarm.isScanned)")
+            print("notifications canceled for \(alarm.id)")
+        }
+        if isDayFinished(){
+            print("all alarms are scanned, day is finished")
+            // TODO: schedule subsequent reminders/alarm for next day
+        }
     }
     
     func isScanRequired() -> Bool {
-        // TODO: needs to be checked for all alarms
-        print("is scanned: \(getInitialAlarm().isScanned)")
-        print("is triggered: \(getInitialAlarm().isTriggered)")
-        return !getInitialAlarm().isScanned && getInitialAlarm().isTriggered
+        for alarm in timedAlarms {
+            if alarm.isActive && alarm.isTriggered && !alarm.isScanned {
+                return true
+            }
+        }
+        return false
     }
     
     func updateAlarmTime(time: Date) {
@@ -107,25 +154,26 @@ class AlarmViewModel : ObservableObject {
             }
         }
         setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
-        scheduleAlarmWithBackupNotifications()
         updateTimedAlarms()
+        scheduleAlarmNotifications()
     }
     
     func updateTimedAlarms() {
         // TODO: access intervals from study configuration
         // TODO: make sure the initial alarm is also included
         // TODO: only allow when no scanning procedure is ongoing?
-        var dummyIntervals = [0, 15, 30, 45]
+        var dummyIntervals = [0, 2, 4, 6]
         if dummyIntervals.count != timedAlarms.count {
             // if timed alarms is set for the first time -> create entire array
             var updatedTimedAlarms = [Alarm]()
             for (index, interval) in dummyIntervals.enumerated() {
+                print("first time")
                 let id = index == 0 ? "initial" : "timed_\(index)"
                 updatedTimedAlarms.append(Alarm(id: id, isActive: getInitialAlarm().isActive, salivaId: index, time: getInitialAlarm().time.addingTimeInterval(TimeInterval(interval * 60))))
             }
             timedAlarms = updatedTimedAlarms
-
-        // if timed alarm was set before -> only update entries
+            
+            // if timed alarm was set before -> only update entries
         } else {
             for (index, interval) in dummyIntervals.enumerated() {
                 let currentAlarm = timedAlarms[index]
@@ -136,13 +184,12 @@ class AlarmViewModel : ObservableObject {
     }
     
     func saveTimedAlarms() {
-        print("save is called")
         if let encodedTimedAlarms = try? JSONEncoder().encode(timedAlarms) {
             UserDefaults.standard.set(encodedTimedAlarms, forKey: timedAlarmDataKey)
         }
     }
     
-    func scheduleAlarmWithBackupNotifications() {
+    func scheduleAlarmNotifications() {
         print("schedule alarm with backup notifications")
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
@@ -150,16 +197,21 @@ class AlarmViewModel : ObservableObject {
         if !getInitialAlarm().isActive {
             return
         }
+        for alarm in timedAlarms {
+            scheduleAlarmWithBackupNotifications(alarm)
+        }
+    }
+    
+    func scheduleAlarmWithBackupNotifications(_ alarm: Alarm){
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
+            print("scheduling alarm \(alarm.id)")
             // calculate notification time
-            guard let notificationTime = getInitialAlarm().getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
-                print("scheduling backup notifications failed at notification \(i)")
+            guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 return
             }
-            
             let (day, hour, minute) = getDayHourMinuteFromTime(time: notificationTime)
             // set notification for next day at the given alarm time
-            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(getInitialAlarm().id)_\(i)", day: day, hour: hour, minute: minute)
+            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", day: day, hour: hour, minute: minute)
         }
     }
 }
