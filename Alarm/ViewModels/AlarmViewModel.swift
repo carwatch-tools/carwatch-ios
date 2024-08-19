@@ -4,9 +4,11 @@ class AlarmViewModel : ObservableObject {
     
     @Published var timedAlarms: [Alarm] = [Alarm(id: "initial", isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
         didSet {
+            updateTimedAlarmActivity()
             saveTimedAlarms()
         }
     }
+    @Published var timedAlarmActivity: [Bool] = [false]
     
     let timedAlarmDataKey = "alarmsList"
     
@@ -55,7 +57,6 @@ class AlarmViewModel : ObservableObject {
     
     func getCurrentlyTriggeredAlarm() -> Alarm? {
         for alarm in timedAlarms {
-            print(alarm)
             if alarm.isActive && alarm.isTriggered && !alarm.isScanned{
                 return alarm
             }
@@ -63,21 +64,25 @@ class AlarmViewModel : ObservableObject {
         return nil
     }
     
+    func isAlarmOngoing() -> Bool {
+        print("is alarm ongoing?")
+        for alarm in timedAlarms {
+            print(alarm)
+            if alarm.isTriggered && !isDayFinished() {
+                return true
+            }
+        }
+        return false
+    }
+    
     func isDayFinished() -> Bool {
         for alarm in timedAlarms {
+            // TODO should all samples be scanned or only active samples be scanned?
             if !alarm.isScanned {
                 return false
             }
         }
         return true
-    }
-    
-    func getAlarmActiveInfo() -> [Bool] {
-        var alarmsActive = [Bool]()
-        for alarm in timedAlarms {
-            alarmsActive.append(alarm.isActive)
-        }
-        return alarmsActive
     }
     
     func getTimeUntilNextInitialAlarm() -> (Int, Int) {
@@ -89,6 +94,7 @@ class AlarmViewModel : ObservableObject {
     
     func setInitialAlarmActivity(isActive: Bool) {
         setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
+        print("set init alarm activity")
         updateAlarmTime(time: getInitialAlarm().time)
         
     }
@@ -109,10 +115,11 @@ class AlarmViewModel : ObservableObject {
     func setCurrentAlarmScanned() {
         print("trying to set Alarm scanned")
         if let alarm = getCurrentlyTriggeredAlarm() {
+            // set alarm as scaned and inactive
             modifyAlarmById(alarm: alarm.setScanned())
             // cancel all remaining alarms
             NotificationManager.instance.cancelNotificationsById(alarmId: alarm.id)
-            print("set scanned: \(alarm.isScanned)")
+            print("set scanned: \(alarm)")
             print("notifications canceled for \(alarm.id)")
         }
         if isDayFinished(){
@@ -131,31 +138,32 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmTime(time: Date) {
-        // TODO: only allow this when no alarm is currently ongoing
         print("update time")
-        let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
-        print(difference.day!)
-        print(difference.hour!)
-        print(difference.minute!)
-        var newTime = time
-        // make sure no date in the past is used, but rather the next time the selected time occurs
-        if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
-            // set day to today
-            if let time = Calendar.current.date(byAdding: .day, value: -diffDays, to: newTime) {
-                newTime = time
-                print("new time: \(newTime)")
-            }
-            if diffHours < 0 || diffMins < 0 {
-                // selected time is in the past -> add one more day
-                if let time = Calendar.current.date(byAdding: .day, value: 1, to: newTime) {
+        if !isAlarmOngoing() {
+            let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
+            print(difference.day!)
+            print(difference.hour!)
+            print(difference.minute!)
+            var newTime = time
+            // make sure no date in the past is used, but rather the next time the selected time occurs
+            if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
+                // set day to today
+                if let time = Calendar.current.date(byAdding: .day, value: -diffDays, to: newTime) {
                     newTime = time
-                    print("new time tmrw: \(newTime)")
+                    print("new time: \(newTime)")
+                }
+                if diffHours < 0 || diffMins < 0 {
+                    // selected time is in the past -> add one more day
+                    if let time = Calendar.current.date(byAdding: .day, value: 1, to: newTime) {
+                        newTime = time
+                        print("new time tmrw: \(newTime)")
+                    }
                 }
             }
+            setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
+            updateTimedAlarms()
+            scheduleAlarmNotifications()
         }
-        setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
-        updateTimedAlarms()
-        scheduleAlarmNotifications()
     }
     
     func updateTimedAlarms() {
@@ -180,7 +188,14 @@ class AlarmViewModel : ObservableObject {
                 timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, salivaId: currentAlarm.salivaId, time: getInitialAlarm().time.addingTimeInterval(TimeInterval(interval * 60)))
             }
         }
-        
+    }
+    
+    func updateTimedAlarmActivity() {
+        var alarmsActive = [Bool]()
+        for alarm in timedAlarms {
+            alarmsActive.append(alarm.isActive)
+        }
+        timedAlarmActivity = alarmsActive
     }
     
     func saveTimedAlarms() {

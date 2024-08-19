@@ -7,7 +7,6 @@ struct AlarmView: View {
     
     @State var initialAlarmActive: Bool
     @State var initialAlarmTime: Date
-    @State var timedAlarmActive: [Bool]
     
     @State private var showTimeToNextAlarmToast: Bool = false
     
@@ -50,7 +49,8 @@ struct AlarmView: View {
                     .labelsHidden()
                     .scaledToFit()
                     .scaleEffect(CGSize(width: 1.5, height: 1.5))
-            }
+            }.disabled(avm.isAlarmOngoing())
+            
             
             Divider()
                 .padding(.bottom)
@@ -65,16 +65,18 @@ struct AlarmView: View {
                                 .font(.system(size: StyleConstants.explanationFontSize))
                             if #available(iOS 17.0, *) {
                                 // signature of onChange function was updated
-                                Toggle("", isOn: $timedAlarmActive[index])
+                                Toggle("", isOn: $avm.timedAlarmActivity[index])
                                     .labelsHidden()
-                                    .onChange(of: timedAlarmActive[index], { _, _ in
-                                        toggleTimedAlarm(index: index, isActive: timedAlarmActive[index])
+                                    .disabled(alarm.isScanned)
+                                    .onChange(of: avm.timedAlarmActivity[index], { _, _ in
+                                        toggleTimedAlarm(index: index, isActive: avm.timedAlarmActivity[index])
                                     })
                             } else {
-                                Toggle("", isOn: $timedAlarmActive[index])
+                                Toggle("", isOn: $avm.timedAlarmActivity[index])
                                     .labelsHidden()
-                                    .onChange(of: timedAlarmActive[index], perform: { _ in
-                                        toggleTimedAlarm(index: index, isActive: timedAlarmActive[index])
+                                    .disabled(alarm.isScanned)
+                                    .onChange(of: avm.timedAlarmActivity[index], perform: { _ in
+                                        toggleTimedAlarm(index: index, isActive: avm.timedAlarmActivity[index])
                                     })
                             }
                             Text(getHourMinFormattedString(time: alarm.time))
@@ -85,15 +87,23 @@ struct AlarmView: View {
                                     .foregroundStyle(.green)
                                     .padding(.leading, 2)
                             } else {
-                                Button(action: {
-                                    // change to scan view
-                                    print("scan button pressed")
-                                })
-                                {
-                                    Label("Take sample", systemImage: "barcode.viewfinder")
-                                        .font(.system(size: StyleConstants.explanationFontSize))
+                                HStack {
+                                    Button(action: {
+                                        // change to scan view
+                                        print("scan button pressed")
+                                    })
+                                    {
+                                        Label("Take sample", systemImage: "barcode.viewfinder")
+                                            .font(.system(size: StyleConstants.explanationFontSize))
+                                    }
+                                    .buttonStyle(.borderless)
+                                    if alarm.isTriggered && !alarm.isScanned {
+                                        Image(systemName: "exclamationmark.arrow.circlepath")
+                                            .font(.system(size: StyleConstants.explanationFontSize))
+                                            .foregroundStyle(.orange)
+                                            .padding(.leading, 2)
+                                    }
                                 }
-                                .buttonStyle(.borderless)
                                 
                             }
                         }
@@ -113,13 +123,11 @@ struct AlarmView: View {
     
     func setInitialAlarmActivity(isActive: Bool){
         avm.setInitialAlarmActivity(isActive: isActive)
-        timedAlarmActive = avm.getAlarmActiveInfo()
         if(avm.getInitialAlarm().isActive) {
+            avm.updateAlarmTime(time: avm.getInitialAlarm().time)
             // if initial alarm is activated, automatically activate all others
-            print(avm.timedAlarms)
             for (index, _) in avm.timedAlarms.enumerated() {
                 avm.setTimedAlarmActivity(index: index, isActive: isActive)
-                timedAlarmActive[index] = isActive
             }
             showTimeToNextAlarmToast = true
         }
@@ -134,5 +142,5 @@ struct AlarmView: View {
 #Preview {
     let avm = AlarmViewModel()
     
-    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, timedAlarmActive: [Bool](repeating: false, count: avm.timedAlarms.count)).environmentObject(avm)
+    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time).environmentObject(avm)
 }
