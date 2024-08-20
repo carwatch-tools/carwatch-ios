@@ -2,8 +2,10 @@ import SwiftUI
 
 struct ScannerView: View {
     @EnvironmentObject var avm: AlarmViewModel
+    @EnvironmentObject var appDelegate: AppDelegate
     
     @Binding var isPresented: Bool
+    @Binding var alarmId: String?
     @State var isSuccessful: Bool = false
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
@@ -38,7 +40,9 @@ struct ScannerView: View {
             isSuccessful = true
             print("scan successful. result: \(result)")
             scanResult = result
-            avm.setCurrentAlarmScanned()
+            avm.setCurrentAlarmScanned(alarmId: alarmId)
+            // reset app delegate status
+            appDelegate.openedFromNotification = false
             
         case .failure(let error):
             print("Scanning failed: \(error.localizedDescription)")
@@ -48,8 +52,9 @@ struct ScannerView: View {
 
 #Preview {
     @State var isPresented = true
+    @State var currentAlarmId: String? = nil
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     
-    return ScannerView(isPresented: $isPresented, codeType: ScannerConstants.CodeType.ean8).environmentObject(alarmViewModel)
+    return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8).environmentObject(alarmViewModel)
 }
 

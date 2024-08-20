@@ -8,6 +8,9 @@ struct AlarmView: View {
     @State var initialAlarmActive: Bool
     @State var initialAlarmTime: Date
     
+    @Binding var isScannerPresented: Bool
+    @Binding var currentAlarmId: String?
+    
     @State private var showTimeToNextAlarmToast: Bool = false
     
     var body: some View {
@@ -89,14 +92,16 @@ struct AlarmView: View {
                             } else {
                                 HStack {
                                     Button(action: {
-                                        // change to scan view
-                                        print("scan button pressed")
+                                        currentAlarmId = alarm.id
+                                        isScannerPresented = true
+                                        // TODO: indicate which sample is currently scanned
                                     })
                                     {
                                         Label("Take sample", systemImage: "barcode.viewfinder")
                                             .font(.system(size: StyleConstants.explanationFontSize))
                                     }
                                     .buttonStyle(.borderless)
+                                    .disabled(!alarm.isActive)
                                     if alarm.isTriggered && !alarm.isScanned {
                                         Image(systemName: "exclamationmark.arrow.circlepath")
                                             .font(.system(size: StyleConstants.explanationFontSize))
@@ -140,7 +145,9 @@ struct AlarmView: View {
 }
 
 #Preview {
+    @State var isScannerPresented: Bool = false
+    @State var currentAlarmId: String? = nil
     let avm = AlarmViewModel()
     
-    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time).environmentObject(avm)
+    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
 }

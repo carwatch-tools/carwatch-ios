@@ -8,7 +8,8 @@ struct MainView: View {
     @State private var selectedTab = 0
     var numAlarms = 4 // TODO: calculate based on config
     
-    @State private var isScannerPresented = false
+    @State var isScannerPresented = false
+    @State var currentAlarmId: String? = nil
     
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
@@ -21,7 +22,7 @@ struct MainView: View {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
-                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time)
+                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId)
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)
@@ -45,7 +46,7 @@ struct MainView: View {
                 checkAlarmStatus()
             }
             .sheet(isPresented: $isScannerPresented) {
-                ScannerView(isPresented: $isScannerPresented, codeType: ScannerConstants.CodeType.ean8)
+                ScannerView(isPresented: $isScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
                     .interactiveDismissDisabled()
             }
         } else if pvm.permissionData.notificationPermissionGranted {
@@ -74,14 +75,17 @@ struct MainView: View {
     
     func checkAlarmStatus() {
         print("checking alarm status")
+        isScannerPresented = false
         if appDelegate.openedFromNotification {
             print("opened from notification")
             // unhandled notification is present
             avm.setUpcomingAlarmTriggered()
+            currentAlarmId = nil
             isScannerPresented = true
         }
         if avm.isScanRequired() {
             // no successful scan yet
+            currentAlarmId = nil
             isScannerPresented = true
         }
         print("scanner presented: \(isScannerPresented)")

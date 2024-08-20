@@ -35,6 +35,13 @@ class AlarmViewModel : ObservableObject {
         timedAlarms[0] = alarm
     }
     
+    func getAlarmById(alarmId: String) -> Alarm? {
+        if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarmId }) {
+            return timedAlarms[alarmIdx]
+        }
+        return nil
+    }
+    
     func modifyAlarmById(alarm: Alarm) {
         if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarm.id }) {
             print("modifying alarm with index \(alarmIdx)")
@@ -112,20 +119,35 @@ class AlarmViewModel : ObservableObject {
         }
     }
     
-    func setCurrentAlarmScanned() {
+    func setCurrentAlarmScanned(alarmId: String? = nil) {
         print("trying to set Alarm scanned")
-        if let alarm = getCurrentlyTriggeredAlarm() {
+        var alarm: Alarm?
+        if alarmId != nil {
+           alarm = getAlarmById(alarmId: alarmId!)
+        } else {
+            alarm = getCurrentlyTriggeredAlarm()
+        }
+        if alarm != nil {
             // set alarm as scaned and inactive
-            modifyAlarmById(alarm: alarm.setScanned())
+            modifyAlarmById(alarm: alarm!.setScanned())
             // cancel all remaining alarms
-            NotificationManager.instance.cancelNotificationsById(alarmId: alarm.id)
-            print("set scanned: \(alarm)")
-            print("notifications canceled for \(alarm.id)")
+            NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
+            print("set scanned: \(alarm!)")
+            print("notifications canceled for \(alarm!.id)")
         }
         if isDayFinished(){
             print("all alarms are scanned, day is finished")
+            resetAlarmData()
             // TODO: schedule subsequent reminders/alarm for next day
         }
+    }
+    
+    func resetAlarmData() {
+        // schedule alarms for the next day after all scans for one day were finished
+        for alarm in timedAlarms {
+            modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, salivaId: alarm.salivaId, time: alarm.time))
+        }
+        updateAlarmTime(time: getInitialAlarm().time)
     }
     
     func isScanRequired() -> Bool {
@@ -156,7 +178,7 @@ class AlarmViewModel : ObservableObject {
                     // selected time is in the past -> add one more day
                     if let time = Calendar.current.date(byAdding: .day, value: 1, to: newTime) {
                         newTime = time
-                        print("new time tmrw: \(newTime)")
+                        print("new time: \(newTime)")
                     }
                 }
             }
