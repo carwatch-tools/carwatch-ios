@@ -36,10 +36,11 @@ class NotificationManager {
     
     func cancelNotificationsById(alarmId: String) {
         var notificationIds = [String]()
-        for i in 1...NotificationConstants.numberOfSubsequentNotifications {
+        for i in 0...NotificationConstants.numberOfSubsequentNotifications-1 {
             let notificationId = "\(alarmId)_\(i)"
             notificationIds.append(notificationId)
         }
+        print("canceling notifications: \(notificationIds)")
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
     }

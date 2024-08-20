@@ -108,6 +108,11 @@ class AlarmViewModel : ObservableObject {
     
     func setTimedAlarmActivity(index: Int, isActive: Bool) {
         timedAlarms[index] = timedAlarms[index].setIsActive(isActive: isActive)
+        if !isActive {
+            NotificationManager.instance.cancelNotificationsById(alarmId: timedAlarms[index].id)
+        } else {
+            scheduleAlarmWithBackupNotifications(timedAlarms[index])
+        }
         print("toggled: \(timedAlarms[index].isActive)")
     }
     
