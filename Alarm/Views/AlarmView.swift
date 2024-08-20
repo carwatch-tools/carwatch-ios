@@ -1,6 +1,10 @@
 import SwiftUI
 import AlertToast
 
+enum ActiveAlert {
+    case toggleActivityAlert, takeSampleEarlyAlert
+}
+
 struct AlarmView: View {
     @EnvironmentObject var avm: AlarmViewModel
     @Environment(\.colorScheme) var colorScheme
@@ -12,6 +16,10 @@ struct AlarmView: View {
     @Binding var currentAlarmId: String?
     
     @State private var showTimeToNextAlarmToast: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var activeAlert: ActiveAlert = .toggleActivityAlert
+    @State private var pendingToggleValue: Bool = false
+    @State private var pendingToggleIndex: Int = 0
     
     var body: some View {
         VStack {
@@ -66,22 +74,21 @@ struct AlarmView: View {
                         HStack{
                             Text("S\(alarm.salivaId):")
                                 .font(.system(size: StyleConstants.explanationFontSize))
-                            if #available(iOS 17.0, *) {
-                                // signature of onChange function was updated
-                                Toggle("", isOn: $avm.timedAlarmActivity[index])
-                                    .labelsHidden()
-                                    .disabled(alarm.isScanned)
-                                    .onChange(of: avm.timedAlarmActivity[index], { _, _ in
-                                        toggleTimedAlarm(index: index, isActive: avm.timedAlarmActivity[index])
-                                    })
-                            } else {
-                                Toggle("", isOn: $avm.timedAlarmActivity[index])
-                                    .labelsHidden()
-                                    .disabled(alarm.isScanned)
-                                    .onChange(of: avm.timedAlarmActivity[index], perform: { _ in
-                                        toggleTimedAlarm(index: index, isActive: avm.timedAlarmActivity[index])
-                                    })
-                            }
+                            Toggle("", isOn: Binding<Bool>(
+                                get: { avm.timedAlarmActivity[index] },
+                                set: { newValue in
+                                    pendingToggleValue = newValue
+                                    pendingToggleIndex = index
+                                    if newValue == false {
+                                        // only show alert when switching alarm off
+                                        activeAlert = .toggleActivityAlert
+                                        showAlert = true
+                                    } else {
+                                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !avm.timedAlarmActivity[pendingToggleIndex])
+                                    }
+                                }))
+                            .labelsHidden()
+                            .disabled(alarm.isScanned)
                             Text(getHourMinFormattedString(time: alarm.time))
                                 .font(.system(size: StyleConstants.explanationFontSize))
                             if alarm.isScanned {
@@ -92,8 +99,9 @@ struct AlarmView: View {
                             } else {
                                 HStack {
                                     Button(action: {
+                                        activeAlert = .takeSampleEarlyAlert
+                                        showAlert = true
                                         currentAlarmId = alarm.id
-                                        isScannerPresented = true
                                         // TODO: indicate which sample is currently scanned
                                     })
                                     {
@@ -121,6 +129,31 @@ struct AlarmView: View {
                 let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
                 let color = Color(UIColor.secondarySystemBackground)
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
+            }
+            .alert(isPresented: $showAlert) {
+                switch activeAlert {
+                case .takeSampleEarlyAlert:
+                    return Alert(title: Text("This sample is scheduled for later. Are you sure you want to scan the sample now?"),
+                          primaryButton: .destructive(Text("Yes")) {
+                        showAlert = false
+                        isScannerPresented = true
+                    },
+                          secondaryButton: .cancel(Text("No")) {
+                        currentAlarmId = nil
+                        showAlert = false
+                    }
+                    )
+                case .toggleActivityAlert:
+                    return Alert(title: Text("This alarm is required for the study. Are you sure to cancel this alarm?"),
+                          primaryButton: .destructive(Text("Yes")) {
+                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !avm.timedAlarmActivity[pendingToggleIndex])
+                        showAlert = false
+                    },
+                          secondaryButton: .cancel(Text("No")) {
+                        showAlert = false
+                    }
+                    )
+                }
             }
             Spacer()
         }

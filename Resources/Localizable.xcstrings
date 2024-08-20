@@ -176,6 +176,9 @@
         }
       }
     },
+    "No" : {
+
+    },
     "NO" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -292,6 +295,12 @@
     "Take sample" : {
 
     },
+    "This alarm is required for the study. Are you sure to cancel this alarm?" : {
+
+    },
+    "This sample is scheduled for later. Are you sure you want to scan the sample now?" : {
+
+    },
     "Title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -355,6 +364,9 @@
           }
         }
       }
+    },
+    "Yes" : {
+
     },
     "YES" : {
       "extractionState" : "manual",
