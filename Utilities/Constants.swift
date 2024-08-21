@@ -11,6 +11,9 @@ struct PermissionConstants {
 struct NotificationConstants {
     static let numberOfSubsequentNotifications = 3
     static let minutesBetweenNotifications = 1
+    enum ToastType {
+        case feedbackToast, wakeupReportedToast, studyFinishedToast
+    }
 }
 
 struct ScannerConstants {
@@ -29,7 +32,7 @@ struct StyleConstants {
     static let explanationFontSize: CGFloat = 20
     static let edgePadding: CGFloat = 30
     
-    static let alertDuration: Double = 8.0
+    static let toastDuration: Double = 8.0
     
     static let overlayOpacity: Double = 0.5
     static let textBackgroundOpacity: Double = 0.7
@@ -37,5 +40,11 @@ struct StyleConstants {
     static let roundedCornerRadius: CGFloat = 15
     static let roundedCornerStrokeLength: CGFloat = 15
 }
- 
 
+struct MenuConstants {
+    static let killButtonClickCountActivate: Int = 5
+    static let killButtonClickCountAlert: Int = 2
+    enum ToastType {
+        case clickToKill, killSuccess
+    }
+}

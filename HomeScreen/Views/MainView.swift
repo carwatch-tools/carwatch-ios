@@ -1,4 +1,5 @@
 import SwiftUI
+import AlertToast
 
 struct MainView: View {
     @EnvironmentObject var pvm: PermissionDataViewModel
@@ -10,19 +11,24 @@ struct MainView: View {
     
     @State var isScannerPresented = false
     @State var currentAlarmId: String? = nil
+    @State var initialAlarmTime: Date
     
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
+    @State private var showToast: Bool = false
+    @State private var toastType: MenuConstants.ToastType = .clickToKill
+    @State private var killButtonClickCount: Int = 0
+    
     var body: some View {
         if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
             NavigationStack{
                 TabView(selection: $selectedTab){
-                    WakeupView()
+                    WakeupView(initialAlarmTime: $initialAlarmTime)
                         .tabItem {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
-                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId)
+                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId)
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)
@@ -34,9 +40,22 @@ struct MainView: View {
                 .navigationBarTitle(Text(tabTitle))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion)
+                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType)
                     }
                 }
+                .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
+                    var toastMsg = ""
+                    switch toastType {
+                    case .clickToKill:
+                        let clicksLeft = MenuConstants.killButtonClickCountActivate - killButtonClickCount
+                        toastMsg = "Click \(clicksLeft) more times to kill all reminders!"
+                    case .killSuccess:
+                        toastMsg = "All reminders were deactivated!"
+                    }
+                    let color = Color(UIColor.secondarySystemBackground)
+                    return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
+                }
+                
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
                 print("opened from notification")
@@ -94,7 +113,8 @@ struct MainView: View {
 
 #Preview{
     let pvm = PermissionDataViewModel()
+    let avm = AlarmViewModel()
     pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)
     pvm.permissionData = pvm.permissionData.setNotificationPermission(isGranted: true)
-    return MainView().environmentObject(AlarmViewModel()).environmentObject(pvm).environmentObject(AppDelegate())
+    return MainView(initialAlarmTime: avm.getInitialAlarm().time).environmentObject(AlarmViewModel()).environmentObject(pvm).environmentObject(AppDelegate())
 }

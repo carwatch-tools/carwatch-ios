@@ -10,7 +10,7 @@ struct AlarmView: View {
     @Environment(\.colorScheme) var colorScheme
     
     @State var initialAlarmActive: Bool
-    @State var initialAlarmTime: Date
+    @Binding var initialAlarmTime: Date
     
     @Binding var isScannerPresented: Bool
     @Binding var currentAlarmId: String?
@@ -124,7 +124,7 @@ struct AlarmView: View {
                 }
             })
             .frame(maxWidth: .infinity)
-            .toast(isPresenting: $showTimeToNextAlarmToast, duration: StyleConstants.alertDuration) {
+            .toast(isPresenting: $showTimeToNextAlarmToast, duration: StyleConstants.toastDuration) {
                 let (diffHours, diffMinutes) = avm.getTimeUntilNextInitialAlarm()
                 let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
                 let color = Color(UIColor.secondarySystemBackground)
@@ -180,7 +180,8 @@ struct AlarmView: View {
 #Preview {
     @State var isScannerPresented: Bool = false
     @State var currentAlarmId: String? = nil
+    @State var initialAlarmTime = Date()
     let avm = AlarmViewModel()
     
-    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: avm.getInitialAlarm().time, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
+    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
 }

@@ -11,7 +11,7 @@ struct CARWatchApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainView()
+            MainView(initialAlarmTime: alarmViewModel.getInitialAlarm().time)
                 .environmentObject(permissionViewModel)
                 .environmentObject(alarmViewModel)
                 .environmentObject(appDelegate)
