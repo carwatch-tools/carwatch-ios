@@ -164,7 +164,7 @@ class AlarmViewModel : ObservableObject {
         return false
     }
     
-    func updateAlarmTime(time: Date) {
+    func updateAlarmTime(time: Date, scheduleInitialNotification: Bool = true) {
         print("update time")
         if !isAlarmOngoing() {
             let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
@@ -189,7 +189,13 @@ class AlarmViewModel : ObservableObject {
             }
             setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
             updateTimedAlarms()
-            scheduleAlarmNotifications()
+            if scheduleInitialNotification {
+                // schedule all notifications -> standard case when not waking up earlier than expected
+                scheduleAlarmNotifications()
+            } else {
+                // only schedule timed notifications, as wakeup eas reported manually
+                scheduleAlarmNotificationsWithoutInitial()
+            }
         }
     }
     
@@ -232,7 +238,6 @@ class AlarmViewModel : ObservableObject {
     }
     
     func scheduleAlarmNotifications() {
-        print("schedule alarm with backup notifications")
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
         // do not schedule new notifications if alarm toggle is set inactive
@@ -240,6 +245,15 @@ class AlarmViewModel : ObservableObject {
             return
         }
         for alarm in timedAlarms {
+            scheduleAlarmWithBackupNotifications(alarm)
+        }
+    }
+     
+    func scheduleAlarmNotificationsWithoutInitial() {
+        // cancel all previous alarms
+        NotificationManager.instance.cancelAllNotifications()
+        // schedule notifications for all but the intial alarm
+        for (index, alarm) in timedAlarms.enumerated() where index > 0 {
             scheduleAlarmWithBackupNotifications(alarm)
         }
     }

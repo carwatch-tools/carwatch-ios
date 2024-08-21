@@ -8,6 +8,7 @@ struct WakeupView: View {
     @State var toastType: NotificationConstants.ToastType = .feedbackToast
     
     @Binding var initialAlarmTime: Date
+    @Binding var isScannerPresented: Bool
     
     var body: some View {
         VStack {
@@ -29,7 +30,9 @@ struct WakeupView: View {
                     } else {
                         // update initial alarm time to now
                         initialAlarmTime = Date()
-                        avm.updateAlarmTime(time: initialAlarmTime)
+                        avm.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
+                        avm.setInitialAlarm(alarm: avm.getInitialAlarm().setTriggered())
+                        isScannerPresented = true
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -57,6 +60,7 @@ struct WakeupView: View {
 
 #Preview {
     @State var initialAlarmTime = Date()
-    
-    return WakeupView(initialAlarmTime: $initialAlarmTime)
+    @State var isScannerPresented = false
+
+    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented)
 }

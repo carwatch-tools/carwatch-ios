@@ -23,7 +23,7 @@ struct MainView: View {
         if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
             NavigationStack{
                 TabView(selection: $selectedTab){
-                    WakeupView(initialAlarmTime: $initialAlarmTime)
+                    WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented)
                         .tabItem {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
