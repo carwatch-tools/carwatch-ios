@@ -9,9 +9,7 @@ struct AlarmView: View {
     @EnvironmentObject var avm: AlarmViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var initialAlarmActive: Bool
     @Binding var initialAlarmTime: Date
-    
     @Binding var isScannerPresented: Bool
     @Binding var currentAlarmId: String?
     
@@ -32,24 +30,14 @@ struct AlarmView: View {
                 .multilineTextAlignment(.center)
                 .font(.system(size: StyleConstants.mainScreenFontSize))
             HStack{
-                if #available(iOS 17.0, *) {
-                    // signature of onChange function was updated
-                    Toggle("", isOn: $initialAlarmActive)
-                        .labelsHidden()
-                        .padding(StyleConstants.edgePadding)
-                        .font(.system(size: StyleConstants.mainScreenFontSize))
-                        .onChange(of: initialAlarmActive, { _, _ in
-                            setInitialAlarmActivity(isActive: initialAlarmActive)
-                        })
-                } else {
-                    Toggle("", isOn: $initialAlarmActive)
-                        .labelsHidden()
-                        .padding(StyleConstants.edgePadding)
-                        .font(.system(size: StyleConstants.mainScreenFontSize))
-                        .onChange(of: initialAlarmActive, perform: { _ in
-                            setInitialAlarmActivity(isActive: initialAlarmActive)
-                        })
-                }
+                Toggle("", isOn: Binding<Bool>(
+                    get: { avm.timedAlarmActivity[0] },
+                    set: { newValue in
+                        setInitialAlarmActivity(isActive: newValue)
+                    }))
+                .labelsHidden()
+                .padding(StyleConstants.edgePadding)
+                .font(.system(size: StyleConstants.mainScreenFontSize))
                 DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                     .onChange(of: initialAlarmTime, perform: { _ in
                         avm.updateAlarmTime(time: initialAlarmTime)
@@ -134,22 +122,22 @@ struct AlarmView: View {
                 switch activeAlert {
                 case .takeSampleEarlyAlert:
                     return Alert(title: Text("This sample is scheduled for later. Are you sure you want to scan the sample now?"),
-                          primaryButton: .destructive(Text("Yes")) {
+                                 primaryButton: .destructive(Text("Yes")) {
                         showAlert = false
                         isScannerPresented = true
                     },
-                          secondaryButton: .cancel(Text("No")) {
+                                 secondaryButton: .cancel(Text("No")) {
                         currentAlarmId = nil
                         showAlert = false
                     }
                     )
                 case .toggleActivityAlert:
                     return Alert(title: Text("This alarm is required for the study. Are you sure to cancel this alarm?"),
-                          primaryButton: .destructive(Text("Yes")) {
+                                 primaryButton: .destructive(Text("Yes")) {
                         toggleTimedAlarm(index: pendingToggleIndex, isActive: !avm.timedAlarmActivity[pendingToggleIndex])
                         showAlert = false
                     },
-                          secondaryButton: .cancel(Text("No")) {
+                                 secondaryButton: .cancel(Text("No")) {
                         showAlert = false
                     }
                     )
@@ -183,5 +171,5 @@ struct AlarmView: View {
     @State var initialAlarmTime = Date()
     let avm = AlarmViewModel()
     
-    return AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
+    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
 }

@@ -28,7 +28,7 @@ struct MainView: View {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
-                    AlarmView(initialAlarmActive: avm.getInitialAlarm().isActive, initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId)
+                    AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId)
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)
