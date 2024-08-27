@@ -45,13 +45,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func getStudyDayCounterData() {
-        guard
-            let studyDayCounterData = UserDefaults.standard.data(forKey: studyDayCounterKey),
-            let savedStudyDayCounter = try? JSONDecoder().decode(Int.self, from: studyDayCounterData)
-        else {
-            return
-        }
-        studyDayCounter = savedStudyDayCounter
+        studyDayCounter = UserDefaults.standard.integer(forKey: studyDayCounterKey)
     }
     
     func getLastInitialAlarmData() {
@@ -75,6 +69,7 @@ class AlarmViewModel : ObservableObject {
     func setInitialAlarmTriggered() {
         timedAlarms[0] = timedAlarms[0].setTriggered()
         dateOfLastInitialAlarm = Date()
+        studyDayCounter += 1
     }
     
     func getAlarmById(alarmId: String) -> Alarm? {
@@ -162,9 +157,14 @@ class AlarmViewModel : ObservableObject {
         print("set upcoming alarm triggered")
         if let alarm = getNextUpcomingAlarm() {
             print(alarm)
+            // make sure study counter is only incremented once
+            if alarm.isTriggered {
+                return
+            }
             modifyAlarmById(alarm: alarm.setTriggered())
-            if alarm.id == AlarmConstants.initialAlarmId{
+            if alarm.id == AlarmConstants.initialAlarmId {
                 dateOfLastInitialAlarm = Date()
+                studyDayCounter += 1
             }
         }
     }
@@ -185,7 +185,7 @@ class AlarmViewModel : ObservableObject {
             print("set scanned: \(alarm!)")
             print("notifications canceled for \(alarm!.id)")
         }
-        if isDayFinished(){
+        if isDayFinished() && !isStudyFinished(){
             print("all alarms are scanned, day is finished")
             resetAlarmData()
             // TODO: schedule subsequent reminders/alarm for next day
@@ -311,9 +311,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func saveStudyDayCounter() {
-        if let encodedStudyDayCounter = try? JSONEncoder().encode(studyDayCounter) {
-            UserDefaults.standard.set(encodedStudyDayCounter, forKey: studyDayCounterKey)
-        }
+        UserDefaults.standard.set(studyDayCounter, forKey: studyDayCounterKey)
     }
     
     func saveDateOfLastInitialAlarm() {
@@ -357,6 +355,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func isStudyFinished() -> Bool {
+        print("Study finished? Study day counter: \(studyDayCounter)")
         // TODO use configured study duration
         let studyDuration = 1
         return studyDayCounter == studyDuration

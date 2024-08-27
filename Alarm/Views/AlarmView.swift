@@ -48,7 +48,7 @@ struct AlarmView: View {
                     .labelsHidden()
                     .scaledToFit()
                     .scaleEffect(CGSize(width: 1.5, height: 1.5))
-            }.disabled(avm.isAlarmOngoing())
+            }.disabled(avm.isAlarmOngoing() || avm.isStudyFinished())
             
             
             Divider()
