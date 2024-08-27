@@ -34,7 +34,12 @@ struct WakeupView: View {
                         toastType = .wakeupReportedToast
                         showToast = true
                     } else {
-                        // if possible, update initial alarm time to now
+                        // activate all alarms
+                        avm.setInitialAlarmActivity(isActive: true)
+                        for (index, _) in avm.timedAlarms.enumerated() {
+                            avm.setTimedAlarmActivity(index: index, isActive: true)
+                        }
+                        // update initial alarm time to now
                         avm.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
                         avm.setInitialAlarmTriggered()
                         isScannerPresented = true

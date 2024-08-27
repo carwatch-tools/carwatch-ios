@@ -161,10 +161,10 @@ class AlarmViewModel : ObservableObject {
             if alarm.isTriggered {
                 return
             }
-            modifyAlarmById(alarm: alarm.setTriggered())
             if alarm.id == AlarmConstants.initialAlarmId {
-                dateOfLastInitialAlarm = Date()
-                studyDayCounter += 1
+                setInitialAlarmTriggered()
+            } else {
+                modifyAlarmById(alarm: alarm.setTriggered())
             }
         }
     }
@@ -188,7 +188,6 @@ class AlarmViewModel : ObservableObject {
         if isDayFinished() && !isStudyFinished(){
             print("all alarms are scanned, day is finished")
             resetAlarmData()
-            // TODO: schedule subsequent reminders/alarm for next day
         }
     }
     
@@ -274,8 +273,6 @@ class AlarmViewModel : ObservableObject {
     
     func updateTimedAlarms() {
         // TODO: access intervals from study configuration
-        // TODO: make sure the initial alarm is also included
-        // TODO: only allow when no scanning procedure is ongoing?
         var dummyIntervals = [0, 2, 4, 6]
         if dummyIntervals.count != timedAlarms.count {
             // if timed alarms is set for the first time -> create entire array
@@ -302,6 +299,20 @@ class AlarmViewModel : ObservableObject {
             alarmsActive.append(alarm.isActive)
         }
         timedAlarmActivity = alarmsActive
+    }
+    
+    func updateAlarmStatus() {
+        // check if any unscanned alarms are in the past
+        for alarm in timedAlarms {
+            if !alarm.isScanned && !alarm.isTriggered && alarm.time < Date(){
+                // triggering the initial alarm requires to update the day counter and date of last initial alarm
+                if alarm.id == AlarmConstants.initialAlarmId {
+                    setInitialAlarmTriggered()
+                } else {
+                    modifyAlarmById(alarm: alarm.setTriggered())
+                }
+            }
+        }
     }
     
     func saveTimedAlarms() {

@@ -59,10 +59,12 @@ struct MainView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
                 print("opened from notification")
-                checkAlarmStatus()
+                updateAlarmStatus()
+                checkScannerStatus()
             }
             .onForeground {
-                checkAlarmStatus()
+                updateAlarmStatus()
+                checkScannerStatus()
             }
             .sheet(isPresented: $isScannerPresented) {
                 ScannerView(isPresented: $isScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
@@ -92,7 +94,7 @@ struct MainView: View {
         }
     }
     
-    func checkAlarmStatus() {
+    func checkScannerStatus() {
         print("checking alarm status")
         isScannerPresented = false
         if appDelegate.openedFromNotification {
@@ -102,16 +104,24 @@ struct MainView: View {
             currentAlarmId = nil
             isScannerPresented = true
         }
+        /*
+        TODO: should the scanner be displayed if app was closed on barcode screen?
         if avm.isScanRequired() {
             // no successful scan yet
             currentAlarmId = nil
             isScannerPresented = true
         }
+        */
         print("scanner presented: \(isScannerPresented)")
+    }
+    
+    func updateAlarmStatus() {
+        print("updating alarm status")
+        avm.updateAlarmStatus()
     }
 }
 
-#Preview{
+#Preview {
     let pvm = PermissionDataViewModel()
     let avm = AlarmViewModel()
     pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)

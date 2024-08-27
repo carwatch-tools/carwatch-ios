@@ -87,10 +87,15 @@ struct AlarmView: View {
                             } else {
                                 HStack {
                                     Button(action: {
-                                        activeAlert = .takeSampleEarlyAlert
-                                        showAlert = true
                                         currentAlarmId = alarm.id
-                                        // TODO: indicate which sample is currently scanned
+                                        if !alarm.isTriggered {
+                                            // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
+                                            activeAlert = .takeSampleEarlyAlert
+                                            showAlert = true
+                                        } else {
+                                            // alarm is due alreadyon
+                                            isScannerPresented = true
+                                        }
                                     })
                                     {
                                         Label("Take sample", systemImage: "barcode.viewfinder")
@@ -162,7 +167,6 @@ struct AlarmView: View {
     
     func toggleTimedAlarm(index: Int, isActive: Bool){
         avm.setTimedAlarmActivity(index: index, isActive: isActive)
-        // TODO: what to do when initial alarm is deactivated here?
     }
 }
 
