@@ -23,15 +23,17 @@ struct WakeupView: View {
                 .multilineTextAlignment(.center)
             HStack{
                 Button("YES") {
-                    // TODO: check if day is already finished or study is already finished
-                    if avm.isAlarmOngoing() {
+                    // check if initial alarm was already triggered at current day -> wakeup can't be reported twice
+                    if Calendar.current.isDate(avm.dateOfLastInitialAlarm, inSameDayAs: Date()) {
                         toastType = .wakeupReportedToast
                         showToast = true
+                    } else if avm.isStudyFinished(){
+                        toastType = .studyFinishedToast
+                        showToast = true
                     } else {
-                        // update initial alarm time to now
-                        initialAlarmTime = Date()
+                        // if possible, update initial alarm time to now
                         avm.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
-                        avm.setInitialAlarm(alarm: avm.getInitialAlarm().setTriggered())
+                        avm.setInitialAlarmTriggered()
                         isScannerPresented = true
                     }
                 }

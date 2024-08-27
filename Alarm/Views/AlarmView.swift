@@ -13,7 +13,7 @@ struct AlarmView: View {
     @Binding var isScannerPresented: Bool
     @Binding var currentAlarmId: String?
     
-    @State private var showTimeToNextAlarmToast: Bool = false
+    @State private var showToast: Bool = false
     @State private var showAlert: Bool = false
     @State private var activeAlert: ActiveAlert = .toggleActivityAlert
     @State private var pendingToggleValue: Bool = false
@@ -42,7 +42,7 @@ struct AlarmView: View {
                     .onChange(of: initialAlarmTime, perform: { _ in
                         avm.updateAlarmTime(time: initialAlarmTime)
                         if(avm.getInitialAlarm().isActive) {
-                            showTimeToNextAlarmToast = true
+                            showToast = true
                         }
                     })
                     .labelsHidden()
@@ -112,11 +112,12 @@ struct AlarmView: View {
                 }
             })
             .frame(maxWidth: .infinity)
-            .toast(isPresenting: $showTimeToNextAlarmToast, duration: StyleConstants.toastDuration) {
+            .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
+                let color = Color(UIColor.secondarySystemBackground)
                 let (diffHours, diffMinutes) = avm.getTimeUntilNextInitialAlarm()
                 let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
-                let color = Color(UIColor.secondarySystemBackground)
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
+                
             }
             .alert(isPresented: $showAlert) {
                 switch activeAlert {
@@ -155,7 +156,7 @@ struct AlarmView: View {
             for (index, _) in avm.timedAlarms.enumerated() {
                 avm.setTimedAlarmActivity(index: index, isActive: isActive)
             }
-            showTimeToNextAlarmToast = true
+            showToast = true
         }
     }
     

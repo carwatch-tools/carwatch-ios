@@ -16,6 +16,11 @@ struct NotificationConstants {
     }
 }
 
+struct AlarmConstants {
+    static let initialAlarmId = "initial"
+    static let timedAlarmId = "timed"
+}
+
 struct ScannerConstants {
     enum CodeType {
         case ean8, qr

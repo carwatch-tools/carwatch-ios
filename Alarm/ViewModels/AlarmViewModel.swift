@@ -2,18 +2,35 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var timedAlarms: [Alarm] = [Alarm(id: "initial", isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
+    @Published var timedAlarms: [Alarm] = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
         didSet {
             updateTimedAlarmActivity()
             saveTimedAlarms()
         }
     }
+    @Published var studyDayCounter: Int = 0 {
+        didSet {
+            saveStudyDayCounter()
+        }
+    }
+    @Published var dateOfLastInitialAlarm: Date = Date.distantPast {
+        didSet {
+            print("Last init alarm updated: \(dateOfLastInitialAlarm)")
+            saveDateOfLastInitialAlarm()
+        }
+    }
     @Published var timedAlarmActivity: [Bool] = [false]
+    // no didSet required because this info is retrieved from timedAlarms and automatically updated when timedAlarms is set
     
     let timedAlarmDataKey = "alarmsList"
+    let studyDayCounterKey = "studyDayCounter"
+    let dateOfLastInitialAlarmKey = "dateOfLastInitialAlarm"
     
     init() {
         getAlarmData()
+        getStudyDayCounterData()
+        getLastInitialAlarmData()
+        print("loaded init alarm last day: \(dateOfLastInitialAlarm)")
     }
     
     func getAlarmData() {
@@ -27,12 +44,37 @@ class AlarmViewModel : ObservableObject {
         updateAlarmTime(time: getInitialAlarm().time)
     }
     
+    func getStudyDayCounterData() {
+        guard
+            let studyDayCounterData = UserDefaults.standard.data(forKey: studyDayCounterKey),
+            let savedStudyDayCounter = try? JSONDecoder().decode(Int.self, from: studyDayCounterData)
+        else {
+            return
+        }
+        studyDayCounter = savedStudyDayCounter
+    }
+    
+    func getLastInitialAlarmData() {
+        guard
+            let dateOfLastInitialAlarmData = UserDefaults.standard.data(forKey: dateOfLastInitialAlarmKey),
+            let savedDateOfLastInitialAlarm = try? JSONDecoder().decode(Date.self, from: dateOfLastInitialAlarmData)
+        else {
+            return
+        }
+        dateOfLastInitialAlarm = savedDateOfLastInitialAlarm
+    }
+    
     func getInitialAlarm() -> Alarm {
         return timedAlarms[0]
     }
     
     func setInitialAlarm(alarm: Alarm) {
         timedAlarms[0] = alarm
+    }
+    
+    func setInitialAlarmTriggered() {
+        timedAlarms[0] = timedAlarms[0].setTriggered()
+        dateOfLastInitialAlarm = Date()
     }
     
     func getAlarmById(alarmId: String) -> Alarm? {
@@ -121,6 +163,9 @@ class AlarmViewModel : ObservableObject {
         if let alarm = getNextUpcomingAlarm() {
             print(alarm)
             modifyAlarmById(alarm: alarm.setTriggered())
+            if alarm.id == AlarmConstants.initialAlarmId{
+                dateOfLastInitialAlarm = Date()
+            }
         }
     }
     
@@ -128,7 +173,7 @@ class AlarmViewModel : ObservableObject {
         print("trying to set Alarm scanned")
         var alarm: Alarm?
         if alarmId != nil {
-           alarm = getAlarmById(alarmId: alarmId!)
+            alarm = getAlarmById(alarmId: alarmId!)
         } else {
             alarm = getCurrentlyTriggeredAlarm()
         }
@@ -165,38 +210,66 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmTime(time: Date, scheduleInitialNotification: Bool = true) {
+        /// returns true when alarms were updated successfully
+        /// returns false when no update was possible because a) there was an initial alarm at the selected day already or
+        /// b) the current sampling procedure is not yet finished
         print("update time")
-        if !isAlarmOngoing() {
-            let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
-            print(difference.day!)
-            print(difference.hour!)
-            print(difference.minute!)
-            var newTime = time
-            // make sure no date in the past is used, but rather the next time the selected time occurs
-            if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
-                // set day to today
-                if let time = Calendar.current.date(byAdding: .day, value: -diffDays, to: newTime) {
-                    newTime = time
-                    print("new time: \(newTime)")
-                }
-                if diffHours < 0 || diffMins < 0 {
-                    // selected time is in the past -> add one more day
-                    if let time = Calendar.current.date(byAdding: .day, value: 1, to: newTime) {
-                        newTime = time
-                        print("new time: \(newTime)")
-                    }
-                }
+        if isAlarmOngoing() {
+            return
+        }
+        
+        var newTime = time
+        /// todays alarm was already triggered -> set for tomorrow
+        if Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: Date()) {
+            print("init alarm - setting time to next time tomorrow")
+            newTime = getNextDateTimeOccurrsAfterToday(time: time)
+        } else {
+            print("init alarm - setting time for today")
+            newTime = getNextDateTimeOccurrs(time: time)
+        }
+        
+        setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
+        updateTimedAlarms()
+        if scheduleInitialNotification {
+            // schedule all notifications -> standard case when not waking up earlier than expected
+            scheduleAlarmNotifications()
+        } else {
+            // only schedule timed notifications, as wakeup eas reported manually
+            scheduleAlarmNotificationsWithoutInitial()
+        }
+    }
+    
+    private func getNextDateTimeOccurrs(time: Date) -> Date {
+        /// select the Date object to the next date in the future at which the given time occurrs
+        let difference = Calendar.current.dateComponents([.day, .hour, .minute], from: Date(), to: time)
+        var updatedTime = time
+        // make sure no date in the past is used, but rather the next time the selected time occurs
+        if let diffDays = difference.day, let diffHours = difference.hour, let diffMins = difference.minute {
+            // set day to today
+            if let time = Calendar.current.date(byAdding: .day, value: -diffDays, to: updatedTime) {
+                updatedTime = time
             }
-            setInitialAlarm(alarm: getInitialAlarm().updateTime(newTime: newTime))
-            updateTimedAlarms()
-            if scheduleInitialNotification {
-                // schedule all notifications -> standard case when not waking up earlier than expected
-                scheduleAlarmNotifications()
-            } else {
-                // only schedule timed notifications, as wakeup eas reported manually
-                scheduleAlarmNotificationsWithoutInitial()
+            if diffHours < 0 || diffMins < 0 {
+                // selected time is in the past -> add one more day
+                if let time = Calendar.current.date(byAdding: .day, value: 1, to: updatedTime) {
+                    updatedTime = time
+                }
             }
         }
+        return updatedTime
+    }
+    
+    private func getNextDateTimeOccurrsAfterToday(time: Date) -> Date {
+        /// select the Date object to the next date after the current day at which the given time occurrs
+        let updatedTime = getNextDateTimeOccurrs(time: time)
+        // check if date of new time is today
+        if Calendar.current.isDateInToday(updatedTime) {
+            // Add one day to the date
+            if let updatedTime = Calendar.current.date(byAdding: .day, value: 1, to: updatedTime) {
+                return updatedTime
+            }
+        }
+        return updatedTime
     }
     
     func updateTimedAlarms() {
@@ -209,7 +282,7 @@ class AlarmViewModel : ObservableObject {
             var updatedTimedAlarms = [Alarm]()
             for (index, interval) in dummyIntervals.enumerated() {
                 print("first time")
-                let id = index == 0 ? "initial" : "timed_\(index)"
+                let id = index == 0 ? AlarmConstants.initialAlarmId : "\(AlarmConstants.timedAlarmId)_\(index)"
                 updatedTimedAlarms.append(Alarm(id: id, isActive: getInitialAlarm().isActive, salivaId: index, time: getInitialAlarm().time.addingTimeInterval(TimeInterval(interval * 60))))
             }
             timedAlarms = updatedTimedAlarms
@@ -237,6 +310,18 @@ class AlarmViewModel : ObservableObject {
         }
     }
     
+    func saveStudyDayCounter() {
+        if let encodedStudyDayCounter = try? JSONEncoder().encode(studyDayCounter) {
+            UserDefaults.standard.set(encodedStudyDayCounter, forKey: studyDayCounterKey)
+        }
+    }
+    
+    func saveDateOfLastInitialAlarm() {
+        if let encodedDateOfLastInitialAlarm = try? JSONEncoder().encode(dateOfLastInitialAlarm) {
+            UserDefaults.standard.set(encodedDateOfLastInitialAlarm, forKey: dateOfLastInitialAlarmKey)
+        }
+    }
+    
     func scheduleAlarmNotifications() {
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
@@ -248,7 +333,7 @@ class AlarmViewModel : ObservableObject {
             scheduleAlarmWithBackupNotifications(alarm)
         }
     }
-     
+    
     func scheduleAlarmNotificationsWithoutInitial() {
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
@@ -269,5 +354,11 @@ class AlarmViewModel : ObservableObject {
             // set notification for next day at the given alarm time
             NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", day: day, hour: hour, minute: minute)
         }
+    }
+    
+    func isStudyFinished() -> Bool {
+        // TODO use configured study duration
+        let studyDuration = 1
+        return studyDayCounter == studyDuration
     }
 }
