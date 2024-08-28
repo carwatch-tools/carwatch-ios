@@ -36,6 +36,7 @@ struct StyleConstants {
     static let mainScreenIconSize: CGFloat = 70
     static let explanationFontSize: CGFloat = 20
     static let edgePadding: CGFloat = 30
+    static let onboardingPadding: CGFloat = 10
     
     static let toastDuration: Double = 8.0
     

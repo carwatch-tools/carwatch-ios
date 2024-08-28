@@ -1,0 +1,100 @@
+//
+//  OnboardingView.swift
+//  CARWatch
+//
+//  Created by Admin on 27.08.24.
+//
+
+import SwiftUI
+
+struct OnboardingBeforeQrView: View {
+    
+    @EnvironmentObject var svm: SessionViewModel
+    @EnvironmentObject var pvm: PermissionDataViewModel
+    
+    @Binding var isScannerPresented: Bool
+    
+    var body: some View {
+        TabView {
+            VStack {
+                Image("CarwatchLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                Text("Welcome to CARWatch!")
+                    .font(.title.weight(.bold))
+            }
+            
+            VStack {
+                Text("Unlock Features")
+                    .font(.title.weight(.bold))
+                    .padding(StyleConstants.edgePadding)
+                Text("To enable all of the features, CARWatch requires the following permissions:")
+                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .multilineTextAlignment(.leading)
+                    .padding()
+                HStack {
+                    Image(systemName: "camera.viewfinder")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundStyle(.blue)
+                        .opacity(StyleConstants.mainScreenIconOpacity)
+                        .padding()
+                        .frame(width: 80, alignment: .center)
+                    Text("Camera access to enable scanning sample tube barcodes")
+                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .multilineTextAlignment(.leading)
+                    
+                }.padding(StyleConstants.onboardingPadding)
+                HStack {
+                    Image(systemName: "light.beacon.max.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .font(.system(size: StyleConstants.mainScreenIconSize))
+                        .foregroundStyle(.blue)
+                        .opacity(StyleConstants.mainScreenIconOpacity)
+                        .padding()
+                        .frame(width: 80, alignment: .center)
+                    Text("Sending notifications to inform you about upcoming samples")
+                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .multilineTextAlignment(.leading)
+                }.padding(StyleConstants.onboardingPadding)
+                Button("Grant Permissions") {
+                    pvm.checkCameraPermission()
+                    pvm.checkNotificationPermission()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            
+            VStack {
+                Text("Configure the App")
+                    .font(.title.weight(.bold))
+                    .padding(StyleConstants.edgePadding)
+                Text("Please scan the QR Code that you received to configure the CARWatch App for your study.")
+                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .multilineTextAlignment(.leading)
+                    .padding()
+                Image(systemName: "qrcode.viewfinder")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .font(.system(size: StyleConstants.mainScreenIconSize))
+                    .foregroundStyle(.blue)
+                    .opacity(StyleConstants.mainScreenIconOpacity)
+                    .padding()
+                    .frame(width: 100, alignment: .center)
+                Button("Scan now") {
+                    isScannerPresented = true
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .tabViewStyle(.page)
+        .indexViewStyle(.page(backgroundDisplayMode: .always))
+    }
+}
+
+#Preview {
+    @State var isScannerPresented: Bool = false
+    
+    return OnboardingBeforeQrView(isScannerPresented: $isScannerPresented)
+}

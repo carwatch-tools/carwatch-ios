@@ -69,6 +69,12 @@
         }
       }
     },
+    "Camera access to enable scanning sample tube barcodes" : {
+
+    },
+    "Configure the App" : {
+
+    },
     "Delete Logs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -133,6 +139,12 @@
           }
         }
       }
+    },
+    "Grant Permissions" : {
+
+    },
+    "Hello, World!" : {
+
     },
     "Info" : {
       "localizations" : {
@@ -204,6 +216,9 @@
     "Please point your camera at a barcode!" : {
 
     },
+    "Please scan the QR Code that you received to configure the CARWatch App for your study." : {
+
+    },
     "Please set your desired alarm time for tomorrow." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -264,10 +279,16 @@
         }
       }
     },
+    "Scan now" : {
+
+    },
     "Scan succesful! Barcode data: %@" : {
 
     },
     "Schedule" : {
+
+    },
+    "Sending notifications to inform you about upcoming samples" : {
 
     },
     "Share Logs" : {
@@ -312,6 +333,9 @@
         }
       }
     },
+    "To enable all of the features, CARWatch requires the following permissions:" : {
+
+    },
     "Unfortunately, CARWatch won't work when camera access is not granted. Please activate camera usage in the app settings." : {
       "localizations" : {
         "de" : {
@@ -343,6 +367,9 @@
         }
       }
     },
+    "Unlock Features" : {
+
+    },
     "User Actions" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -364,6 +391,9 @@
           }
         }
       }
+    },
+    "Welcome to CARWatch!" : {
+
     },
     "Yes" : {
 

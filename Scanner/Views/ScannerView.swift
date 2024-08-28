@@ -3,7 +3,8 @@ import SwiftUI
 struct ScannerView: View {
     @EnvironmentObject var avm: AlarmViewModel
     @EnvironmentObject var appDelegate: AppDelegate
-    
+    @EnvironmentObject var svm: SessionViewModel
+
     @Binding var isPresented: Bool
     @Binding var alarmId: String?
     @State var isSuccessful: Bool = false
@@ -40,10 +41,15 @@ struct ScannerView: View {
             isSuccessful = true
             print("scan successful. result: \(result)")
             scanResult = result
-            avm.setCurrentAlarmScanned(alarmId: alarmId)
-            // reset app delegate status
-            appDelegate.openedFromNotification = false
-            
+            switch codeType {
+            case .ean8:
+                avm.setCurrentAlarmScanned(alarmId: alarmId)
+                // reset app delegate status
+                appDelegate.openedFromNotification = false
+            case .qr:
+                svm.currentState = .onboardingAfterQR
+                // TODO: do qr parsing stuff
+            }
         case .failure(let error):
             print("Scanning failed: \(error.localizedDescription)")
         }
@@ -54,7 +60,10 @@ struct ScannerView: View {
     @State var isPresented = true
     @State var currentAlarmId: String? = nil
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
-    
-    return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8).environmentObject(alarmViewModel)
+    @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
+
+    return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
+        .environmentObject(alarmViewModel)
+        .environmentObject(sessionViewModel)
 }
 

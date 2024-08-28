@@ -1,9 +1,9 @@
 import Foundation
 
 struct PermissionData : Codable {
-    let notificationPermissionGranted: Bool
+    var notificationPermissionGranted: Bool
     let notificationPermissionDialogHandled: Bool
-    let cameraPermissionGranted: Bool
+    var cameraPermissionGranted: Bool
     let cameraPermissionDialogHandled: Bool
     
     init(notificationPermissionGranted: Bool, notificationPermissionDialogHandled: Bool,

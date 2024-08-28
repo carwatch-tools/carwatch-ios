@@ -44,4 +44,33 @@ class PermissionDataViewModel : ObservableObject {
             UserDefaults.standard.set(encodedUserData, forKey: permissionDataKey)
         }
     }
+    
+    func checkNotificationPermission() {
+        // prompt is only displayed on first launch, function is executed every time
+        NotificationManager.instance.requestAuthorization { isDone in
+            self.setNotificationPermissionDialogHandled()
+            // update status every time
+            NotificationManager.instance.reloadAuthorizationStatus { isDone in
+                switch NotificationManager.instance.authorizationStatus {
+                case .authorized:
+                    self.setNotificationPermission(isGranted: true)
+                    break
+                default:
+                    self.setNotificationPermission(isGranted: false)
+                    print(NotificationManager.instance.authorizationStatus.rawValue)
+                    break
+                }
+            }
+        }
+    }
+    
+    func checkCameraPermission() {
+        // reload status every time
+        CameraManager.instance.reloadCameraPermission()
+        self.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
+        // permission prompt only shown at first launch
+        CameraManager.instance.requestPermission { isDone in
+            self.setCameraPermissionDialogHandled()
+        }
+    }
 }

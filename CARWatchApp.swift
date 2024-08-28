@@ -6,6 +6,7 @@ struct CARWatchApp: App {
     
     @StateObject var permissionViewModel: PermissionDataViewModel = PermissionDataViewModel()
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
+    @StateObject var sessionViewModel : SessionViewModel = SessionViewModel()
     
     @Environment(\.scenePhase) var scenePhase
     
@@ -14,50 +15,27 @@ struct CARWatchApp: App {
             MainView(initialAlarmTime: alarmViewModel.getInitialAlarm().time)
                 .environmentObject(permissionViewModel)
                 .environmentObject(alarmViewModel)
+                .environmentObject(sessionViewModel)
                 .environmentObject(appDelegate)
                 .onAppear(){
-                    checkNotificationPermission()
-                    checkCameraPermission()
+                   checkPermissionsDuringOngoingStudy()
                 }
                 .onBackground {
                     // print("background")
                     // TODO: let's see if there's something useful that can be done here, otherwise remove
                 }
                 .onForeground {
-                    checkNotificationPermission()
-                    checkCameraPermission()
+                    checkPermissionsDuringOngoingStudy()
                 }
         }
     }
     
-    func checkNotificationPermission() {
-        // prompt is only displayed on first launch, function is executed every time
-        NotificationManager.instance.requestAuthorization { isDone in
-            permissionViewModel.setNotificationPermissionDialogHandled()
-            // update status every time
-            NotificationManager.instance.reloadAuthorizationStatus { isDone in
-                switch NotificationManager.instance.authorizationStatus {
-                case .authorized:
-                    permissionViewModel.setNotificationPermission(isGranted: true)
-                    break
-                default:
-                    permissionViewModel.setNotificationPermission(isGranted: false)
-                    print(NotificationManager.instance.authorizationStatus.rawValue)
-                    break
-                }
-            }
+    func checkPermissionsDuringOngoingStudy() {
+        // after completing onboarding, make sure all permissions are granted
+        if sessionViewModel.currentState == .studyOngoing {
+            permissionViewModel.checkNotificationPermission()
+            permissionViewModel.checkCameraPermission()
         }
-    }
-    
-    func checkCameraPermission() {
-        // reload status every time
-        CameraManager.instance.reloadCameraPermission()
-        permissionViewModel.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
-        // permission prompt only shown at first launch
-        CameraManager.instance.requestPermission { isDone in
-            permissionViewModel.setCameraPermissionDialogHandled()
-        }
-       
     }
 }
 
@@ -76,4 +54,3 @@ extension View {
         )
     }
 }
-
