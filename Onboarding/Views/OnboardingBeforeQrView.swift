@@ -32,39 +32,41 @@ struct OnboardingBeforeQrView: View {
                 Text("To enable all of the features, CARWatch requires the following permissions:")
                     .font(.system(size: StyleConstants.explanationFontSize))
                     .multilineTextAlignment(.leading)
-                    .padding()
-                HStack {
-                    Image(systemName: "camera.viewfinder")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .foregroundStyle(.blue)
-                        .opacity(StyleConstants.mainScreenIconOpacity)
-                        .padding()
-                        .frame(width: 80, alignment: .center)
-                    Text("Camera access to enable scanning sample tube barcodes")
-                        .font(.system(size: StyleConstants.explanationFontSize))
-                        .multilineTextAlignment(.leading)
-                    
-                }.padding(StyleConstants.onboardingPadding)
-                HStack {
-                    Image(systemName: "light.beacon.max.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .font(.system(size: StyleConstants.mainScreenIconSize))
-                        .foregroundStyle(.blue)
-                        .opacity(StyleConstants.mainScreenIconOpacity)
-                        .padding()
-                        .frame(width: 80, alignment: .center)
-                    Text("Sending notifications to inform you about upcoming samples")
-                        .font(.system(size: StyleConstants.explanationFontSize))
-                        .multilineTextAlignment(.leading)
-                }.padding(StyleConstants.onboardingPadding)
+                VStack(alignment:.leading) {
+                    HStack {
+                        Image(systemName: "camera.viewfinder")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .foregroundStyle(.blue)
+                            .opacity(StyleConstants.mainScreenIconOpacity)
+                            .padding()
+                            .frame(width: 80, alignment: .center)
+                        Text("Camera access to enable scanning sample tube barcodes")
+                            .font(.system(size: StyleConstants.explanationFontSize))
+                        
+                    }
+                    HStack {
+                        Image(systemName: "light.beacon.max.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .font(.system(size: StyleConstants.mainScreenIconSize))
+                            .foregroundStyle(.blue)
+                            .opacity(StyleConstants.mainScreenIconOpacity)
+                            .padding()
+                            .frame(width: 80, alignment: .center)
+                        Text("Sending notifications to inform you about upcoming samples")
+                            .font(.system(size: StyleConstants.explanationFontSize))
+                    }
+                }
                 Button("Grant Permissions") {
                     pvm.checkCameraPermission()
                     pvm.checkNotificationPermission()
                 }
+                .padding()
+                .frame(alignment: .center)
                 .buttonStyle(.borderedProminent)
             }
+            .padding(StyleConstants.edgePadding)
             
             VStack {
                 Text("Configure the App")

@@ -7,5 +7,5 @@ class SessionViewModel : ObservableObject {
     }
     
     @Published var currentState: CurrentState = .onboardingBeforeQR
-    @Published var isOnboardingRequired = true
+    @Published var isParticipantIdRequired = true
 }

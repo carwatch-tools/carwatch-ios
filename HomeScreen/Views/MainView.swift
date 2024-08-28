@@ -38,7 +38,11 @@ struct MainView: View {
                     }
             }
         case .onboardingAfterQR:
-            OnboardingAfterQrView()
+            if svm.isParticipantIdRequired {
+                ParticipantIdView()
+            } else {
+                OnboardingAfterQrView()
+            }
         case .studyOngoing:
             if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
                 NavigationStack{
@@ -146,7 +150,9 @@ struct MainView: View {
 #Preview {
     let pvm = PermissionDataViewModel()
     let avm = AlarmViewModel()
+    let svm = SessionViewModel()
+    
     pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)
     pvm.permissionData = pvm.permissionData.setNotificationPermission(isGranted: true)
-    return MainView(initialAlarmTime: avm.getInitialAlarm().time).environmentObject(AlarmViewModel()).environmentObject(pvm).environmentObject(AppDelegate())
+    return MainView(initialAlarmTime: avm.getInitialAlarm().time).environmentObject(avm).environmentObject(pvm).environmentObject(svm).environmentObject(AppDelegate())
 }
