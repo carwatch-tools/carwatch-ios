@@ -71,6 +71,7 @@ class PermissionDataViewModel : ObservableObject {
         // permission prompt only shown at first launch
         CameraManager.instance.requestPermission { isDone in
             self.setCameraPermissionDialogHandled()
+            CameraManager.instance.reloadCameraPermission()
         }
     }
 }

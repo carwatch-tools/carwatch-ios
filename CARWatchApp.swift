@@ -32,7 +32,7 @@ struct CARWatchApp: App {
     
     func checkPermissionsDuringOngoingStudy() {
         // after completing onboarding, make sure all permissions are granted
-        if sessionViewModel.currentState == .studyOngoing {
+        if sessionViewModel.getCurrentState() == .studyOngoing {
             permissionViewModel.checkNotificationPermission()
             permissionViewModel.checkCameraPermission()
         }

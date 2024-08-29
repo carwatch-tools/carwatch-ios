@@ -2,6 +2,8 @@ import SwiftUI
 import AlertToast
 
 struct MainViewToolbarMenu: View {
+    @EnvironmentObject var svm: SessionViewModel
+    
     @Binding var showAppInfoDialog : Bool
     @Binding var appVersion: String?
     @Binding var showToast: Bool
@@ -19,7 +21,7 @@ struct MainViewToolbarMenu: View {
                 }
                 
                 Button {
-                    print("clicked show tutorial")
+                    svm.startTutorial()
                 } label: {
                     Label("Show Tutorial", systemImage: "questionmark.circle")
                 }
@@ -39,7 +41,9 @@ struct MainViewToolbarMenu: View {
                         killButtonClickCount = 0
                     }
                 }
-                Button("Reregister"){ }
+                Button("Reregister"){ 
+                    svm.reregister()
+                }
             }
             
             Button("Info") {
@@ -72,5 +76,5 @@ struct MainViewToolbarMenu: View {
     @State var killButtonClickCount: Int = 0
     @State var toastType: MenuConstants.ToastType = .clickToKill
     
-    return MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType)
+    return MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType).environmentObject(SessionViewModel())
 }

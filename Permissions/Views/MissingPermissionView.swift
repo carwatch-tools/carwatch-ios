@@ -33,6 +33,7 @@ struct MissingPermissionView: View {
         .padding(StyleConstants.edgePadding)
     }
 }
+    
 
 #Preview {
     MissingPermissionView(type: PermissionConstants.PermissionType.camera)

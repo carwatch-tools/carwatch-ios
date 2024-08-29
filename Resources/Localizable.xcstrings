@@ -75,6 +75,9 @@
     "Configure the App" : {
 
     },
+    "Continue" : {
+
+    },
     "Delete Logs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -107,6 +110,9 @@
           }
         }
       }
+    },
+    "Get Started" : {
+
     },
     "Go to App Settings" : {
       "localizations" : {
@@ -143,9 +149,6 @@
     "Grant Permissions" : {
 
     },
-    "Hello, World!" : {
-
-    },
     "Info" : {
       "localizations" : {
         "de" : {
@@ -155,6 +158,9 @@
           }
         }
       }
+    },
+    "Input invalid! Please enter a valid participant ID!" : {
+
     },
     "Kill all Notifications" : {
       "localizations" : {
@@ -212,6 +218,12 @@
           }
         }
       }
+    },
+    "Participant ID" : {
+
+    },
+    "Please enter the participant ID you received from us:" : {
+
     },
     "Please point your camera at a barcode!" : {
 
@@ -312,6 +324,9 @@
           }
         }
       }
+    },
+    "Skip" : {
+
     },
     "Take sample" : {
 

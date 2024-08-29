@@ -23,12 +23,15 @@ struct MainView: View {
     
     var body: some View {
         
-        switch svm.currentState {
-        case .onboardingBeforeQR:
+        switch svm.getCurrentState() {
+        case .registration:
             if pvm.permissionData.cameraPermissionDialogHandled && !pvm.permissionData.cameraPermissionGranted {
                 MissingPermissionView(type: PermissionConstants.PermissionType.camera)
+                    .onAppear(){
+                        pvm.checkCameraPermission()
+                     }
             } else {
-                OnboardingBeforeQrView(isScannerPresented: $isQrCodeScannerPresented)
+                RegistrationView(isScannerPresented: $isQrCodeScannerPresented)
                     .environmentObject(svm)
                     .environmentObject(pvm)
                     .interactiveDismissDisabled()
@@ -37,11 +40,11 @@ struct MainView: View {
                             .interactiveDismissDisabled()
                     }
             }
-        case .onboardingAfterQR:
+        case .tutorial:
             if svm.isParticipantIdRequired {
                 ParticipantIdView()
             } else {
-                OnboardingAfterQrView()
+                TutorialView()
             }
         case .studyOngoing:
             if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
@@ -96,17 +99,9 @@ struct MainView: View {
                 }
                 
             } else if pvm.permissionData.notificationPermissionGranted {
-                if pvm.permissionData.cameraPermissionDialogHandled {
-                    MissingPermissionView(type: PermissionConstants.PermissionType.camera)
-                } else {
-                    EmptyView()
-                }
+                MissingPermissionView(type: PermissionConstants.PermissionType.camera)
             } else {
-                if pvm.permissionData.notificationPermissionDialogHandled {
-                    MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
-                } else {
-                    EmptyView()
-                }
+                MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
             }
         }
     }

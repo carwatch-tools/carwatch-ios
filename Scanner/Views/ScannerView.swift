@@ -47,7 +47,7 @@ struct ScannerView: View {
                 // reset app delegate status
                 appDelegate.openedFromNotification = false
             case .qr:
-                svm.currentState = .onboardingAfterQR
+                svm.startTutorial()
                 // TODO: do qr parsing stuff
             }
         case .failure(let error):
