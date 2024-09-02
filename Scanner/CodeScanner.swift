@@ -4,7 +4,8 @@ struct CodeScanner : UIViewControllerRepresentable {
     
     typealias UIViewControllerType = CodeScannerViewController
     public var completion: (Result<String, ScanError>) -> Void
-    
+    public var validation: (String) -> Bool
+
     let codeType: ScannerConstants.CodeType
     let overlayWidthHeightRatio: CGFloat
     

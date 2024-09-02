@@ -9,9 +9,8 @@ import SwiftUI
 
 struct ParticipantIdView: View {
     
-    @EnvironmentObject var svm: SessionViewModel
-    
-    @State var participantId: String = ""
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
+
     @State var showAlert: Bool = false
     
     var body: some View {
@@ -29,16 +28,14 @@ struct ParticipantIdView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             TextField(
                 "Participant ID",
-                text: $participantId
+                text: $studyDataVM.studyData.participantId
             )
             .frame(maxWidth: .infinity, alignment:  .leading)
             .textFieldStyle(.roundedBorder)
             .padding(.bottom)
             Button("Continue") {
-                if participantId.isEmpty {
+                if studyDataVM.isParticipantIdRequired() {
                     showAlert = true
-                } else {
-                    svm.isParticipantIdRequired = false
                 }
             }
             .buttonStyle(.borderedProminent)
@@ -58,5 +55,5 @@ struct ParticipantIdView: View {
 }
 
 #Preview {
-    ParticipantIdView()
+    ParticipantIdView().environmentObject(StudyDataViewModel())
 }

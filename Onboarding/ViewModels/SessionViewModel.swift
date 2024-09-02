@@ -7,7 +7,6 @@ class SessionViewModel : ObservableObject {
     }
     
     @Published private var currentState: CurrentState = .registration
-    @Published var isParticipantIdRequired = true
     @Published var isReregistration = false
     
     func getCurrentState() -> CurrentState {

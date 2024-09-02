@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct ScannerView: View {
-    @EnvironmentObject var avm: AlarmViewModel
+    @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var appDelegate: AppDelegate
-    @EnvironmentObject var svm: SessionViewModel
+    @EnvironmentObject var sessionVM: SessionViewModel
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
 
     @Binding var isPresented: Bool
     @Binding var alarmId: String?
@@ -18,7 +19,7 @@ struct ScannerView: View {
         GeometryReader { geometry in
             let overlayWidthHeightRatio = codeType == ScannerConstants.CodeType.ean8 ? ScannerConstants.barcodeWidthHeightRatio : ScannerConstants.defaultWidthHeightRatio
             ZStack{
-                CodeScanner(completion: handleScanResult, codeType: codeType, overlayWidthHeightRatio: overlayWidthHeightRatio)
+                CodeScanner(completion: handleScanResult, validation: validateScanResult, codeType: codeType, overlayWidthHeightRatio: overlayWidthHeightRatio)
                 ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
             }
         }
@@ -35,20 +36,31 @@ struct ScannerView: View {
         }
     }
     
+    func validateScanResult(result: String) -> Bool {
+        switch codeType {
+        case .ean8:
+            // TODO
+            return true
+        case .qr:
+            studyDataVM.parseQrCodeData(result)
+            // TODO: add explanation alert
+            return studyDataVM.studyData.isValid
+        }
+    }
+    
     func handleScanResult(result: Result<String, ScanError>){
         switch result {
         case .success(let result):
-            isSuccessful = true
             print("scan successful. result: \(result)")
             scanResult = result
+            isSuccessful = true
             switch codeType {
             case .ean8:
-                avm.setCurrentAlarmScanned(alarmId: alarmId)
+                alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
                 // reset app delegate status
                 appDelegate.openedFromNotification = false
             case .qr:
-                svm.startTutorial()
-                // TODO: do qr parsing stuff
+                sessionVM.startTutorial()
             }
         case .failure(let error):
             print("Scanning failed: \(error.localizedDescription)")
@@ -61,9 +73,11 @@ struct ScannerView: View {
     @State var currentAlarmId: String? = nil
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
+    @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()
 
     return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
         .environmentObject(alarmViewModel)
         .environmentObject(sessionViewModel)
+        .environmentObject(studyDataViewModel)
 }
 

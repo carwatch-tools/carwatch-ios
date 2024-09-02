@@ -128,6 +128,10 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         // Vibration on successful scan
         AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
         
+        // check if scanning result is valid
+        if !parentView.validation(stringValue) {
+            return
+        }
         // Stop AV capture session
         DispatchQueue.global(qos: .userInteractive).async {
             self.captureSession.stopRunning()

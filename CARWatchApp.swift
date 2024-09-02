@@ -7,7 +7,8 @@ struct CARWatchApp: App {
     @StateObject var permissionViewModel: PermissionDataViewModel = PermissionDataViewModel()
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel : SessionViewModel = SessionViewModel()
-    
+    @StateObject var studyDataViewModel : StudyDataViewModel = StudyDataViewModel()
+
     @Environment(\.scenePhase) var scenePhase
     
     var body: some Scene {
@@ -16,6 +17,7 @@ struct CARWatchApp: App {
                 .environmentObject(permissionViewModel)
                 .environmentObject(alarmViewModel)
                 .environmentObject(sessionViewModel)
+                .environmentObject(studyDataViewModel)
                 .environmentObject(appDelegate)
                 .onAppear(){
                    checkPermissionsDuringOngoingStudy()

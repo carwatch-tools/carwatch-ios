@@ -2,9 +2,10 @@ import SwiftUI
 import AlertToast
 
 struct MainView: View {
-    @EnvironmentObject var pvm: PermissionDataViewModel
-    @EnvironmentObject var avm: AlarmViewModel
-    @EnvironmentObject var svm: SessionViewModel
+    @EnvironmentObject var permissionDataVM: PermissionDataViewModel
+    @EnvironmentObject var alarmVM: AlarmViewModel
+    @EnvironmentObject var sessionVM: SessionViewModel
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var appDelegate: AppDelegate
     
     @State private var selectedTab = 0
@@ -23,17 +24,17 @@ struct MainView: View {
     
     var body: some View {
         
-        switch svm.getCurrentState() {
+        switch sessionVM.getCurrentState() {
         case .registration:
-            if pvm.permissionData.cameraPermissionDialogHandled && !pvm.permissionData.cameraPermissionGranted {
+            if permissionDataVM.permissionData.cameraPermissionDialogHandled && !permissionDataVM.permissionData.cameraPermissionGranted {
                 MissingPermissionView(type: PermissionConstants.PermissionType.camera)
                     .onAppear(){
-                        pvm.checkCameraPermission()
+                        permissionDataVM.checkCameraPermission()
                      }
             } else {
                 RegistrationView(isScannerPresented: $isQrCodeScannerPresented)
-                    .environmentObject(svm)
-                    .environmentObject(pvm)
+                    .environmentObject(sessionVM)
+                    .environmentObject(permissionDataVM)
                     .interactiveDismissDisabled()
                     .sheet(isPresented: $isQrCodeScannerPresented) {
                         ScannerView(isPresented: $isQrCodeScannerPresented, alarmId: $currentAlarmId, codeType: .qr)
@@ -41,13 +42,13 @@ struct MainView: View {
                     }
             }
         case .tutorial:
-            if svm.isParticipantIdRequired {
+            if studyDataVM.isParticipantIdRequired() {
                 ParticipantIdView()
             } else {
                 TutorialView()
             }
         case .studyOngoing:
-            if pvm.permissionData.notificationPermissionGranted && pvm.permissionData.cameraPermissionGranted {
+            if permissionDataVM.permissionData.notificationPermissionGranted && permissionDataVM.permissionData.cameraPermissionGranted {
                 NavigationStack{
                     TabView(selection: $selectedTab){
                         WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isBarcodeScannerPresented)
@@ -98,7 +99,7 @@ struct MainView: View {
                         .interactiveDismissDisabled()
                 }
                 
-            } else if pvm.permissionData.notificationPermissionGranted {
+            } else if permissionDataVM.permissionData.notificationPermissionGranted {
                 MissingPermissionView(type: PermissionConstants.PermissionType.camera)
             } else {
                 MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
@@ -121,7 +122,7 @@ struct MainView: View {
         if appDelegate.openedFromNotification {
             print("opened from notification")
             // unhandled notification is present
-            avm.setUpcomingAlarmTriggered()
+            alarmVM.setUpcomingAlarmTriggered()
             currentAlarmId = nil
             isBarcodeScannerPresented = true
         }
@@ -138,7 +139,7 @@ struct MainView: View {
     
     func updateAlarmStatus() {
         print("updating alarm status")
-        avm.updateAlarmStatus()
+        alarmVM.updateAlarmStatus()
     }
 }
 
@@ -146,8 +147,9 @@ struct MainView: View {
     let pvm = PermissionDataViewModel()
     let avm = AlarmViewModel()
     let svm = SessionViewModel()
+    let sdvm = StudyDataViewModel()
     
     pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)
     pvm.permissionData = pvm.permissionData.setNotificationPermission(isGranted: true)
-    return MainView(initialAlarmTime: avm.getInitialAlarm().time).environmentObject(avm).environmentObject(pvm).environmentObject(svm).environmentObject(AppDelegate())
+    return MainView(initialAlarmTime: avm.getInitialAlarm().time).environmentObject(avm).environmentObject(pvm).environmentObject(svm).environmentObject(sdvm).environmentObject(AppDelegate())
 }

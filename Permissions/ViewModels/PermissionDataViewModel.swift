@@ -40,8 +40,8 @@ class PermissionDataViewModel : ObservableObject {
     }
     
     func savePermissionData() {
-        if let encodedUserData = try? JSONEncoder().encode(permissionData) {
-            UserDefaults.standard.set(encodedUserData, forKey: permissionDataKey)
+        if let encodedPermissionData = try? JSONEncoder().encode(permissionData) {
+            UserDefaults.standard.set(encodedPermissionData, forKey: permissionDataKey)
         }
     }
     

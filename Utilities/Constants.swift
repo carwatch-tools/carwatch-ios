@@ -54,3 +54,19 @@ struct MenuConstants {
         case clickToKill, killSuccess
     }
 }
+
+struct QrParserConstants {
+    static let separator: String = ";"
+    static let specifier: String = ":"
+    static let appId = "CARWATCH"
+    static let studyNameProperty: String = "N";
+    static let studyDaysProperty: String = "D";
+    static let numParticipantsProperty: String = "NP";
+    static let salivaDistancesProperty: String = "T";
+    static let salivaTimesProperty: String = "A";
+    static let startSampleProperty: String = "SS";
+    static let eveningProperty: String = "E";
+    static let contactProperty: String = "M";
+    static let duplicatesProperty: String = "FD";
+    static let participantIdProperty: String = "PID";
+}
