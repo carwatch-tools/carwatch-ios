@@ -1,10 +1,3 @@
-//
-//  OnboardingAfterQrView.swift
-//  CARWatch
-//
-//  Created by Admin on 28.08.24.
-//
-
 import SwiftUI
 
 struct TutorialView: View {

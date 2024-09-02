@@ -1,10 +1,3 @@
-//
-//  OnboardingView.swift
-//  CARWatch
-//
-//  Created by Admin on 27.08.24.
-//
-
 import SwiftUI
 
 struct RegistrationView: View {

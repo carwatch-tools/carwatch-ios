@@ -1,16 +1,10 @@
-//
-//  ParticipantIdView.swift
-//  CARWatch
-//
-//  Created by Admin on 28.08.24.
-//
-
 import SwiftUI
 
 struct ParticipantIdView: View {
     
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-
+    
+    @State var participantId = ""
     @State var showAlert: Bool = false
     
     var body: some View {
@@ -28,12 +22,13 @@ struct ParticipantIdView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             TextField(
                 "Participant ID",
-                text: $studyDataVM.studyData.participantId
+                text: $participantId
             )
             .frame(maxWidth: .infinity, alignment:  .leading)
             .textFieldStyle(.roundedBorder)
             .padding(.bottom)
             Button("Continue") {
+                studyDataVM.studyData.participantId = participantId
                 if studyDataVM.isParticipantIdRequired() {
                     showAlert = true
                 }

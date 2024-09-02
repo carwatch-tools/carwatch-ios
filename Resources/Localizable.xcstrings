@@ -4,6 +4,16 @@
     "" : {
 
     },
+    "%@ invalid! Please make sure you have scanned the correct %@ and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ invalid! Please make sure you have scanned the correct %2$@ and try again."
+          }
+        }
+      }
+    },
     "Alarm" : {
       "extractionState" : "manual",
       "localizations" : {
