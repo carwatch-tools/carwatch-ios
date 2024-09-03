@@ -94,6 +94,9 @@ struct MainView: View {
                     updateAlarmStatus()
                     checkScannerStatus()
                 }
+                .onAppear {
+                    updateTimedAlarms()
+                }
                 .sheet(isPresented: $isBarcodeScannerPresented) {
                     ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
                         .interactiveDismissDisabled()
@@ -137,8 +140,11 @@ struct MainView: View {
         print("scanner presented: \(isBarcodeScannerPresented)")
     }
     
+    func updateTimedAlarms() {
+        alarmVM.updateTimedAlarms()
+    }
+    
     func updateAlarmStatus() {
-        print("updating alarm status")
         alarmVM.updateAlarmStatus()
     }
 }

@@ -2,7 +2,7 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var timedAlarms: [Alarm] = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false, salivaId: -1)] {
+    @Published var timedAlarms: [Alarm]  = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false, salivaId: -1)]  {
         didSet {
             updateTimedAlarmActivity()
             saveTimedAlarms()
@@ -209,10 +209,6 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmTime(time: Date, scheduleInitialNotification: Bool = true) {
-        /// returns true when alarms were updated successfully
-        /// returns false when no update was possible because a) there was an initial alarm at the selected day already or
-        /// b) the current sampling procedure is not yet finished
-        print("update time")
         if isAlarmOngoing() {
             return
         }
@@ -273,6 +269,8 @@ class AlarmViewModel : ObservableObject {
     
     func updateTimedAlarms() {
         // TODO: access intervals from study configuration
+        // TODO: call this earlier
+        print("in update timed alarms")
         var dummyIntervals = [0, 2, 4, 6]
         if dummyIntervals.count != timedAlarms.count {
             // if timed alarms is set for the first time -> create entire array
@@ -304,7 +302,7 @@ class AlarmViewModel : ObservableObject {
     func updateAlarmStatus() {
         // check if any unscanned alarms are in the past
         for alarm in timedAlarms {
-            if !alarm.isScanned && !alarm.isTriggered && alarm.time < Date(){
+            if alarm.isActive && !alarm.isScanned && !alarm.isTriggered && alarm.time < Date(){
                 // triggering the initial alarm requires to update the day counter and date of last initial alarm
                 if alarm.id == AlarmConstants.initialAlarmId {
                     setInitialAlarmTriggered()

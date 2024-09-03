@@ -10,7 +10,7 @@ struct Alarm : Identifiable, Codable, Hashable {
     let salivaId : Int
     let time : Date
     
-    init(id: String, isActive: Bool, isScanned: Bool, isTriggered: Bool, salivaId: Int, time: Date = Date()) {
+    init(id: String, isActive: Bool, isScanned: Bool, isTriggered: Bool, salivaId: Int, time: Date = getDateTomorrowMorning()) {
         self.id = id
         self.isActive = isActive
         self.isScanned = isScanned

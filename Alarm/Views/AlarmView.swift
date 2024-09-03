@@ -152,7 +152,7 @@ struct AlarmView: View {
             Spacer()
         }
     }
-    
+
     func setInitialAlarmActivity(isActive: Bool){
         avm.setInitialAlarmActivity(isActive: isActive)
         if(avm.getInitialAlarm().isActive) {
