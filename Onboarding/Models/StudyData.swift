@@ -49,10 +49,17 @@ struct StudyData : Codable {
     }
     
     static private func parseSalivaDistances(salivaDistancesString: String) -> [Int]{
-        return [Int]()
+        if salivaDistancesString.isEmpty {
+            return [Int]()
+        }
+
+        let splitList = salivaDistancesString.split(separator: Character(QrParserConstants.listSeparator))
+        let output = splitList.compactMap { Int($0) }
+            return output
     }
     
     static private func parseSalivaTimes(salivaTimesString: String) -> [Int]{
+        // TODO: add time- not interval-based functionality
         return [Int]()
     }
 }

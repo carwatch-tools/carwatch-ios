@@ -2,8 +2,9 @@ import SwiftUI
 import AlertToast
 
 struct WakeupView: View {
-    @EnvironmentObject var avm: AlarmViewModel
-    
+    @EnvironmentObject var alarmVM: AlarmViewModel
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
+
     @State var showToast: Bool = false
     @State var toastType: NotificationConstants.ToastType = .feedbackToast
     
@@ -24,24 +25,24 @@ struct WakeupView: View {
             HStack{
                 Button("YES") {
                     // don't allow any further interaction if the study is finished already
-                    if avm.isStudyFinished(){
+                    if alarmVM.isStudyFinished(){
                         toastType = .studyFinishedToast
                         showToast = true
                         return
                     }
                     // check if initial alarm was already triggered at current day -> wakeup can't be reported twice
-                    if Calendar.current.isDate(avm.dateOfLastInitialAlarm, inSameDayAs: Date()) {
+                    if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
                         toastType = .wakeupReportedToast
                         showToast = true
                     } else {
                         // activate all alarms
-                        avm.setInitialAlarmActivity(isActive: true)
-                        for (index, _) in avm.timedAlarms.enumerated() {
-                            avm.setTimedAlarmActivity(index: index, isActive: true)
+                        alarmVM.setInitialAlarmActivity(isActive: true)
+                        for (index, _) in alarmVM.timedAlarms.enumerated() {
+                            alarmVM.setTimedAlarmActivity(index: index, isActive: true)
                         }
                         // update initial alarm time to now
-                        avm.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
-                        avm.setInitialAlarmTriggered()
+                        alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
+                        alarmVM.setInitialAlarmTriggered()
                         isScannerPresented = true
                     }
                 }
@@ -71,6 +72,8 @@ struct WakeupView: View {
 #Preview {
     @State var initialAlarmTime = Date()
     @State var isScannerPresented = false
+    
+    let avm = AlarmViewModel(timeIntervals: [0,10,20])
 
-    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented)
+    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented).environmentObject(avm).environmentObject(StudyDataViewModel())
 }

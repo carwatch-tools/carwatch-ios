@@ -7,6 +7,7 @@ enum ActiveAlert {
 
 struct AlarmView: View {
     @EnvironmentObject var avm: AlarmViewModel
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
     @Environment(\.colorScheme) var colorScheme
     
     @Binding var initialAlarmTime: Date
@@ -174,7 +175,7 @@ struct AlarmView: View {
     @State var isScannerPresented: Bool = false
     @State var currentAlarmId: String? = nil
     @State var initialAlarmTime = Date()
-    let avm = AlarmViewModel()
-    
-    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm)
+    let avm = AlarmViewModel(timeIntervals: [0,10,20])
+
+    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm).environmentObject(StudyDataViewModel())
 }

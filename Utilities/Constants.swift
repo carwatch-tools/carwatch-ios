@@ -60,6 +60,7 @@ struct MenuConstants {
 
 struct QrParserConstants {
     static let separator: String = ";"
+    static let listSeparator: String = ","
     static let specifier: String = ":"
     static let appId = "CARWATCH"
     static let studyNameProperty: String = "N";

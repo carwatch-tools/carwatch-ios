@@ -5,7 +5,6 @@ struct CARWatchApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     @StateObject var permissionViewModel: PermissionDataViewModel = PermissionDataViewModel()
-    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel : SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel : StudyDataViewModel = StudyDataViewModel()
 
@@ -13,9 +12,8 @@ struct CARWatchApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainView(initialAlarmTime: alarmViewModel.getInitialAlarm().time)
+            MainView()
                 .environmentObject(permissionViewModel)
-                .environmentObject(alarmViewModel)
                 .environmentObject(sessionViewModel)
                 .environmentObject(studyDataViewModel)
                 .environmentObject(appDelegate)

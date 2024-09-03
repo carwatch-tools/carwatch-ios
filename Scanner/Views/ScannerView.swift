@@ -5,11 +5,10 @@ struct ScannerView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-    
+
     @Binding var isPresented: Bool
     @Binding var alarmId: String?
-    @State var alertPresented: Bool = false
-    @State var alertType: ScannerConstants.AlertType = .success
+    @State var isSuccessful: Bool = false
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
     
@@ -24,29 +23,16 @@ struct ScannerView: View {
                 ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
             }
         }
-        .alert(isPresented: $alertPresented) {
-            switch alertType {
-            case .success:
-                return Alert(title: Text("Scan succesful! Barcode data: \(scanResult)"),
-                      dismissButton: Alert.Button.default(
-                        Text("OK"), action: {
-                            // go back to main view
-                            alertPresented = false
-                            isPresented = false
-                        }
-                      )
-                )
-            case .invalid:
-                let type = codeType == .ean8 ? "Barcode" : "QR code"
-                return Alert(title: Text("\(type) invalid! Please make sure you have scanned the correct \(type) and try again."),
-                      dismissButton: Alert.Button.default(
-                        Text("OK"), action: {
-                            // go back to main view
-                            alertPresented = false
-                        }
-                      )
-                )
-            }
+        .alert(isPresented: $isSuccessful) {
+            Alert(title: Text("Scan succesful! Barcode data: \(scanResult)"),
+                  dismissButton: Alert.Button.default(
+                    Text("OK"), action: {
+                        // go back to main view
+                        isSuccessful = false
+                        isPresented = false
+                    }
+                  )
+            )
         }
     }
     
@@ -57,12 +43,8 @@ struct ScannerView: View {
             return true
         case .qr:
             studyDataVM.parseQrCodeData(result)
-            let isValid = studyDataVM.studyData.isValid
-            if !isValid {
-                alertType = .invalid
-                alertPresented = true
-            }
-            return isValid
+            // TODO: add explanation alert
+            return studyDataVM.studyData.isValid
         }
     }
     
@@ -71,8 +53,7 @@ struct ScannerView: View {
         case .success(let result):
             print("scan successful. result: \(result)")
             scanResult = result
-            alertType = .success
-            alertPresented = true
+            isSuccessful = true
             switch codeType {
             case .ean8:
                 alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
@@ -90,10 +71,10 @@ struct ScannerView: View {
 #Preview {
     @State var isPresented = true
     @State var currentAlarmId: String? = nil
-    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
+    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel(timeIntervals: [0,10,20])
     @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()
-    
+
     return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
         .environmentObject(alarmViewModel)
         .environmentObject(sessionViewModel)
