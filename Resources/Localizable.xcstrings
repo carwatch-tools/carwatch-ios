@@ -172,6 +172,9 @@
         }
       }
     },
+    "LIGHTS ON!" : {
+
+    },
     "LIGHTS OUT!" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -22,7 +22,7 @@ struct OngoingStudyView: View {
     
     init() {
         // Use the shared property from firstViewModel for secondViewModel initialization
-        _alarmVM = StateObject(wrappedValue: AlarmViewModel(timeIntervals: [Int]()))
+        _alarmVM = StateObject(wrappedValue: AlarmViewModel())
     }
 
     var body: some View {
@@ -84,6 +84,7 @@ struct OngoingStudyView: View {
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
             }
+            .preferredColorScheme(alarmVM.isDarkModeOn ? .dark : .light)
             
         } else if permissionDataVM.permissionData.notificationPermissionGranted {
             MissingPermissionView(type: PermissionConstants.PermissionType.camera)
@@ -124,6 +125,8 @@ struct OngoingStudyView: View {
     
     func initializeStudyData() {
         alarmVM.timeIntervals = studyDataVM.studyData.salivaDistances
+        alarmVM.numStudyDays = studyDataVM.studyData.studyDays
+        alarmVM.hasEveningSample = studyDataVM.studyData.hasEveningSample
         initialAlarmTime = alarmVM.getInitialAlarm().time
     }
     
@@ -132,6 +135,10 @@ struct OngoingStudyView: View {
     }
     
     func updateAlarmStatus() {
+        if !Calendar.current.isDateInToday(alarmVM.dateOfLastInitialAlarm) {
+            // reset to light mode because a new day has started
+            alarmVM.isDarkModeOn = false
+        }
         alarmVM.updateAlarmStatus()
     }
 }

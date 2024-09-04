@@ -6,9 +6,8 @@ enum ActiveAlert {
 }
 
 struct AlarmView: View {
-    @EnvironmentObject var avm: AlarmViewModel
+    @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-    @Environment(\.colorScheme) var colorScheme
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
@@ -32,7 +31,7 @@ struct AlarmView: View {
                 .font(.system(size: StyleConstants.mainScreenFontSize))
             HStack{
                 Toggle("", isOn: Binding<Bool>(
-                    get: { avm.timedAlarmActivity[0] },
+                    get: { alarmVM.timedAlarmActivity[0] },
                     set: { newValue in
                         setInitialAlarmActivity(isActive: newValue)
                     }))
@@ -41,15 +40,15 @@ struct AlarmView: View {
                 .font(.system(size: StyleConstants.mainScreenFontSize))
                 DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                     .onChange(of: initialAlarmTime, perform: { _ in
-                        avm.updateAlarmTime(time: initialAlarmTime)
-                        if(avm.getInitialAlarm().isActive) {
+                        alarmVM.updateAlarmTime(time: initialAlarmTime)
+                        if(alarmVM.getInitialAlarm().isActive) {
                             showToast = true
                         }
                     })
                     .labelsHidden()
                     .scaledToFit()
                     .scaleEffect(CGSize(width: 1.5, height: 1.5))
-            }.disabled(avm.isAlarmOngoing() || avm.isStudyFinished())
+            }.disabled(alarmVM.isAlarmOngoing() || alarmVM.isStudyFinished())
             
             
             Divider()
@@ -58,13 +57,13 @@ struct AlarmView: View {
                 VStack (alignment: .leading) {
                     Text("Saliva sample reminders")
                         .font(.system(size: StyleConstants.explanationFontSize))
-                    ForEach(Array(avm.timedAlarms.enumerated()), id: \.1) {
+                    ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
                         index, alarm in
                         HStack{
                             Text("S\(alarm.salivaId):")
                                 .font(.system(size: StyleConstants.explanationFontSize))
                             Toggle("", isOn: Binding<Bool>(
-                                get: { avm.timedAlarmActivity[index] },
+                                get: { alarmVM.timedAlarmActivity[index] },
                                 set: { newValue in
                                     pendingToggleValue = newValue
                                     pendingToggleIndex = index
@@ -73,7 +72,7 @@ struct AlarmView: View {
                                         activeAlert = .toggleActivityAlert
                                         showAlert = true
                                     } else {
-                                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !avm.timedAlarmActivity[pendingToggleIndex])
+                                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
                                     }
                                 }))
                             .labelsHidden()
@@ -120,7 +119,7 @@ struct AlarmView: View {
             .frame(maxWidth: .infinity)
             .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
                 let color = Color(UIColor.secondarySystemBackground)
-                let (diffHours, diffMinutes) = avm.getTimeUntilNextInitialAlarm()
+                let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
                 let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
                 
@@ -141,7 +140,7 @@ struct AlarmView: View {
                 case .toggleActivityAlert:
                     return Alert(title: Text("This alarm is required for the study. Are you sure to cancel this alarm?"),
                                  primaryButton: .destructive(Text("Yes")) {
-                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !avm.timedAlarmActivity[pendingToggleIndex])
+                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
                         showAlert = false
                     },
                                  secondaryButton: .cancel(Text("No")) {
@@ -153,21 +152,21 @@ struct AlarmView: View {
             Spacer()
         }
     }
-
+    
     func setInitialAlarmActivity(isActive: Bool){
-        avm.setInitialAlarmActivity(isActive: isActive)
-        if(avm.getInitialAlarm().isActive) {
-            avm.updateAlarmTime(time: avm.getInitialAlarm().time)
+        alarmVM.setInitialAlarmActivity(isActive: isActive)
+        if(alarmVM.getInitialAlarm().isActive) {
+            alarmVM.updateAlarmTime(time: alarmVM.getInitialAlarm().time)
             // if initial alarm is activated, automatically activate all others
-            for (index, _) in avm.timedAlarms.enumerated() {
-                avm.setTimedAlarmActivity(index: index, isActive: isActive)
+            for (index, _) in alarmVM.timedAlarms.enumerated() {
+                alarmVM.setTimedAlarmActivity(index: index, isActive: isActive)
             }
             showToast = true
         }
     }
     
     func toggleTimedAlarm(index: Int, isActive: Bool){
-        avm.setTimedAlarmActivity(index: index, isActive: isActive)
+        alarmVM.setTimedAlarmActivity(index: index, isActive: isActive)
     }
 }
 
@@ -175,7 +174,7 @@ struct AlarmView: View {
     @State var isScannerPresented: Bool = false
     @State var currentAlarmId: String? = nil
     @State var initialAlarmTime = Date()
-    let avm = AlarmViewModel(timeIntervals: [0,10,20])
-
+    let avm = AlarmViewModel()
+    
     return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm).environmentObject(StudyDataViewModel())
 }

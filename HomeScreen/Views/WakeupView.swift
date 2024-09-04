@@ -6,7 +6,7 @@ struct WakeupView: View {
     @EnvironmentObject var studyDataVM: StudyDataViewModel
 
     @State var showToast: Bool = false
-    @State var toastType: NotificationConstants.ToastType = .feedbackToast
+    @State var toastType: NotificationConstants.WakeupToastType = .feedbackToast
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
@@ -73,7 +73,7 @@ struct WakeupView: View {
     @State var initialAlarmTime = Date()
     @State var isScannerPresented = false
     
-    let avm = AlarmViewModel(timeIntervals: [0,10,20])
+    let avm = AlarmViewModel()
 
     return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented).environmentObject(avm).environmentObject(StudyDataViewModel())
 }

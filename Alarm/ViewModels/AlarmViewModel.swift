@@ -10,7 +10,7 @@ class AlarmViewModel : ObservableObject {
     }
     @Published var isEveningScanned: Bool = false {
         didSet {
-            UserDefaults.standard.bool(forKey: isEveningScannedKey)
+            UserDefaults.standard.set(isEveningScanned, forKey: isEveningScannedKey)
         }
     }
     @Published var studyDayCounter: Int = 0 {
@@ -26,7 +26,8 @@ class AlarmViewModel : ObservableObject {
     }
     @Published var isDarkModeOn: Bool = false {
         didSet {
-            UserDefaults.standard.bool(forKey: isDarkModeOnKey)
+            print("dark mode: \(isDarkModeOn)")
+            UserDefaults.standard.set(isDarkModeOn, forKey: isDarkModeOnKey)
         }
     }
     

@@ -11,14 +11,18 @@ struct PermissionConstants {
 struct NotificationConstants {
     static let numberOfSubsequentNotifications = 2
     static let minutesBetweenNotifications = 1
-    enum ToastType {
+    enum WakeupToastType {
         case feedbackToast, wakeupReportedToast, studyFinishedToast
+    }
+    enum BedtimeToastType {
+        case feedbackToast, eveningSampleTakenToast
     }
 }
 
 struct AlarmConstants {
     static let initialAlarmId = "initial"
     static let timedAlarmId = "timed"
+    static let eveningAlarmId = "evening"
 }
 
 struct ScannerConstants {

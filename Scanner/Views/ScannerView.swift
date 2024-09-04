@@ -71,7 +71,7 @@ struct ScannerView: View {
 #Preview {
     @State var isPresented = true
     @State var currentAlarmId: String? = nil
-    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel(timeIntervals: [0,10,20])
+    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()
 
