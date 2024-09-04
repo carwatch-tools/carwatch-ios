@@ -8,9 +8,14 @@ class AlarmViewModel : ObservableObject {
             saveTimedAlarms()
         }
     }
+    @Published var isEveningScanned: Bool = false {
+        didSet {
+            UserDefaults.standard.bool(forKey: isEveningScannedKey)
+        }
+    }
     @Published var studyDayCounter: Int = 0 {
         didSet {
-            saveStudyDayCounter()
+            UserDefaults.standard.set(studyDayCounter, forKey: studyDayCounterKey)
         }
     }
     @Published var dateOfLastInitialAlarm: Date = Date.distantPast {
@@ -19,17 +24,27 @@ class AlarmViewModel : ObservableObject {
             saveDateOfLastInitialAlarm()
         }
     }
+    @Published var isDarkModeOn: Bool = false {
+        didSet {
+            UserDefaults.standard.bool(forKey: isDarkModeOnKey)
+        }
+    }
+    
     // no didSet required because this info is retrieved from timedAlarms and automatically updated when timedAlarms is set
     @Published var timedAlarmActivity: [Bool] = [false]
-    // no didSet required because this is a shared property with the study data view model
-    @Published var timeIntervals: [Int] = [0]
+    
+    // no didSet required because these are shared properties with the study data view model
+    @Published var timeIntervals: [Int] = [Int]()
+    @Published var numStudyDays: Int = 0
+    @Published var hasEveningSample: Bool = false
     
     let timedAlarmDataKey = "alarmsList"
+    let isEveningScannedKey = "isEveningScanned"
     let studyDayCounterKey = "studyDayCounter"
     let dateOfLastInitialAlarmKey = "dateOfLastInitialAlarm"
+    let isDarkModeOnKey = "isDarkModeOn"
     
-    init(timeIntervals: [Int]) {
-        self.timeIntervals = timeIntervals
+    init() {
         getAlarmData()
         getStudyDayCounterData()
         getLastInitialAlarmData()
@@ -37,6 +52,8 @@ class AlarmViewModel : ObservableObject {
     }
     
     func getAlarmData() {
+        isEveningScanned = UserDefaults.standard.bool(forKey: isEveningScannedKey)
+        isDarkModeOn = UserDefaults.standard.bool(forKey: isDarkModeOnKey)
         guard
             let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
             let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData)
@@ -123,6 +140,9 @@ class AlarmViewModel : ObservableObject {
     }
     
     func isDayFinished() -> Bool {
+        if hasEveningSample && !isEveningScanned {
+            return false
+        }
         for alarm in timedAlarms {
             // TODO should all samples be scanned or only active samples be scanned?
             if !alarm.isScanned {
@@ -175,13 +195,18 @@ class AlarmViewModel : ObservableObject {
     func setCurrentAlarmScanned(alarmId: String? = nil) {
         print("trying to set Alarm scanned")
         var alarm: Alarm?
-        if alarmId != nil {
-            alarm = getAlarmById(alarmId: alarmId!)
-        } else {
+        switch alarmId {
+        case nil:
             alarm = getCurrentlyTriggeredAlarm()
+        case AlarmConstants.eveningAlarmId:
+            alarm = nil
+            isEveningScanned = true
+        default:
+            alarm = getAlarmById(alarmId: alarmId!)
         }
+        
         if alarm != nil {
-            // set alarm as scaned and inactive
+            // set alarm as scanned and inactive
             modifyAlarmById(alarm: alarm!.setScanned())
             // cancel all remaining alarms
             NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
@@ -195,6 +220,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func resetAlarmData() {
+        isEveningScanned = false
         // schedule alarms for the next day after all scans for one day were finished
         for alarm in timedAlarms {
             modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, salivaId: alarm.salivaId, time: alarm.time))
@@ -326,9 +352,6 @@ class AlarmViewModel : ObservableObject {
         }
     }
     
-    func saveStudyDayCounter() {
-        UserDefaults.standard.set(studyDayCounter, forKey: studyDayCounterKey)
-    }
     
     func saveDateOfLastInitialAlarm() {
         if let encodedDateOfLastInitialAlarm = try? JSONEncoder().encode(dateOfLastInitialAlarm) {
@@ -372,8 +395,6 @@ class AlarmViewModel : ObservableObject {
     
     func isStudyFinished() -> Bool {
         print("Study finished? Study day counter: \(studyDayCounter)")
-        // TODO use configured study duration
-        let studyDuration = 1
-        return studyDayCounter == studyDuration
+        return isDayFinished() && studyDayCounter == numStudyDays
     }
 }

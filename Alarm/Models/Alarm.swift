@@ -41,11 +41,11 @@ struct Alarm : Identifiable, Codable, Hashable {
     }
     
     func setTriggered() -> Alarm {
-        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: true, salivaId: salivaId)
+        return Alarm(id: id, isActive: isActive, isScanned: isScanned, isTriggered: true, salivaId: salivaId, time: time)
     }
     
     func setScanned() -> Alarm {
-        return Alarm(id: id, isActive: false, isScanned: true, isTriggered: isTriggered, salivaId: salivaId)
+        return Alarm(id: id, isActive: false, isScanned: true, isTriggered: isTriggered, salivaId: salivaId, time: time)
     }
     
     func getCurrentAlarmTimePlusInterval(numMinutes: Int) -> Date? {
