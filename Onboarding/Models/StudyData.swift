@@ -2,7 +2,7 @@ import Foundation
 
 struct StudyData : Codable {
     var isValid : Bool = true
-    var studyName: String;
+    var studyName: String
     var salivaDistances: [Int]
     var salivaTimes: [Int]
     var startSample: String

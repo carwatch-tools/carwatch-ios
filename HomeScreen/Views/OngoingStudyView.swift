@@ -3,7 +3,7 @@ import AlertToast
 
 struct OngoingStudyView: View {
     @StateObject var alarmVM: AlarmViewModel
-     
+    
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var appDelegate: AppDelegate
@@ -11,7 +11,7 @@ struct OngoingStudyView: View {
     @State var isBarcodeScannerPresented = false
     @State var currentAlarmId: String? = nil
     @State var initialAlarmTime: Date = getDateTomorrowMorning()
-
+    
     @State private var selectedTab = 0
     
     @State private var showAppInfoDialog = false
@@ -24,7 +24,7 @@ struct OngoingStudyView: View {
         // Use the shared property from firstViewModel for secondViewModel initialization
         _alarmVM = StateObject(wrappedValue: AlarmViewModel())
     }
-
+    
     var body: some View {
         if permissionDataVM.permissionData.notificationPermissionGranted && permissionDataVM.permissionData.cameraPermissionGranted {
             NavigationStack{
@@ -128,6 +128,14 @@ struct OngoingStudyView: View {
         alarmVM.numStudyDays = studyDataVM.studyData.studyDays
         alarmVM.hasEveningSample = studyDataVM.studyData.hasEveningSample
         initialAlarmTime = alarmVM.getInitialAlarm().time
+        Logger.instance.setStudyData(studyName: studyDataVM.studyData.studyName, participantId: studyDataVM.studyData.participantId)
+        // Create a dictionary to represent JSON
+        var msg = [String: Any]()
+        msg["property1"] = true
+        msg["property2"] = "a string"
+        msg["property3"] = [1, 2, 3, 4]
+        msg["property3"] = 100
+        Logger.instance.log(tag: "test", message: msg)
     }
     
     func updateTimedAlarms() {
