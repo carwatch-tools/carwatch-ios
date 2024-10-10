@@ -21,11 +21,17 @@ struct MainViewToolbarMenu: View {
             Section("User Actions") {
                 Button {
                     print("clicked share logs")
-                    showShareSheet = true
-                    //                    if let zipFileURL = Logger.instance.zipDirectory() {
-                    //                        self.zipFileURL = zipFileURL
-                    //                        showShareSheet = true
-                    //                    }
+                    if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
+                        // ensure that state is updated already before sheet is rendered
+                        DispatchQueue.main.async {
+                            self.zipFileURL = zipFileURL
+                            self.showShareSheet = true
+                        }
+                    }
+                    else {
+                        toastType = .zipLogsFailed
+                        showToast = true
+                    }
                 } label: {
                     Label("Share Logs", systemImage: "square.and.arrow.up")
                 }
@@ -40,6 +46,7 @@ struct MainViewToolbarMenu: View {
             Section("Expert Actions"){
                 Button("Delete Logs"){ }
                 Button("Kill all Notifications") {
+                    toastType = .clickToKill
                     killButtonClickCount += 1
                     if killButtonClickCount >= MenuConstants.killButtonClickCountAlert {
                         showToast = true
@@ -79,9 +86,24 @@ struct MainViewToolbarMenu: View {
         .sheet(isPresented: $showShareSheet, onDismiss: {
             print("Dismiss")
         }, content: {
-            // ActivityViewController(activityItems: [URL(string: "https://www.apple.com")!])
-            MailViewController(recipients: ["test@kfdsj.com"], subject: "Subject")
+            if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
+                if MFMailComposeViewController.canSendMail() {
+                    // only works if user is signed in to at least one mail account in apple mail app
+                    MailViewController(recipients: ["test@kfdsj.com"],
+                                       subject: "Subject",
+                                       attachmentURL: zipFileURL,
+                                       attachmentMimeType: "application/zip",
+                                       attachmentFileName: "logFileAttachmenName.zip")
+                } else {
+                    // fallback if user uses a third party mail app
+                    ActivityViewController(activityItems: [zipFileURL], subject: "This is the email subject")
+                }
+            } else {
+                // TODO: debugging dummy
+                MissingPermissionView(type: .camera)
+            }
         })
+        
     }
 }
 
@@ -90,11 +112,14 @@ struct ActivityViewController: UIViewControllerRepresentable {
     var activityItems: [Any]
     var applicationActivities: [UIActivity]? = nil
     
+    var subject: String
+    
     func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+        print("ui view controller")
         let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
         
         // Set the subject for email (optional, only works for mail-based apps)
-        controller.setValue("test@test.com", forKey: "subject")
+        controller.setValue(subject, forKey: "subject")
         
         // TODO: check what to exclude here
         // Exclude some activity types if desired (e.g., exclude printing or saving to files)
@@ -110,7 +135,7 @@ struct MailViewController: UIViewControllerRepresentable {
     var recipients: [String]
     var subject: String
     var messageBody: String = ""
-    var attachmentData: Data?
+    var attachmentURL: URL?
     var attachmentMimeType: String = ""
     var attachmentFileName: String = ""
     
@@ -139,7 +164,7 @@ struct MailViewController: UIViewControllerRepresentable {
         vc.setMessageBody(messageBody, isHTML: false)
         
         // Add attachment if provided
-        if let data = attachmentData {
+        if let url = attachmentURL, let data = try? Data(contentsOf: url) {
             vc.addAttachmentData(data, mimeType: attachmentMimeType, fileName: attachmentFileName)
         }
         

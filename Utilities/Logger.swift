@@ -78,7 +78,7 @@ class Logger {
     
     private func getZippedLogsDirectory() -> URL {
         /// Get the directory where zipped logs are stored, in this case the Documents/zippedCarwatchLogs directory of the CARWatch app home folder
-        var logsDirectory = getLogsDirectory()
+        let logsDirectory = getLogsDirectory()
         // construct the name of the archive
         var fileName = "logs"
         if studyName != nil && participantId != nil {
@@ -110,10 +110,22 @@ class Logger {
         }
     }
     
-    func zipDirectory() -> URL? {
+    func zipCurrentLogDirectoryContent() -> URL? {
         let fileManager = FileManager()
         let sourceURL = getLogsDirectory()
         let destinationURL = getZippedLogsDirectory()
+        
+        // Check if a ZIP file already exists at the destination, and remove if it does
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            do {
+                try fileManager.removeItem(at: destinationURL)
+            } catch {
+                print("Failed to remove existing ZIP file with error: \(error)")
+                return nil
+            }
+        }
+        
+        // create new ZIP file
         do {
             try fileManager.zipItem(at: sourceURL, to: destinationURL)
         } catch {
@@ -123,37 +135,37 @@ class Logger {
         return destinationURL
         
         // Create an empty ZIP file at the destination
-//        do {
-//            try fileManager.createDirectory(at: destinationURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-//            
-//            // TODO: fix access mode selection
-//            // Initialize the archive (ZIP file)
-//            var accessMode = fileManager.fileExists(atPath: destinationURL.absoluteString) ?  Archive.AccessMode.update :  Archive.AccessMode.create
-//            print("file exists? \(fileManager.fileExists(atPath: destinationURL.absoluteString))")
-//            print("\(destinationURL.absoluteString): \(accessMode)")
-//            accessMode = .update
-//            let archive = try Archive(url: destinationURL, accessMode: accessMode)
-//            print("archive modified")
-//            // Enumerate all files and subdirectories in the source directory
-//            let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey]
-//            let enumerator = fileManager.enumerator(at: sourceURL, includingPropertiesForKeys: keys, options: [], errorHandler: { (url, error) -> Bool in
-//                print("Error while enumerating files: \(error)")
-//                return true
-//            })
-//            
-//            // Add each file to the archive (ZIP file)
-//            for case let fileURL as URL in enumerator! {
-//                // Only add files, not directories
-//                let resourceValues = try fileURL.resourceValues(forKeys: Set(keys))
-//                if resourceValues.isRegularFile ?? false {
-//                    // Add the file to the archive
-//                    try archive.addEntry(with: fileURL.lastPathComponent, relativeTo: sourceURL)
-//                }
-//            }
-//        } catch {
-//            print("Error creating ZIP file: \(error)")
-//            return nil
-//        }
-//        return destinationURL
+        //        do {
+        //            try fileManager.createDirectory(at: destinationURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+        //
+        //            // TODO: fix access mode selection
+        //            // Initialize the archive (ZIP file)
+        //            var accessMode = fileManager.fileExists(atPath: destinationURL.absoluteString) ?  Archive.AccessMode.update :  Archive.AccessMode.create
+        //            print("file exists? \(fileManager.fileExists(atPath: destinationURL.absoluteString))")
+        //            print("\(destinationURL.absoluteString): \(accessMode)")
+        //            accessMode = .update
+        //            let archive = try Archive(url: destinationURL, accessMode: accessMode)
+        //            print("archive modified")
+        //            // Enumerate all files and subdirectories in the source directory
+        //            let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey]
+        //            let enumerator = fileManager.enumerator(at: sourceURL, includingPropertiesForKeys: keys, options: [], errorHandler: { (url, error) -> Bool in
+        //                print("Error while enumerating files: \(error)")
+        //                return true
+        //            })
+        //
+        //            // Add each file to the archive (ZIP file)
+        //            for case let fileURL as URL in enumerator! {
+        //                // Only add files, not directories
+        //                let resourceValues = try fileURL.resourceValues(forKeys: Set(keys))
+        //                if resourceValues.isRegularFile ?? false {
+        //                    // Add the file to the archive
+        //                    try archive.addEntry(with: fileURL.lastPathComponent, relativeTo: sourceURL)
+        //                }
+        //            }
+        //        } catch {
+        //            print("Error creating ZIP file: \(error)")
+        //            return nil
+        //        }
+        //        return destinationURL
     }
 }

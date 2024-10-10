@@ -60,6 +60,8 @@ struct OngoingStudyView: View {
                         toastMsg = "Click \(clicksLeft) more times to kill all reminders!"
                     case .killSuccess:
                         toastMsg = "All reminders were deactivated!"
+                    case .zipLogsFailed:
+                        toastMsg = "Generating the logs failed.\nPlease try again later!"
                     }
                     let color = Color(UIColor.secondarySystemBackground)
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))

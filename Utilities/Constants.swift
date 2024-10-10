@@ -58,7 +58,7 @@ struct MenuConstants {
     static let killButtonClickCountActivate: Int = 5
     static let killButtonClickCountAlert: Int = 2
     enum ToastType {
-        case clickToKill, killSuccess
+        case clickToKill, killSuccess, zipLogsFailed
     }
 }
 
