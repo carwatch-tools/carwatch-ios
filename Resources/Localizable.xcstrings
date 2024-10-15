@@ -211,6 +211,9 @@
         }
       }
     },
+    "No logs available" : {
+
+    },
     "OK" : {
       "extractionState" : "manual",
       "localizations" : {

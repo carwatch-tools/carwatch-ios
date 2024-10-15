@@ -9,6 +9,7 @@ class Logger {
     private var participantId: String? = nil
     
     func setStudyData(studyName: String?, participantId: String?) {
+        print("setting study data: \(studyName!), \(participantId!)")
         self.studyName = studyName
         self.participantId = participantId
     }
@@ -37,14 +38,9 @@ class Logger {
         let fileManager = FileManager.default
         let logsDirectory = getLogsDirectory()
         
-        // Create logs directory if it does not exist
-        if !fileManager.fileExists(atPath: logsDirectory.path) {
-            do {
-                try fileManager.createDirectory(at: logsDirectory, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("Failed to create logs directory: \(error)")
-                return nil
-            }
+        if !createDirectoryIfNotExisting(directoryURL: logsDirectory){
+            // directory creation failed
+            return nil
         }
         
         // construct the name of the current file
@@ -78,7 +74,10 @@ class Logger {
     
     private func getZippedLogsDirectory() -> URL {
         /// Get the directory where zipped logs are stored, in this case the Documents/zippedCarwatchLogs directory of the CARWatch app home folder
-        let logsDirectory = getLogsDirectory()
+        let fileManager = FileManager.default
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let logsDirectory = documentsDirectory.appendingPathComponent("zippedCarwatchLogs")
+        
         // construct the name of the archive
         var fileName = "logs"
         if studyName != nil && participantId != nil {
@@ -110,10 +109,32 @@ class Logger {
         }
     }
     
+    private func createDirectoryIfNotExisting(directoryURL: URL) -> Bool {
+        /// checks if the directory exists and creates it otherwise
+        /// returns true when successful and false in case of an error
+        let fileManager = FileManager.default
+        // Create destination directory if it does not exist
+        if !fileManager.fileExists(atPath: directoryURL.path) {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("Failed to create directory \(directoryURL.lastPathComponent): \(error)")
+                return false
+            }
+        }
+        return true
+    }
+    
     func zipCurrentLogDirectoryContent() -> URL? {
+        /// create zip archive from all present log files and return the link to it
         let fileManager = FileManager()
         let sourceURL = getLogsDirectory()
         let destinationURL = getZippedLogsDirectory()
+        
+        if !createDirectoryIfNotExisting(directoryURL: destinationURL) {
+            // directory creation failed
+            return nil
+        }
         
         // Check if a ZIP file already exists at the destination, and remove if it does
         if fileManager.fileExists(atPath: destinationURL.path) {
@@ -132,40 +153,23 @@ class Logger {
             print("Creation of ZIP archive failed with error:\(error)")
             return nil
         }
-        return destinationURL
         
-        // Create an empty ZIP file at the destination
-        //        do {
-        //            try fileManager.createDirectory(at: destinationURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-        //
-        //            // TODO: fix access mode selection
-        //            // Initialize the archive (ZIP file)
-        //            var accessMode = fileManager.fileExists(atPath: destinationURL.absoluteString) ?  Archive.AccessMode.update :  Archive.AccessMode.create
-        //            print("file exists? \(fileManager.fileExists(atPath: destinationURL.absoluteString))")
-        //            print("\(destinationURL.absoluteString): \(accessMode)")
-        //            accessMode = .update
-        //            let archive = try Archive(url: destinationURL, accessMode: accessMode)
-        //            print("archive modified")
-        //            // Enumerate all files and subdirectories in the source directory
-        //            let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey]
-        //            let enumerator = fileManager.enumerator(at: sourceURL, includingPropertiesForKeys: keys, options: [], errorHandler: { (url, error) -> Bool in
-        //                print("Error while enumerating files: \(error)")
-        //                return true
-        //            })
-        //
-        //            // Add each file to the archive (ZIP file)
-        //            for case let fileURL as URL in enumerator! {
-        //                // Only add files, not directories
-        //                let resourceValues = try fileURL.resourceValues(forKeys: Set(keys))
-        //                if resourceValues.isRegularFile ?? false {
-        //                    // Add the file to the archive
-        //                    try archive.addEntry(with: fileURL.lastPathComponent, relativeTo: sourceURL)
-        //                }
-        //            }
-        //        } catch {
-        //            print("Error creating ZIP file: \(error)")
-        //            return nil
-        //        }
-        //        return destinationURL
+        return destinationURL
+    }
+    
+    func deleteAllLogFiles() {
+        /// remove all log files present in Documents/carwatchLogs
+        let fileManager = FileManager.default
+        let logDirectory = getLogsDirectory()
+        do {
+            let filePaths = try fileManager.contentsOfDirectory(at: logDirectory, includingPropertiesForKeys: nil)
+            // Iterate through each file and delete it
+            for filePath in filePaths {
+                try fileManager.removeItem(at: filePath)
+            }
+            print("All files deleted from directory: \(logDirectory)")
+        } catch let error {
+            print("Error while deleting files: \(error.localizedDescription)")
+        }
     }
 }

@@ -20,10 +20,6 @@ struct CARWatchApp: App {
                 .onAppear(){
                    checkPermissionsDuringOngoingStudy()
                 }
-                .onBackground {
-                    // print("background")
-                    // TODO: let's see if there's something useful that can be done here, otherwise remove
-                }
                 .onForeground {
                     checkPermissionsDuringOngoingStudy()
                 }
