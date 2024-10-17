@@ -28,5 +28,35 @@ func getDateTomorrowMorning() -> Date {
             return tomorrowMorning
         }
     }
+    print("getDateTomorrowMorning failed")
     return Date()
+}
+
+func getUnixTimeMillisFromDateComponent(_ dc: DateComponents) -> Int {
+    /// returns the time since 1st January 1970 in milliseconds from a date component
+    let calendar = Calendar.current
+    if let date = calendar.date(from: dc) {
+        return Int(date.timeIntervalSince1970 * 1000)
+    }
+    print("getUnixTimeMillisFromDateComponent failed")
+    return 0
+}
+
+func getUnixTimeSecondsFromDateComponent(_ dc: DateComponents) -> TimeInterval {
+    /// returns the time since 1st January 1970 in seconds from a date component
+    let calendar = Calendar.current
+    if let date = calendar.date(from: dc) {
+        return date.timeIntervalSince1970
+    }
+    print("getUnixTimeSecondsFromDateComponent failed")
+    return 0
+}
+
+func translateUnixTimestamp(timeSeconds: TimeInterval) -> String {
+    /// returns unix timestamp formatted to human-readable string
+    let date = Date(timeIntervalSince1970: timeSeconds)
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "EE MMM dd yyyy HH:mm:ss ZZZZ"
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    return dateFormatter.string(from: date)
 }

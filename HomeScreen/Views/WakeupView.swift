@@ -35,6 +35,10 @@ struct WakeupView: View {
                         toastType = .wakeupReportedToast
                         showToast = true
                     } else {
+                        // log spontaneous awakening
+                        var msg = [String: Any]()
+                        msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
+                        Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
                         // activate all alarms
                         alarmVM.setInitialAlarmActivity(isActive: true)
                         for (index, _) in alarmVM.timedAlarms.enumerated() {

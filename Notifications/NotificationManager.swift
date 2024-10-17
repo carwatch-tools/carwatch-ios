@@ -19,19 +19,11 @@ class NotificationManager {
         UNUserNotificationCenter.current().add(request)
         
         print("Notification scheduled - Day: \(day), Time: \(hour):\(minute), ID: \(id)")
-    }
-    
-    func scheduleIntervalBasedNotification(id: String, intervalSeconds: Int) {
-        let content = UNMutableNotificationContent()
-        content.title = "This is a calendar-based notification"
-        content.subtitle = "Interval in sec: \(intervalSeconds), ID: \(id)"
-        content.sound = .defaultCriticalSound(withAudioVolume: 1)
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
-        
-        print("Notification scheduled: Interval in sec: \(intervalSeconds), ID: \(id)")
+        var msg = [String: Any]()
+        msg[LoggerConstants.loggerExtraAlarmId] = id
+        msg[LoggerConstants.loggerExtraAlarmTimestamp] = getUnixTimeMillisFromDateComponent(dateComponents)
+        msg[LoggerConstants.loggerTranslatedTimestamp] = translateUnixTimestamp(timeSeconds: getUnixTimeSecondsFromDateComponent(dateComponents))
+        Logger.instance.log(tag: LoggerConstants.loggerActionAlarmSet, message: msg)
     }
     
     func cancelNotificationsById(alarmId: String) {
@@ -40,14 +32,21 @@ class NotificationManager {
             let notificationId = "\(alarmId)_\(i)"
             notificationIds.append(notificationId)
         }
-        print("canceling notifications: \(notificationIds)")
+        
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
+        
+        print("canceling notifications: \(notificationIds)")
+        var msg = [String: Any]()
+        msg[LoggerConstants.loggerExtraAlarmId] = alarmId
+        Logger.instance.log(tag: LoggerConstants.loggerActionAlarmCancel, message: msg)
     }
     
     func cancelAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        
+        Logger.instance.log(tag: LoggerConstants.loggerActionAlarmKillAll, message: [String: Any]())
     }
 }
 

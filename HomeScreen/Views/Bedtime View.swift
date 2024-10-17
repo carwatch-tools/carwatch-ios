@@ -45,6 +45,7 @@ struct BedtimeView: View {
             }
             .padding(.bottom)
             Button(alarmVM.isDarkModeOn ? "LIGHTS ON!" : "LIGHTS OUT!") {
+                Logger.instance.log(tag: alarmVM.isDarkModeOn ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
                 alarmVM.isDarkModeOn.toggle()
             }
             .buttonStyle(.borderedProminent)

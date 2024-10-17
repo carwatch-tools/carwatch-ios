@@ -68,6 +68,12 @@ class StudyDataViewModel : ObservableObject {
         
         studyData = StudyData(isValid: true, studyName: studyName, salivaDistancesString: salivaDistances, salivaTimesString: salivaTimes, startSample: startSample, studyDays: studyDays, numParticipants: numParticipants, hasEveningSample: hasEveningSample, shareEmailAdress: shareEmailAddress, isCheckDuplicatesEnabled: isCheckDuplicatesEnabled, participantId: participantId)
         print("parsed study data \(studyData)")
+        if !isParticipantIdRequired(){
+            logDeviceProperties()
+            logAppMetadata()
+            logStudyData(studyData: studyData)
+            logParticipantId(participantId: participantId)
+        }
     }
     
     private func getStringProperty(_ key: String, isMandatory: Bool = true) -> String {

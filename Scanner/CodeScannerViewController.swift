@@ -90,6 +90,8 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         DispatchQueue.global(qos: .userInteractive).async {
             self.captureSession.startRunning()
         }
+        
+        Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanInit, message:[String: Any]())
     }
     
     private func addRectOfInterest(_ metadataOutput: AVCaptureMetadataOutput) {

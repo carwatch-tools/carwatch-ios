@@ -39,12 +39,28 @@ struct ScannerView: View {
     func validateScanResult(result: String) -> Bool {
         switch codeType {
         case .ean8:
-            // TODO
+            // TODO: add explanation alert & validation
+            //
+            // Duplicate Barcode:
+            // var msg = [String: Any]()
+            // msg[LoggerConstants.loggerExtraBarcodeValue] = result
+            // msg[LoggerConstants.loggerExtraOtherBarcodes] = scannedBarcodes
+            // Logger.instance.log(tag: LoggerConstants.loggerActionDuplicateBarcodeScanned, message: msg)
+            // Invalid barcode
+            // var msg = [String: Any]()
+            // msg[LoggerConstants.loggerExtraBarcodeValue] = result
+            // Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
             return true
         case .qr:
             studyDataVM.parseQrCodeData(result)
-            // TODO: add explanation alert
-            return studyDataVM.studyData.isValid
+            let isValid = studyDataVM.studyData.isValid
+            if !isValid {
+                // TODO: add explanation alert
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraBarcodeValue] = result
+                Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
+            }
+            return isValid
         }
     }
     
@@ -52,11 +68,24 @@ struct ScannerView: View {
         switch result {
         case .success(let result):
             print("scan successful. result: \(result)")
+
             scanResult = result
             isSuccessful = true
             switch codeType {
             case .ean8:
                 alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
+                
+                // TODO: fix this
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraAlarmId] = result
+                msg[LoggerConstants.loggerExtraSalivaId] = result
+                msg[LoggerConstants.loggerExtraBarcodeValue] = result
+                msg[LoggerConstants.loggerExtraScannedDay] = result
+                msg[LoggerConstants.loggerExtraExpectedDay] = result
+                msg[LoggerConstants.loggerExtraScannedSample] = result
+                msg[LoggerConstants.loggerExtraExpectedSample] = result
+                Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)
+                
                 // reset app delegate status
                 appDelegate.openedFromNotification = false
             case .qr:

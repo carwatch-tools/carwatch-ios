@@ -31,6 +31,11 @@ struct ParticipantIdView: View {
                 studyDataVM.studyData.participantId = participantId
                 if studyDataVM.isParticipantIdRequired() {
                     showAlert = true
+                } else {
+                    logDeviceProperties()
+                    logAppMetadata()
+                    logParticipantId(participantId: participantId)
+                    logStudyData(studyData: studyDataVM.studyData)
                 }
             }
             .buttonStyle(.borderedProminent)

@@ -150,6 +150,10 @@ class AlarmViewModel : ObservableObject {
                 return false
             }
         }
+        
+        var msg = [String: Any]()
+        msg[LoggerConstants.loggerExtraDayCounter] = studyDayCounter
+        Logger.instance.log(tag: LoggerConstants.loggerActionDayFinished, message: msg)
         return true
     }
     
@@ -343,6 +347,10 @@ class AlarmViewModel : ObservableObject {
                 } else {
                     modifyAlarmById(alarm: alarm.setTriggered())
                 }
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
+                msg[LoggerConstants.loggerExtraSalivaId] = alarm.salivaId
+                Logger.instance.log(tag: LoggerConstants.loggerActionAlarmReceived, message: msg)
             }
         }
     }

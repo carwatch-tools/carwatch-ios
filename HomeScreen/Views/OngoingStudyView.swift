@@ -131,13 +131,6 @@ struct OngoingStudyView: View {
         alarmVM.hasEveningSample = studyDataVM.studyData.hasEveningSample
         initialAlarmTime = alarmVM.getInitialAlarm().time
         Logger.instance.setStudyData(studyName: studyDataVM.studyData.studyName, participantId: studyDataVM.studyData.participantId)
-        // Create a dictionary to represent JSON
-        var msg = [String: Any]()
-        msg["property1"] = true
-        msg["property2"] = "a string"
-        msg["property3"] = [1, 2, 3, 4]
-        msg["property3"] = 100
-        Logger.instance.log(tag: "test", message: msg)
     }
     
     func updateTimedAlarms() {
