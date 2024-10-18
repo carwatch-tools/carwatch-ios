@@ -2,7 +2,7 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var timedAlarms: [Alarm]  = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false, salivaId: -1)]  {
+    @Published var timedAlarms: [Alarm]  = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)]  {
         didSet {
             updateTimedAlarmActivity()
             saveTimedAlarms()
@@ -93,7 +93,7 @@ class AlarmViewModel : ObservableObject {
         studyDayCounter += 1
     }
     
-    func getAlarmById(alarmId: String) -> Alarm? {
+    func getAlarmById(alarmId: Int) -> Alarm? {
         if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarmId }) {
             return timedAlarms[alarmIdx]
         }
@@ -197,7 +197,7 @@ class AlarmViewModel : ObservableObject {
         }
     }
     
-    func setCurrentAlarmScanned(alarmId: String? = nil) {
+    func setCurrentAlarmScanned(alarmId: Int? = nil) {
         print("trying to set Alarm scanned")
         var alarm: Alarm?
         switch alarmId {
@@ -228,7 +228,7 @@ class AlarmViewModel : ObservableObject {
         isEveningScanned = false
         // schedule alarms for the next day after all scans for one day were finished
         for alarm in timedAlarms {
-            modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, salivaId: alarm.salivaId, time: alarm.time))
+            modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, time: alarm.time))
         }
         updateAlarmTime(time: getInitialAlarm().time)
     }
@@ -311,9 +311,8 @@ class AlarmViewModel : ObservableObject {
             // if timed alarms is set for the first time -> create entire array
             var updatedTimedAlarms = [Alarm]()
             for (index, interval) in timeIntervals.enumerated() {
-                let id = index == 0 ? AlarmConstants.initialAlarmId : "\(AlarmConstants.timedAlarmId)_\(index)"
                 let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
-                updatedTimedAlarms.append(Alarm(id: id, isActive: getInitialAlarm().isActive, salivaId: index, time: newAlarmTime))
+                updatedTimedAlarms.append(Alarm(id: index, isActive: getInitialAlarm().isActive, time: newAlarmTime))
                 previousAlarmTime = newAlarmTime
             }
             timedAlarms = updatedTimedAlarms
@@ -323,7 +322,7 @@ class AlarmViewModel : ObservableObject {
             for (index, interval) in timeIntervals.enumerated() {
                 let currentAlarm = timedAlarms[index]
                 let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
-                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, salivaId: currentAlarm.salivaId, time: newAlarmTime)
+                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, time: newAlarmTime)
                 previousAlarmTime = newAlarmTime
             }
         }
@@ -349,7 +348,6 @@ class AlarmViewModel : ObservableObject {
                 }
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
-                msg[LoggerConstants.loggerExtraSalivaId] = alarm.salivaId
                 Logger.instance.log(tag: LoggerConstants.loggerActionAlarmReceived, message: msg)
             }
         }

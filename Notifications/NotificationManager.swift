@@ -26,7 +26,7 @@ class NotificationManager {
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmSet, message: msg)
     }
     
-    func cancelNotificationsById(alarmId: String) {
+    func cancelNotificationsById(alarmId: Int) {
         var notificationIds = [String]()
         for i in 0...NotificationConstants.numberOfSubsequentNotifications-1 {
             let notificationId = "\(alarmId)_\(i)"

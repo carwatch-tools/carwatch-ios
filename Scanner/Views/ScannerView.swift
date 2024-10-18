@@ -7,7 +7,7 @@ struct ScannerView: View {
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     
     @Binding var isPresented: Bool
-    @Binding var alarmId: String?
+    @Binding var alarmId: Int?
     @State var isSuccessful: Bool = false
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
@@ -51,7 +51,10 @@ struct ScannerView: View {
             
             // check if barcode is valid
             if let (participantId, dayId, salivaId) = parseBarcodeScanResult(result) {
+                print("checking if barcode is valid")
+                print("\(participantId), \(dayId), \(salivaId)")
                 if(participantId <= studyDataVM.studyData.numParticipants && dayId <= studyDataVM.studyData.studyDays && salivaId <= studyDataVM.studyData.numSamples) {
+                    print("barcode is valid")
                     return true
                 }
             }
@@ -78,40 +81,11 @@ struct ScannerView: View {
         switch result {
         case .success(let result):
             print("scan successful. result: \(result)")
-            
             scanResult = result
             isSuccessful = true
             switch codeType {
             case .ean8:
-                if let (_, scannedDayId, scannedSalivaId) = parseBarcodeScanResult(result) {
-                    let samplePrefix = studyDataVM.studyData.startSample.prefix(1)
-                    if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst())
-                    {
-                        let eveningSampleIndex = studyDataVM.studyData.hasEveningSample ? studyDataVM.studyData.numSamples - 1 + startIndex : -1
-                        let salivaId = alarmId == AlarmConstants.eveningAlarmId ? eveningSampleIndex : alarmId + startIndex
-                        let salivaDayId = alarmVM.studyDayCounter * 100 + salivaId
-                        let scannedSample = "\(samplePrefix)\(scannedSalivaId == eveningSampleIndex ? AlarmConstants.eveningAlarmLoggerPrefix : String(scannedSalivaId))"
-                        let expectedSample = "\(samplePrefix)\(alarmId == AlarmConstants.eveningAlarmId ? AlarmConstants.eveningAlarmLoggerPrefix : alarmId + startIndex)"
-                        
-                        var msg = [String: Any]()
-                        msg[LoggerConstants.loggerExtraAlarmId] = alarmId // TODO: does this work?
-                        msg[LoggerConstants.loggerExtraSalivaId] = salivaDayId
-                        msg[LoggerConstants.loggerExtraBarcodeValue] = result
-                        msg[LoggerConstants.loggerExtraScannedDay] = scannedDayId
-                        msg[LoggerConstants.loggerExtraExpectedDay] = alarmVM.numStudyDays
-                        msg[LoggerConstants.loggerExtraScannedSample] = scannedSample
-                        msg[LoggerConstants.loggerExtraExpectedSample] = expectedSample
-                        Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)
-                    }
-                }
-                let scannedDay = result
-                alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
-                
-                
-                
-                
-                // reset app delegate status
-                appDelegate.openedFromNotification = false
+                handleSuccessfulEanScan()
             case .qr:
                 sessionVM.startTutorial()
             }
@@ -129,11 +103,49 @@ struct ScannerView: View {
         }
         return nil
     }
+    
+    private func handleSuccessfulEanScan(){
+        logEanScanData()
+        alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
+        // reset app delegate status
+        appDelegate.openedFromNotification = false
+    }
+    
+    private func logEanScanData(){
+        if let (_, scannedDayId, scannedSalivaId) = parseBarcodeScanResult(scanResult) {
+            let samplePrefix = studyDataVM.studyData.startSample.prefix(1)
+            if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst())
+            {
+                if alarmId == nil {
+                    if let alarm = alarmVM.getNextUpcomingAlarm(){
+                        alarmId = alarm.id
+                    } else {
+                        alarmId = -1
+                    }
+                }
+                let eveningSampleIndex = studyDataVM.studyData.hasEveningSample ? studyDataVM.studyData.numSamples - 1 + startIndex : -1
+                let salivaId = alarmId == AlarmConstants.eveningAlarmId ? eveningSampleIndex : alarmId! + startIndex
+                let salivaDayId = alarmVM.studyDayCounter * 100 + salivaId
+                let scannedSample = "\(samplePrefix)\(scannedSalivaId == eveningSampleIndex ? AlarmConstants.eveningAlarmLoggerPrefix : String(scannedSalivaId))"
+                let expectedSample = "\(samplePrefix)\(alarmId == AlarmConstants.eveningAlarmId ? AlarmConstants.eveningAlarmLoggerPrefix : String(alarmId! + startIndex))"
+                
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraAlarmId] = alarmId // TODO: does this work?
+                msg[LoggerConstants.loggerExtraSalivaId] = salivaDayId
+                msg[LoggerConstants.loggerExtraBarcodeValue] = scanResult
+                msg[LoggerConstants.loggerExtraScannedDay] = scannedDayId
+                msg[LoggerConstants.loggerExtraExpectedDay] = alarmVM.numStudyDays
+                msg[LoggerConstants.loggerExtraScannedSample] = scannedSample
+                msg[LoggerConstants.loggerExtraExpectedSample] = expectedSample
+                Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)
+            }
+        }
+    }
 }
 
 #Preview {
     @State var isPresented = true
-    @State var currentAlarmId: String? = nil
+    @State var currentAlarmId: Int? = 0
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()

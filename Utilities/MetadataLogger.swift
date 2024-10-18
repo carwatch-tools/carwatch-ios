@@ -9,6 +9,7 @@ func logDeviceProperties() {
     msg[LoggerConstants.loggerExtraPhoneVersionSdkLevel] = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
     msg[LoggerConstants.loggerExtraPhoneVersionRelease] = device.systemVersion
     Logger.instance.log(tag: LoggerConstants.loggerActionAppMetadata, message: msg)
+
 }
 
 func logAppMetadata() {

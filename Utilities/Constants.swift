@@ -20,9 +20,9 @@ struct NotificationConstants {
 }
 
 struct AlarmConstants {
-    static let initialAlarmId = "initial"
+    static let initialAlarmId = 0
     static let timedAlarmId = "timed"
-    static let eveningAlarmId = "evening"
+    static let eveningAlarmId = 815
     
     static let eveningAlarmLoggerPrefix = "A"
 }

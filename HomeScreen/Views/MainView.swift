@@ -7,7 +7,7 @@ struct MainView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     
     @State var isQrCodeScannerPresented = false
-    @State var currentAlarmId: String? = nil
+    @State var currentAlarmId: Int? = nil
     
     var body: some View {
         

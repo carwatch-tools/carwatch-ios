@@ -11,7 +11,7 @@ struct AlarmView: View {
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
-    @Binding var currentAlarmId: String?
+    @Binding var currentAlarmId: Int?
     
     @State private var showToast: Bool = false
     @State private var showAlert: Bool = false
@@ -60,7 +60,7 @@ struct AlarmView: View {
                     ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
                         index, alarm in
                         HStack{
-                            Text("S\(alarm.salivaId):")
+                            Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
                                 .font(.system(size: StyleConstants.explanationFontSize))
                             Toggle("", isOn: Binding<Bool>(
                                 get: { alarmVM.timedAlarmActivity[index] },
@@ -172,7 +172,7 @@ struct AlarmView: View {
 
 #Preview {
     @State var isScannerPresented: Bool = false
-    @State var currentAlarmId: String? = nil
+    @State var currentAlarmId: Int? = nil
     @State var initialAlarmTime = Date()
     let avm = AlarmViewModel()
     

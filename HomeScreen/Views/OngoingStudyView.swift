@@ -9,7 +9,7 @@ struct OngoingStudyView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     
     @State var isBarcodeScannerPresented = false
-    @State var currentAlarmId: String? = nil
+    @State var currentAlarmId: Int? = nil
     @State var initialAlarmTime: Date = getDateTomorrowMorning()
     
     @State private var selectedTab = 0

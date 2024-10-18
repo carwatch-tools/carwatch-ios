@@ -26,8 +26,8 @@ struct StudyData : Codable {
         self.hasEveningSample = hasEveningSample
         self.shareEmailAdress = shareEmailAdress
         self.isCheckDuplicatesEnabled = isCheckDuplicatesEnabled
-        self.numSamples = calculateNumSamples()
-        self.eveningSampleId = calculateEveningSampleId()
+        self.numSamples = StudyData.calculateNumSamples(hasEvening: hasEveningSample, salivaDistances: salivaDistances, salivaTimes: salivaTimes)
+        self.eveningSampleId = StudyData.calculateEveningSampleId(hasEvening: hasEveningSample, numSamples: numSamples)
     }
     
     init(isValid: Bool, studyName: String, salivaDistances: [Int], salivaTimes: [Int], startSample: String, studyDays: Int, numParticipants: Int, hasEveningSample: Bool, shareEmailAdress: String, isCheckDuplicatesEnabled: Bool, participantId: String) {
@@ -42,8 +42,8 @@ struct StudyData : Codable {
         self.shareEmailAdress = shareEmailAdress
         self.isCheckDuplicatesEnabled = isCheckDuplicatesEnabled
         self.participantId = participantId
-        self.numSamples = calculateNumSamples()
-        self.eveningSampleId = calculateEveningSampleId()
+        self.numSamples = StudyData.calculateNumSamples(hasEvening: hasEveningSample, salivaDistances: salivaDistances, salivaTimes: salivaTimes)
+        self.eveningSampleId = StudyData.calculateEveningSampleId(hasEvening: hasEveningSample, numSamples: numSamples)
     }
     
     func setInvalid() -> StudyData {
@@ -69,16 +69,16 @@ struct StudyData : Codable {
         return [Int]()
     }
     
-    private func calculateNumSamples() -> Int {
-        let numEveningSamples = hasEveningSample ? 1 : 0
+    static private func calculateNumSamples(hasEvening: Bool, salivaDistances: [Int], salivaTimes: [Int]) -> Int {
+        let numEveningSamples = hasEvening ? 1 : 0
         let numMorningSamples = salivaDistances.count
         let numFixedSamples = salivaTimes.count
         let totalNumSamples = numFixedSamples + numMorningSamples + numEveningSamples
         return totalNumSamples
     }
     
-    private func calculateEveningSampleId() -> Int {
-        return hasEveningSample ? numSamples - 1 : -1
+    static private func calculateEveningSampleId(hasEvening: Bool, numSamples: Int) -> Int {
+        return hasEvening ? numSamples - 1 : -1
     }
 }
 

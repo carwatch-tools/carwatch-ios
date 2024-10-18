@@ -9,7 +9,7 @@ struct BedtimeView: View {
     @State var toastType: NotificationConstants.BedtimeToastType = .feedbackToast
 
     @State var isBarcodeScannerPresented : Bool = false
-    @State var alarmId : String? = AlarmConstants.eveningAlarmId
+    @State var alarmId : Int? = AlarmConstants.eveningAlarmId
 
     var body: some View {
         VStack {
