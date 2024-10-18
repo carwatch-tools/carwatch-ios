@@ -40,17 +40,19 @@ struct ScannerView: View {
         switch codeType {
             // TODO: add explanation alerts for invalid cases
         case .ean8:
-            if sessionVM.scannedBarcodes.contains(result) {
+            // remove check digit
+            let barcodeData = String(result.dropLast(1))
+            if sessionVM.scannedBarcodes.contains(barcodeData) {
                 // duplicate Barcode
                 var msg = [String: Any]()
-                msg[LoggerConstants.loggerExtraBarcodeValue] = result
+                msg[LoggerConstants.loggerExtraBarcodeValue] = barcodeData
                 msg[LoggerConstants.loggerExtraOtherBarcodes] = sessionVM.scannedBarcodes
                 Logger.instance.log(tag: LoggerConstants.loggerActionDuplicateBarcodeScanned, message: msg)
                 return false
             }
             
             // check if barcode is valid
-            if let (participantId, dayId, salivaId) = parseBarcodeScanResult(result) {
+            if let (participantId, dayId, salivaId) = parseBarcodeScanResult(barcodeData) {
                 print("checking if barcode is valid")
                 print("\(participantId), \(dayId), \(salivaId)")
                 if(participantId <= studyDataVM.studyData.numParticipants && dayId <= studyDataVM.studyData.studyDays && salivaId <= studyDataVM.studyData.numSamples) {
@@ -61,7 +63,7 @@ struct ScannerView: View {
             
             // invalid barcode
             var msg = [String: Any]()
-            msg[LoggerConstants.loggerExtraBarcodeValue] = result
+            msg[LoggerConstants.loggerExtraBarcodeValue] = barcodeData
             Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
             return false
             
@@ -81,12 +83,14 @@ struct ScannerView: View {
         switch result {
         case .success(let result):
             print("scan successful. result: \(result)")
-            scanResult = result
             isSuccessful = true
             switch codeType {
             case .ean8:
+                // remove check digit
+                scanResult = String(result.dropLast(1))
                 handleSuccessfulEanScan()
             case .qr:
+                scanResult = result
                 sessionVM.startTutorial()
             }
         case .failure(let error):
