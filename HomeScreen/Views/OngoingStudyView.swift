@@ -50,6 +50,7 @@ struct OngoingStudyView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType)
+                            .environmentObject(alarmVM)
                     }
                 }
                 .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {

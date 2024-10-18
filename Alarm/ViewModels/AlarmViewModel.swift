@@ -404,4 +404,13 @@ class AlarmViewModel : ObservableObject {
         print("Study finished? Study day counter: \(studyDayCounter)")
         return isDayFinished() && studyDayCounter == numStudyDays
     }
+    
+    func resetAlarmDataForNewUser() {
+        timedAlarms = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)]
+        isEveningScanned = false
+        studyDayCounter = 0
+        isDarkModeOn = false
+        dateOfLastInitialAlarm = Date.distantPast
+        timedAlarmActivity = [false]
+    }
 }

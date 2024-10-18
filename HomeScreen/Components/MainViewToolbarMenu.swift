@@ -6,7 +6,8 @@ import MessageUI
 struct MainViewToolbarMenu: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-    
+    @EnvironmentObject var alarmVM: AlarmViewModel
+
     @Binding var showAppInfoDialog : Bool
     @Binding var appVersion: String?
     @Binding var showToast: Bool
@@ -55,6 +56,7 @@ struct MainViewToolbarMenu: View {
                     }
                 }
                 Button("Reregister"){
+                    alarmVM.resetAlarmDataForNewUser()
                     sessionVM.reregister()
                 }
             }
