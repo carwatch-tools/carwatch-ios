@@ -5,7 +5,7 @@ struct ScannerView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-
+    
     @Binding var isPresented: Bool
     @Binding var alarmId: String?
     @State var isSuccessful: Bool = false
@@ -38,24 +38,34 @@ struct ScannerView: View {
     
     func validateScanResult(result: String) -> Bool {
         switch codeType {
+            // TODO: add explanation alerts for invalid cases
         case .ean8:
-            // TODO: add explanation alert & validation
-            //
-            // Duplicate Barcode:
-            // var msg = [String: Any]()
-            // msg[LoggerConstants.loggerExtraBarcodeValue] = result
-            // msg[LoggerConstants.loggerExtraOtherBarcodes] = scannedBarcodes
-            // Logger.instance.log(tag: LoggerConstants.loggerActionDuplicateBarcodeScanned, message: msg)
-            // Invalid barcode
-            // var msg = [String: Any]()
-            // msg[LoggerConstants.loggerExtraBarcodeValue] = result
-            // Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
-            return true
+            if sessionVM.scannedBarcodes.contains(result) {
+                // duplicate Barcode
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraBarcodeValue] = result
+                msg[LoggerConstants.loggerExtraOtherBarcodes] = sessionVM.scannedBarcodes
+                Logger.instance.log(tag: LoggerConstants.loggerActionDuplicateBarcodeScanned, message: msg)
+                return false
+            }
+            
+            // check if barcode is valid
+            if let (participantId, dayId, salivaId) = parseBarcodeScanResult(result) {
+                if(participantId <= studyDataVM.studyData.numParticipants && dayId <= studyDataVM.studyData.studyDays && salivaId <= studyDataVM.studyData.numSamples) {
+                    return true
+                }
+            }
+            
+            // invalid barcode
+            var msg = [String: Any]()
+            msg[LoggerConstants.loggerExtraBarcodeValue] = result
+            Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
+            return false
+            
         case .qr:
             studyDataVM.parseQrCodeData(result)
             let isValid = studyDataVM.studyData.isValid
             if !isValid {
-                // TODO: add explanation alert
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraBarcodeValue] = result
                 Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
@@ -68,23 +78,37 @@ struct ScannerView: View {
         switch result {
         case .success(let result):
             print("scan successful. result: \(result)")
-
+            
             scanResult = result
             isSuccessful = true
             switch codeType {
             case .ean8:
+                if let (_, scannedDayId, scannedSalivaId) = parseBarcodeScanResult(result) {
+                    let samplePrefix = studyDataVM.studyData.startSample.prefix(1)
+                    if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst())
+                    {
+                        let eveningSampleIndex = studyDataVM.studyData.hasEveningSample ? studyDataVM.studyData.numSamples - 1 + startIndex : -1
+                        let salivaId = alarmId == AlarmConstants.eveningAlarmId ? eveningSampleIndex : alarmId + startIndex
+                        let salivaDayId = alarmVM.studyDayCounter * 100 + salivaId
+                        let scannedSample = "\(samplePrefix)\(scannedSalivaId == eveningSampleIndex ? AlarmConstants.eveningAlarmLoggerPrefix : String(scannedSalivaId))"
+                        let expectedSample = "\(samplePrefix)\(alarmId == AlarmConstants.eveningAlarmId ? AlarmConstants.eveningAlarmLoggerPrefix : alarmId + startIndex)"
+                        
+                        var msg = [String: Any]()
+                        msg[LoggerConstants.loggerExtraAlarmId] = alarmId // TODO: does this work?
+                        msg[LoggerConstants.loggerExtraSalivaId] = salivaDayId
+                        msg[LoggerConstants.loggerExtraBarcodeValue] = result
+                        msg[LoggerConstants.loggerExtraScannedDay] = scannedDayId
+                        msg[LoggerConstants.loggerExtraExpectedDay] = alarmVM.numStudyDays
+                        msg[LoggerConstants.loggerExtraScannedSample] = scannedSample
+                        msg[LoggerConstants.loggerExtraExpectedSample] = expectedSample
+                        Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)
+                    }
+                }
+                let scannedDay = result
                 alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
                 
-                // TODO: fix this
-                var msg = [String: Any]()
-                msg[LoggerConstants.loggerExtraAlarmId] = result
-                msg[LoggerConstants.loggerExtraSalivaId] = result
-                msg[LoggerConstants.loggerExtraBarcodeValue] = result
-                msg[LoggerConstants.loggerExtraScannedDay] = result
-                msg[LoggerConstants.loggerExtraExpectedDay] = result
-                msg[LoggerConstants.loggerExtraScannedSample] = result
-                msg[LoggerConstants.loggerExtraExpectedSample] = result
-                Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)
+                
+                
                 
                 // reset app delegate status
                 appDelegate.openedFromNotification = false
@@ -95,6 +119,16 @@ struct ScannerView: View {
             print("Scanning failed: \(error.localizedDescription)")
         }
     }
+    
+    private func parseBarcodeScanResult(_ result: String) -> (Int, Int, Int)? {
+        if let barcodeValue = Int(result) {
+            let participantId = barcodeValue / 10000
+            let dayId = (barcodeValue / 100) % 100
+            let salivaId = barcodeValue % 100
+            return (participantId, dayId, salivaId)
+        }
+        return nil
+    }
 }
 
 #Preview {
@@ -103,7 +137,7 @@ struct ScannerView: View {
     @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
     @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()
-
+    
     return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
         .environmentObject(alarmViewModel)
         .environmentObject(sessionViewModel)

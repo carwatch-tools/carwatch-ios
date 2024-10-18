@@ -12,6 +12,8 @@ struct StudyData : Codable {
     var hasEveningSample: Bool
     var shareEmailAdress: String
     var isCheckDuplicatesEnabled: Bool
+    var numSamples: Int
+    var eveningSampleId: Int
     
     init(isValid: Bool, studyName: String, salivaDistancesString: String, salivaTimesString: String, startSample: String, studyDays: Int, numParticipants: Int, hasEveningSample: Bool, shareEmailAdress: String, isCheckDuplicatesEnabled: Bool, participantId: String = "") {
         self.isValid = isValid
@@ -24,6 +26,8 @@ struct StudyData : Codable {
         self.hasEveningSample = hasEveningSample
         self.shareEmailAdress = shareEmailAdress
         self.isCheckDuplicatesEnabled = isCheckDuplicatesEnabled
+        self.numSamples = calculateNumSamples()
+        self.eveningSampleId = calculateEveningSampleId()
     }
     
     init(isValid: Bool, studyName: String, salivaDistances: [Int], salivaTimes: [Int], startSample: String, studyDays: Int, numParticipants: Int, hasEveningSample: Bool, shareEmailAdress: String, isCheckDuplicatesEnabled: Bool, participantId: String) {
@@ -38,6 +42,8 @@ struct StudyData : Codable {
         self.shareEmailAdress = shareEmailAdress
         self.isCheckDuplicatesEnabled = isCheckDuplicatesEnabled
         self.participantId = participantId
+        self.numSamples = calculateNumSamples()
+        self.eveningSampleId = calculateEveningSampleId()
     }
     
     func setInvalid() -> StudyData {
@@ -52,15 +58,27 @@ struct StudyData : Codable {
         if salivaDistancesString.isEmpty {
             return [Int]()
         }
-
+        
         let splitList = salivaDistancesString.split(separator: Character(QrParserConstants.listSeparator))
         let output = splitList.compactMap { Int($0) }
-            return output
+        return output
     }
     
     static private func parseSalivaTimes(salivaTimesString: String) -> [Int]{
         // TODO: add time- not interval-based functionality
         return [Int]()
+    }
+    
+    private func calculateNumSamples() -> Int {
+        let numEveningSamples = hasEveningSample ? 1 : 0
+        let numMorningSamples = salivaDistances.count
+        let numFixedSamples = salivaTimes.count
+        let totalNumSamples = numFixedSamples + numMorningSamples + numEveningSamples
+        return totalNumSamples
+    }
+    
+    private func calculateEveningSampleId() -> Int {
+        return hasEveningSample ? numSamples - 1 : -1
     }
 }
 

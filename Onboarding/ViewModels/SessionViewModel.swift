@@ -16,9 +16,15 @@ class SessionViewModel : ObservableObject {
             saveRegistrationStatus()
         }
     }
+    @Published var scannedBarcodes = [String]() {
+        didSet {
+            saveScannedBarcodes()
+        }
+    }
     
     let currentStateDataKey = "currentState"
     let registrationStateDataKey = "isReregistration"
+    let scannedBarcodesKey = "scannedBarcodes"
     
     init() {
         getSessionData()
@@ -34,6 +40,10 @@ class SessionViewModel : ObservableObject {
     func saveRegistrationStatus(){
         UserDefaults.standard.set(isReregistration, forKey: registrationStateDataKey)
     }
+
+    func saveScannedBarcodes(){
+        UserDefaults.standard.set(scannedBarcodes, forKey: scannedBarcodesKey)
+    }
     
     func getSessionData() {
         isReregistration = UserDefaults.standard.bool(forKey: registrationStateDataKey)
@@ -44,6 +54,7 @@ class SessionViewModel : ObservableObject {
             return
         }
         currentState = savedState
+        scannedBarcodes = UserDefaults.standard.stringArray(forKey: scannedBarcodesKey) ?? [String]()
     }
     
     func getCurrentState() -> CurrentState {
@@ -53,6 +64,7 @@ class SessionViewModel : ObservableObject {
     func reregister() {
         currentState = .registration
         isReregistration = true
+        scannedBarcodes = [String]()
     }
     
     func startStudy() {

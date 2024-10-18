@@ -145,7 +145,7 @@ class AlarmViewModel : ObservableObject {
             return false
         }
         for alarm in timedAlarms {
-            // TODO should all samples be scanned or only active samples be scanned?
+            // TODO should all samples be scanned or only active samples be scanned to consider a day finished?
             if !alarm.isScanned {
                 return false
             }
