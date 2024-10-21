@@ -17,13 +17,6 @@ class NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
-        
-        print("Notification scheduled - Day: \(day), Time: \(hour):\(minute), ID: \(id)")
-        var msg = [String: Any]()
-        msg[LoggerConstants.loggerExtraAlarmId] = id
-        msg[LoggerConstants.loggerExtraAlarmTimestamp] = getUnixTimeMillisFromDateComponent(dateComponents)
-        msg[LoggerConstants.loggerTranslatedTimestamp] = translateUnixTimestamp(timeSeconds: getUnixTimeSecondsFromDateComponent(dateComponents))
-        Logger.instance.log(tag: LoggerConstants.loggerActionAlarmSet, message: msg)
     }
     
     func cancelNotificationsById(alarmId: Int) {

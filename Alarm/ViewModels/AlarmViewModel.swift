@@ -165,6 +165,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func setInitialAlarmActivity(isActive: Bool) {
+        /// called when initial alarm activity is toggled
         setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
         print("set init alarm activity")
         updateAlarmTime(time: getInitialAlarm().time)
@@ -225,6 +226,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func resetAlarmData() {
+        /// called after a day is finished
         isEveningScanned = false
         // schedule alarms for the next day after all scans for one day were finished
         for alarm in timedAlarms {
@@ -384,6 +386,7 @@ class AlarmViewModel : ObservableObject {
         // schedule notifications for all but the intial alarm
         for (index, alarm) in timedAlarms.enumerated() where index > 0 {
             scheduleAlarmWithBackupNotifications(alarm)
+            logAlarmScheduled(alarm)
         }
     }
     
@@ -398,6 +401,15 @@ class AlarmViewModel : ObservableObject {
             // set notification for next day at the given alarm time
             NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", day: day, hour: hour, minute: minute)
         }
+    }
+    
+    func logAlarmScheduled(_ alarm: Alarm){
+        print("logging alarm \(alarm)")
+        var msg = [String: Any]()
+        msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
+        msg[LoggerConstants.loggerExtraAlarmTimestamp] = getUnixTimeMillisFromDate(alarm.time)
+        msg[LoggerConstants.loggerTranslatedTimestamp] = formatDateForLogs(alarm.time)
+        Logger.instance.log(tag: LoggerConstants.loggerActionAlarmSet, message: msg)
     }
     
     func isStudyFinished() -> Bool {

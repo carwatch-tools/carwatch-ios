@@ -15,7 +15,7 @@ class Logger {
     }
     
     func log(tag: String, message: [String:Any]) {
-        let timestamp = Date().timeIntervalSince1970
+        let timestamp = Int(Date().timeIntervalSince1970)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
         let humanReadableTime = dateFormatter.string(from: Date())
