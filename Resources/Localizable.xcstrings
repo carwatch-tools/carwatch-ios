@@ -100,6 +100,9 @@
         }
       }
     },
+    "Duplicate barcode!" : {
+
+    },
     "Expert Actions" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -160,6 +163,9 @@
       }
     },
     "Input invalid! Please enter a valid participant ID!" : {
+
+    },
+    "Invalid barcode!" : {
 
     },
     "Kill all Notifications" : {
@@ -300,9 +306,6 @@
     "Scan now" : {
 
     },
-    "Scan succesful! Barcode data: %@" : {
-
-    },
     "Schedule" : {
 
     },
@@ -337,7 +340,13 @@
     "Take sample" : {
 
     },
+    "The barcode was scanned successfully!" : {
+
+    },
     "This alarm is required for the study. Are you sure to cancel this alarm?" : {
+
+    },
+    "This barcode was already scanned before. Please check and make sure to use a new salivette." : {
 
     },
     "This sample is scheduled for later. Are you sure you want to scan the sample now?" : {

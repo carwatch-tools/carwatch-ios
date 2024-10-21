@@ -8,7 +8,8 @@ struct ScannerView: View {
     
     @Binding var isPresented: Bool
     @Binding var alarmId: Int?
-    @State var isSuccessful: Bool = false
+    @State var showAlert: Bool = false
+    @State var alertType: ScannerConstants.AlertType = .invalid
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
     
@@ -23,27 +24,50 @@ struct ScannerView: View {
                 ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
             }
         }
-        .alert(isPresented: $isSuccessful) {
-            Alert(title: Text("Scan succesful! Barcode data: \(scanResult)"),
-                  dismissButton: Alert.Button.default(
-                    Text("OK"), action: {
-                        // go back to main view
-                        isSuccessful = false
-                        isPresented = false
-                    }
-                  )
-            )
+        .alert(isPresented: $showAlert) {
+            switch alertType {
+            case .success:
+                return Alert(title: Text("The barcode was scanned successfully!"),
+                             dismissButton: Alert.Button.default(
+                                Text("OK"), action: {
+                                    // go back to main view
+                                    showAlert = false
+                                    isPresented = false
+                                }
+                             )
+                )
+            case .invalid:
+                return Alert(title: Text("Invalid barcode!"),
+                             dismissButton: Alert.Button.default(
+                                Text("OK"), action: {
+                                    // go back to main view
+                                    showAlert = false
+                                }
+                             )
+                )
+            case .duplicate:
+                return Alert(title: Text("Duplicate barcode!"), message: Text("This barcode was already scanned before. Please check and make sure to use a new salivette."),
+                             dismissButton: Alert.Button.default(
+                                Text("OK"), action: {
+                                    // go back to main view
+                                    showAlert = false
+                                }
+                             )
+                )
+            }
+            
         }
     }
     
     func validateScanResult(result: String) -> Bool {
         switch codeType {
-            // TODO: add explanation alerts for invalid cases
         case .ean8:
             // remove check digit
             let barcodeData = String(result.dropLast(1))
-            if sessionVM.scannedBarcodes.contains(barcodeData) {
+            if  studyDataVM.studyData.isCheckDuplicatesEnabled && sessionVM.scannedBarcodes.contains(barcodeData) {
                 // duplicate Barcode
+                alertType = .duplicate
+                showAlert = true
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraBarcodeValue] = barcodeData
                 msg[LoggerConstants.loggerExtraOtherBarcodes] = sessionVM.scannedBarcodes
@@ -62,6 +86,8 @@ struct ScannerView: View {
             }
             
             // invalid barcode
+            alertType = .invalid
+            showAlert = true
             var msg = [String: Any]()
             msg[LoggerConstants.loggerExtraBarcodeValue] = barcodeData
             Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
@@ -83,11 +109,13 @@ struct ScannerView: View {
         switch result {
         case .success(let result):
             print("scan successful. result: \(result)")
-            isSuccessful = true
+            alertType = .success
+            showAlert = true
             switch codeType {
             case .ean8:
                 // remove check digit
                 scanResult = String(result.dropLast(1))
+                sessionVM.scannedBarcodes.append(scanResult)
                 handleSuccessfulEanScan()
             case .qr:
                 scanResult = result
@@ -134,7 +162,7 @@ struct ScannerView: View {
                 let expectedSample = "\(samplePrefix)\(alarmId == AlarmConstants.eveningAlarmId ? AlarmConstants.eveningAlarmLoggerPrefix : String(alarmId! + startIndex))"
                 
                 var msg = [String: Any]()
-                msg[LoggerConstants.loggerExtraAlarmId] = alarmId // TODO: does this work?
+                msg[LoggerConstants.loggerExtraAlarmId] = alarmId
                 msg[LoggerConstants.loggerExtraSalivaId] = salivaDayId
                 msg[LoggerConstants.loggerExtraBarcodeValue] = scanResult
                 msg[LoggerConstants.loggerExtraScannedDay] = scannedDayId

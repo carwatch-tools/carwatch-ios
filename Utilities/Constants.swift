@@ -32,7 +32,7 @@ struct ScannerConstants {
         case ean8, qr
     }
     enum AlertType {
-        case success, invalid
+        case success, invalid, duplicate
     }
     static let overlayWidthFactor: CGFloat = 1.5
     static let barcodeWidthHeightRatio: CGFloat = 2
