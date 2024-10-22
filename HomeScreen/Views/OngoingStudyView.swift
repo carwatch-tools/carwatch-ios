@@ -130,6 +130,10 @@ struct OngoingStudyView: View {
         alarmVM.timeIntervals = studyDataVM.studyData.salivaDistances
         alarmVM.numStudyDays = studyDataVM.studyData.studyDays
         alarmVM.hasEveningSample = studyDataVM.studyData.hasEveningSample
+        if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst())
+        {
+            alarmVM.startSample = startIndex
+        }
         initialAlarmTime = alarmVM.getInitialAlarm().time
         Logger.instance.setStudyData(studyName: studyDataVM.studyData.studyName, participantId: studyDataVM.studyData.participantId)
     }

@@ -38,6 +38,7 @@ class AlarmViewModel : ObservableObject {
     @Published var timeIntervals: [Int] = [Int]()
     @Published var numStudyDays: Int = 0
     @Published var hasEveningSample: Bool = false
+    @Published var startSample: Int = 1
     
     let timedAlarmDataKey = "alarmsList"
     let isEveningScannedKey = "isEveningScanned"
@@ -398,8 +399,9 @@ class AlarmViewModel : ObservableObject {
                 return
             }
             let (day, hour, minute) = getDayHourMinuteFromTime(time: notificationTime)
+            let salivaId = "\(startSample + alarm.id)"
             // set notification for next day at the given alarm time
-            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", day: day, hour: hour, minute: minute)
+            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", salivaId: salivaId, day: day, hour: hour, minute: minute)
         }
     }
     

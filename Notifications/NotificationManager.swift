@@ -5,10 +5,9 @@ class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
     
-    func scheduleCalendarBasedNotification(id: String, day: Int,  hour: Int, minute: Int) {
+    func scheduleCalendarBasedNotification(id: String, salivaId: String, day: Int,  hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "This is a calendar-based notification"
-        content.subtitle = "Time: \(hour)\(minute), ID: \(id)"
+        content.title = "Please take saliva sample #\(salivaId)!"
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         var dateComponents = DateComponents()
         dateComponents.day = day
