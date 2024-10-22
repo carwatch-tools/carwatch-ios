@@ -2,8 +2,8 @@ import SwiftUI
 
 struct RegistrationView: View {
     
-    @EnvironmentObject var svm: SessionViewModel
-    @EnvironmentObject var pvm: PermissionDataViewModel
+    @EnvironmentObject var sessionVM: SessionViewModel
+    @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     
     @Binding var isScannerPresented: Bool
     @State var permissionButtonTapped: Bool = false
@@ -19,7 +19,7 @@ struct RegistrationView: View {
                     .font(.title.weight(.bold))
             }
             
-            if !svm.isReregistration {
+            if !sessionVM.isReregistration {
                 VStack {
                     Text("Unlock Features")
                         .font(.title.weight(.bold))
@@ -54,8 +54,8 @@ struct RegistrationView: View {
                         }
                     }
                     Button("Grant Permissions") {
-                        pvm.checkNotificationPermission()
-                        pvm.checkCameraPermission()
+                        permissionDataVM.checkNotificationPermission()
+                        permissionDataVM.checkCameraPermission()
                         permissionButtonTapped = true
                     }
                     .padding()

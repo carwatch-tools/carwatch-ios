@@ -42,11 +42,12 @@ struct MainView: View {
 }
 
 #Preview {
-    let pvm = PermissionDataViewModel()
-    let svm = SessionViewModel()
-    let sdvm = StudyDataViewModel()
+    let permissionDataVM = PermissionDataViewModel()
+    let sessionVM = SessionViewModel()
+    sessionVM.startStudy()
+    let sessionDataVM = StudyDataViewModel()
     
-    pvm.permissionData = pvm.permissionData.setCameraPermission(isGranted: true)
-    pvm.permissionData = pvm.permissionData.setNotificationPermission(isGranted: true)
-    return MainView().environmentObject(pvm).environmentObject(svm).environmentObject(sdvm).environmentObject(AppDelegate())
+    permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
+    permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
+    return MainView().environmentObject(permissionDataVM).environmentObject(sessionVM).environmentObject(sessionDataVM).environmentObject(AppDelegate())
 }

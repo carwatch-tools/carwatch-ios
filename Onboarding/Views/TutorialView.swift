@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TutorialView: View {
     
-    @EnvironmentObject var svm: SessionViewModel
+    @EnvironmentObject var sessionVM: SessionViewModel
     
     @State var pageIndex: Int = 0
     
@@ -23,13 +23,13 @@ struct TutorialView: View {
             .indexViewStyle(.page(backgroundDisplayMode: .always))
             if (pageIndex == titleTexts.count - 1) {
                 Button("Get Started") {
-                    svm.startStudy()
+                    sessionVM.startStudy()
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.bottom)
             } else {
                 Button("Skip") {
-                    svm.startStudy()
+                    sessionVM.startStudy()
                 }
                 .buttonStyle(.borderless)
                 .padding()

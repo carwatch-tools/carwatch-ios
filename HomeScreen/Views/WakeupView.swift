@@ -45,6 +45,7 @@ struct WakeupView: View {
                             alarmVM.setTimedAlarmActivity(index: index, isActive: true)
                         }
                         // update initial alarm time to now
+                        initialAlarmTime = Date()
                         alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
                         alarmVM.setInitialAlarmTriggered()
                         isScannerPresented = true
@@ -77,7 +78,7 @@ struct WakeupView: View {
     @State var initialAlarmTime = Date()
     @State var isScannerPresented = false
     
-    let avm = AlarmViewModel()
+    let alarmVM = AlarmViewModel()
 
-    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented).environmentObject(avm).environmentObject(StudyDataViewModel())
+    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented).environmentObject(alarmVM).environmentObject(StudyDataViewModel())
 }

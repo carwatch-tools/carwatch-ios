@@ -117,7 +117,7 @@ struct OngoingStudyView: View {
         }
         /*
          TODO: should the scanner be displayed if app was closed on barcode screen?
-         if avm.isScanRequired() {
+         if alarmVM.isScanRequired() {
          // no successful scan yet
          currentAlarmId = nil
          isScannerPresented = true
