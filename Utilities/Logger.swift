@@ -15,9 +15,9 @@ class Logger {
     }
     
     func log(tag: String, message: [String:Any]) {
-        let timestamp = Int(Date().timeIntervalSince1970)
+        let timestamp = Int(Date().timeIntervalSince1970 * 1000) // unix time in ms
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
+        dateFormatter.dateFormat = "EE MMM dd yyyy HH:mm:ss ZZZZ"
         let humanReadableTime = dateFormatter.string(from: Date())
         
         // Convert the message dictionary content to JSON data
