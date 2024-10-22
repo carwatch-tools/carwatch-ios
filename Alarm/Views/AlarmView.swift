@@ -173,8 +173,9 @@ struct AlarmView: View {
 #Preview {
     @State var isScannerPresented: Bool = false
     @State var currentAlarmId: Int? = nil
-    @State var initialAlarmTime = Date()
-    let avm = AlarmViewModel()
+    @State var initialAlarmTime = getDateTomorrowMorning()
+    let alarmVM = AlarmViewModel()
+    alarmVM.timedAlarms = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: true, isTriggered: false), Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: true), Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: false)]
     
-    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(avm).environmentObject(StudyDataViewModel())
+    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(alarmVM).environmentObject(StudyDataViewModel())
 }
