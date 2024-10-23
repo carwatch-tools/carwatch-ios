@@ -37,6 +37,7 @@ struct CARWatchApp: App {
 
 extension View {
     func onBackground(_ f: @escaping () -> Void) -> some View {
+        /// called everytime the app moves to the background
         self.onReceive(
             NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification),
             perform: { _ in f() }
@@ -44,6 +45,7 @@ extension View {
     }
     
     func onForeground(_ f: @escaping () -> Void) -> some View {
+        /// called everytime the app moves to the foreground
         self.onReceive(
             NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification),
             perform: { _ in f() }
