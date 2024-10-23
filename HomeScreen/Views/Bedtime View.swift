@@ -51,7 +51,6 @@ struct BedtimeView: View {
             .buttonStyle(.borderedProminent)
             .tint(Color.orange)
         }
-        // TODO: continue from here
         .sheet(isPresented: $isBarcodeScannerPresented) {
             ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $alarmId, codeType: .ean8)
                 .interactiveDismissDisabled()
