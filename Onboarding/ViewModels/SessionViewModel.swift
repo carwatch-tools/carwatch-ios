@@ -28,11 +28,9 @@ class SessionViewModel : ObservableObject {
     
     init() {
         getSessionData()
-        print("retrieved session data: \(currentState)")
     }
     
     func saveCurrentState() {
-        print("saved session data: \(currentState)")
         let rawStateValue = currentState.rawValue
         UserDefaults.standard.set(rawStateValue, forKey: currentStateDataKey)
     }

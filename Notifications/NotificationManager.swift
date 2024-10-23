@@ -28,7 +28,7 @@ class NotificationManager {
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
         
-        print("canceling notifications: \(notificationIds)")
+        print("Canceling notifications: \(notificationIds)")
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarmId
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmCancel, message: msg)

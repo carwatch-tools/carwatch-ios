@@ -77,10 +77,8 @@ struct ScannerView: View {
             
             // check if barcode is valid
             if let (participantId, dayId, salivaId) = parseBarcodeScanResult(barcodeData) {
-                print("checking if barcode is valid")
-                print("\(participantId), \(dayId), \(salivaId)")
                 if(participantId <= studyDataVM.studyData.numParticipants && dayId <= studyDataVM.studyData.studyDays && salivaId <= studyDataVM.studyData.numSamples) {
-                    print("barcode is valid")
+                    print("Barcode \(barcodeData) is valid")
                     return true
                 }
             }
@@ -91,6 +89,7 @@ struct ScannerView: View {
             var msg = [String: Any]()
             msg[LoggerConstants.loggerExtraBarcodeValue] = barcodeData
             Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
+            print("Barcode \(barcodeData) is invalid")
             return false
             
         case .qr:
@@ -101,6 +100,7 @@ struct ScannerView: View {
                 msg[LoggerConstants.loggerExtraBarcodeValue] = result
                 Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
             }
+            print("QR code valid: \(isValid)")
             return isValid
         }
     }
@@ -108,7 +108,7 @@ struct ScannerView: View {
     func handleScanResult(result: Result<String, ScanError>){
         switch result {
         case .success(let result):
-            print("scan successful. result: \(result)")
+            print("Scan successful with result: \(result)")
             alertType = .success
             showAlert = true
             switch codeType {
@@ -122,7 +122,7 @@ struct ScannerView: View {
                 sessionVM.startTutorial()
             }
         case .failure(let error):
-            print("Scanning failed: \(error.localizedDescription)")
+            print("Scan failed: \(error.localizedDescription)")
         }
     }
     

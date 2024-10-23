@@ -67,7 +67,7 @@ class StudyDataViewModel : ObservableObject {
         let participantId = getStringProperty(QrParserConstants.participantIdProperty,isMandatory: false)
         
         studyData = StudyData(isValid: true, studyName: studyName, salivaDistancesString: salivaDistances, salivaTimesString: salivaTimes, startSample: startSample, studyDays: studyDays, numParticipants: numParticipants, hasEveningSample: hasEveningSample, shareEmailAdress: shareEmailAddress, isCheckDuplicatesEnabled: isCheckDuplicatesEnabled, participantId: participantId)
-        print("parsed study data \(studyData)")
+        print("parsed study data: \(studyData)")
         if !isParticipantIdRequired(){
             logDeviceProperties()
             logAppMetadata()

@@ -57,7 +57,6 @@ class PermissionDataViewModel : ObservableObject {
                     break
                 default:
                     self.setNotificationPermission(isGranted: false)
-                    print(NotificationManager.instance.authorizationStatus.rawValue)
                     break
                 }
             }

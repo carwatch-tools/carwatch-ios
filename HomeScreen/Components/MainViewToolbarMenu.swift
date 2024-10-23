@@ -62,10 +62,8 @@ struct MainViewToolbarMenu: View {
             }
             
             Button("Info") {
-                print("clicked app info")
                 showAppInfoDialog = true
                 appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-                print(showAppInfoDialog)
             }
         } label: {
             Label("Menu", systemImage: "ellipsis.circle")
@@ -81,9 +79,7 @@ struct MainViewToolbarMenu: View {
                 Text("App version: \(appVersion ?? String(localized:"Unknown"))")
             }
         )
-        .sheet(isPresented: $showShareSheet, onDismiss: {
-            print("Dismiss")
-        }, content: {
+        .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
                 let subject = zipFileURL.lastPathComponent
                 if MFMailComposeViewController.canSendMail() {

@@ -8,7 +8,6 @@ class CameraManager : ObservableObject {
     func reloadCameraPermission() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         self.permissionGranted = status == .authorized ? true : false
-        print("permission status reloaded: \(self.permissionGranted)")
     }
     
     func requestPermission(completion: @escaping (Bool) -> ()) {

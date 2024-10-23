@@ -19,7 +19,7 @@ extension NotificationManager {
                 if let error = error {
                     print("Error during notification permission request: \(error)")
                 } else {
-                    print("Sucess granting notification")
+                    print("Sucess granting notification permission")
                 }
                 completion(true)
             }

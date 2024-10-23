@@ -70,7 +70,7 @@ struct OngoingStudyView: View {
                 
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
-                print("opened from notification")
+                print("App opened from notification")
                 updateAlarmStatus()
                 checkScannerStatus()
             }
@@ -106,10 +106,9 @@ struct OngoingStudyView: View {
     }
     
     func checkScannerStatus() {
-        print("checking alarm status")
         isBarcodeScannerPresented = false
         if appDelegate.openedFromNotification {
-            print("opened from notification")
+            print("App opened from notification")
             // unhandled notification is present
             alarmVM.setUpcomingAlarmTriggered()
             currentAlarmId = nil
@@ -123,7 +122,6 @@ struct OngoingStudyView: View {
          isScannerPresented = true
          }
          */
-        print("scanner presented: \(isBarcodeScannerPresented)")
     }
     
     func initializeStudyData() {

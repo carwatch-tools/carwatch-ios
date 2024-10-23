@@ -95,7 +95,6 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
     }
     
     private func addRectOfInterest(_ metadataOutput: AVCaptureMetadataOutput) {
-        print("w,h: \(view.frame.size.width), \(view.frame.size.height)")
         let barcodeArea = calculateScannerRectOfInterest(width:  view.frame.size.width, height:  view.frame.size.height, widthHeightRatio: codeWidthHeightRatio)
         metadataOutput.rectOfInterest = cameraView!.metadataOutputRectConverted(fromLayerRect: barcodeArea)
         

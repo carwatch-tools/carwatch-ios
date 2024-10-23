@@ -9,7 +9,7 @@ class Logger {
     private var participantId: String? = nil
     
     func setStudyData(studyName: String?, participantId: String?) {
-        print("setting study data: \(studyName!), \(participantId!)")
+        print("Setting study data in logger: \(studyName!), \(participantId!)")
         self.studyName = studyName
         self.participantId = participantId
     }
@@ -24,7 +24,6 @@ class Logger {
         if let jsonMessage = try? JSONSerialization.data(withJSONObject: message, options: .prettyPrinted) {
             // Convert JSON data to humand readale string
             if let stringMessage = String(data: jsonMessage, encoding: .utf8) {
-                print(stringMessage) // This is the string representation of the JSON
                 let logEntry = "\(timestamp);\(humanReadableTime);\(tag);\(stringMessage)\n"
                 if let fileURL = getCurrentLogFile() {
                     appendLog(logEntry, to: fileURL)
@@ -60,7 +59,6 @@ class Logger {
         if !fileManager.fileExists(atPath: logFileURL.path) {
             fileManager.createFile(atPath: logFileURL.path, contents: nil, attributes: nil)
         }
-        print("log file url: \(logFileURL)")
         return logFileURL
     }
     
@@ -98,11 +96,9 @@ class Logger {
                     fileHandle.write(data)
                 }
                 fileHandle.closeFile()
-                print("log file exists: \(fileURL)")
             } else {
                 // Create a new file and write the log entry
                 try logEntry.write(to: fileURL, atomically: true, encoding: .utf8)
-                print("log file created: \(fileURL)")
             }
         } catch {
             print("Failed to write log: \(error)")
@@ -118,7 +114,7 @@ class Logger {
             do {
                 try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                print("Failed to create directory \(directoryURL.lastPathComponent): \(error)")
+                print("Failed to create log directory \(directoryURL.lastPathComponent): \(error)")
                 return false
             }
         }
@@ -150,7 +146,7 @@ class Logger {
         do {
             try fileManager.zipItem(at: sourceURL, to: destinationURL)
         } catch {
-            print("Creation of ZIP archive failed with error:\(error)")
+            print("Creation of ZIP archive failed with error: \(error)")
             return nil
         }
         

@@ -20,13 +20,11 @@ class AlarmViewModel : ObservableObject {
     }
     @Published var dateOfLastInitialAlarm: Date = Date.distantPast {
         didSet {
-            print("Last init alarm updated: \(dateOfLastInitialAlarm)")
             saveDateOfLastInitialAlarm()
         }
     }
     @Published var isDarkModeOn: Bool = false {
         didSet {
-            print("dark mode: \(isDarkModeOn)")
             UserDefaults.standard.set(isDarkModeOn, forKey: isDarkModeOnKey)
         }
     }
@@ -50,7 +48,6 @@ class AlarmViewModel : ObservableObject {
         getAlarmData()
         getStudyDayCounterData()
         getLastInitialAlarmData()
-        print("loaded init alarm last day: \(dateOfLastInitialAlarm)")
     }
     
     func getAlarmData() {
@@ -103,8 +100,7 @@ class AlarmViewModel : ObservableObject {
     
     func modifyAlarmById(alarm: Alarm) {
         if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarm.id }) {
-            print("modifying alarm with index \(alarmIdx)")
-            print(alarm)
+            print("Modifying alarm with id \(alarm.id)")
             timedAlarms[alarmIdx] = alarm
         }
         else {
@@ -133,11 +129,12 @@ class AlarmViewModel : ObservableObject {
     func isAlarmOngoing() -> Bool {
         print("is alarm ongoing?")
         for alarm in timedAlarms {
-            print(alarm)
             if alarm.isTriggered && !isDayFinished() {
+                print("Ongoing alarm: \(alarm.id)")
                 return true
             }
         }
+        print("No ongoing alarm")
         return false
     }
     
@@ -168,7 +165,6 @@ class AlarmViewModel : ObservableObject {
     func setInitialAlarmActivity(isActive: Bool) {
         /// called when initial alarm activity is toggled
         setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
-        print("set init alarm activity")
         updateAlarmTime(time: getInitialAlarm().time)
         
     }
@@ -180,13 +176,10 @@ class AlarmViewModel : ObservableObject {
         } else {
             scheduleAlarmWithBackupNotifications(timedAlarms[index])
         }
-        print("toggled: \(timedAlarms[index].isActive)")
     }
     
     func setUpcomingAlarmTriggered() {
-        print("set upcoming alarm triggered")
         if let alarm = getNextUpcomingAlarm() {
-            print(alarm)
             // make sure study counter is only incremented once
             if alarm.isTriggered {
                 return
@@ -196,11 +189,11 @@ class AlarmViewModel : ObservableObject {
             } else {
                 modifyAlarmById(alarm: alarm.setTriggered())
             }
+            print("Alarm \(alarm.id) set as triggered")
         }
     }
     
     func setCurrentAlarmScanned(alarmId: Int? = nil) {
-        print("trying to set Alarm scanned")
         var alarm: Alarm?
         switch alarmId {
         case nil:
@@ -217,11 +210,10 @@ class AlarmViewModel : ObservableObject {
             modifyAlarmById(alarm: alarm!.setScanned())
             // cancel all remaining alarms
             NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
-            print("set scanned: \(alarm!)")
-            print("notifications canceled for \(alarm!.id)")
+            print("Alarm \(alarm!.id) set  as scanned")
         }
         if isDayFinished() && !isStudyFinished(){
-            print("all alarms are scanned, day is finished")
+            print("All alarms are scanned, day is finished")
             resetAlarmData()
         }
     }
@@ -253,10 +245,10 @@ class AlarmViewModel : ObservableObject {
         var newTime = time
         /// todays alarm was already triggered -> set for tomorrow
         if Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: Date()) {
-            print("init alarm - setting time to next time tomorrow")
+            print("Setting next alarm for tomorrow")
             newTime = getNextDateTimeOccurrsAfterToday(time: time)
         } else {
-            print("init alarm - setting time for today")
+            print("Setting next alarm for today")
             newTime = getNextDateTimeOccurrs(time: time)
         }
         
@@ -393,7 +385,6 @@ class AlarmViewModel : ObservableObject {
     
     func scheduleAlarmWithBackupNotifications(_ alarm: Alarm){
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
-            print("scheduling alarm \(alarm.id)")
             // calculate notification time
             guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 return
@@ -406,7 +397,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func logAlarmScheduled(_ alarm: Alarm){
-        print("logging alarm \(alarm)")
+        print("Alarm \(alarm.id) was scheduled")
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
         msg[LoggerConstants.loggerExtraAlarmTimestamp] = getUnixTimeMillisFromDate(alarm.time)
@@ -415,8 +406,9 @@ class AlarmViewModel : ObservableObject {
     }
     
     func isStudyFinished() -> Bool {
-        print("Study finished? Study day counter: \(studyDayCounter)")
-        return isDayFinished() && studyDayCounter == numStudyDays
+        let isFinished = isDayFinished() && studyDayCounter == numStudyDays
+        print("Study finished: \(isFinished)")
+        return isFinished
     }
     
     func resetAlarmDataForNewUser() {
