@@ -45,8 +45,10 @@ struct StyleConstants {
     static let mainScreenIconSize: CGFloat = 70
     static let explanationFontSize: CGFloat = 20
     static let edgePadding: CGFloat = 30
-    static let onboardingPadding: CGFloat = 10
-    
+    static let shadowRadius: CGFloat = 10
+    static let onboardingPadding: CGFloat = 20
+    static let onboardingImageHeight: CGFloat = UIScreen.main.bounds.height * 0.55
+
     static let toastDuration: Double = 8.0
     
     static let overlayOpacity: Double = 0.5
