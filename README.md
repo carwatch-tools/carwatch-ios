@@ -21,6 +21,7 @@ After pulling the Code from Github, the file structure will look like the follow
 
  However, to be accepted by Xcode, the `CARWatch.xcodeproj` might need to be moved to the parent directory (arbitrary name, e.g., CARWatchApp), yielding the following structure:
 
+```bash
 └── CARWatchApp
     ├── CARWatch.xcodeproj
     └── CARWatch
@@ -28,7 +29,7 @@ After pulling the Code from Github, the file structure will look like the follow
         ├── CarWatchApp.swift
         ├── Assets.xcassets
         └── Different feature folders
-
+```
 
 ### Framework
 This App was written in Swift using the SwiftUI framework, which is the relatively new (2019) successor of UIKit. In contrast to the latter and the native CARWatch Android app, this framework uses a declarative approach and therefore differentiates fundamentally from the structure of the android app. The fundamental idea of declarative frameworks is to define user-facing views depending on states. Everytime a states changes, the UI components are then re-rendered automatically by the framework.
