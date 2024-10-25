@@ -26,6 +26,7 @@ struct StudyData : Codable {
         self.hasEveningSample = hasEveningSample
         self.shareEmailAdress = shareEmailAdress
         self.isCheckDuplicatesEnabled = isCheckDuplicatesEnabled
+        self.participantId = participantId
         self.numSamples = StudyData.calculateNumSamples(hasEvening: hasEveningSample, salivaDistances: salivaDistances, salivaTimes: salivaTimes)
         self.eveningSampleId = StudyData.calculateEveningSampleId(hasEvening: hasEveningSample, numSamples: numSamples)
     }
