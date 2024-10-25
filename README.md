@@ -120,6 +120,18 @@ SwiftUI does not have a built-in code scanner component (yet), thats why a custo
 If debugging is required, the scanner's area of interest can be visualized in the `addRectOfInterest` function.
 
 ### Short comparison CARWATCH Android vs. iOS
+> [!NOTE]
+> No guarantee for completeness!
+
+| Feature | iOS | Android |
+|---------|-----|---------|
+| Alarm API |  uses notifications -> only received when no focus mode is activated, sound only played when phone is not on silent | uses Alarm-API -> always coming through |
+| Initial Alarm | initial alarm is equivalent with first sample [#10](../../issues/10) | initial alarm is independent of sample reminders |
+| Alarm Overview | list of all sample reminders always displayed | list of sample reminders displayed after initial alarm was firing |
+| Next day alarm | can only be set once all samples of a day are finished | can also be set during ongoing sampling procedure |
+| Alarm times | only relative times (so far, [#3](../../issues/3)) | relative & absolute times |
+| Next scanned barcode | when clicking to alarm notification, the earliest sample that is due is scanned | when clicking on alarm, the sample that the alarm belongs to is scanned |
+| Log file sharing | share dialog directly opens apple mail ([#16](../../issues/16))) | share dialog enables multiple sharing options (email, messengers, cloud) |
 
 ### Helpful hacks and resources 
 - when building fails without any obvious reason, (force) cleaning the build folder can help: `(Option) + Command + Shift + K`
