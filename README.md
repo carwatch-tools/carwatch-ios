@@ -1,5 +1,19 @@
 # CARWatch App for iOS
 ## Developer Guide
+### Getting started
+For development, you need to have an Apple ID and a Mac with XCode installed. The latest XCode version can be retrieved from the app store. If your OS version is not compatible with the latest version, you can download an earlier version [here](https://developer.apple.com/download/all/?q=xcode) (requires sign-in with your apple id).
+
+To get started, first clone the project:
+```bash
+git clone https://github.com/mad-lab-fau/carwatch-ios.git
+```
+Or when using SSH:
+```bash
+git clone git@github.com:mad-lab-fau/carwatch-ios.git
+```
+Next, make sure to reorder the directory structure as described in the [App Configuration](#app-configuration) section.
+To deploy the app to a device, you need to sign-in to your apple account in XCode (Click on top-level project folder -> Signing & Capabilities -> Team -> Add account. In the accounts tab that is opening, you can add your apple id and also sign in to your github account for version control.
+You can then run the app, either on an emulator, or a connected phone. The target device can be selected in the dropdown menu at the top middle of the editor. If you select to run the app on a physical device, a fresh deployment will likely cause an 'Untrusted Developer' alert on the device. To prevent this, search for 'VPN & Device Management' in the phone's settings and select your apple ID in the 'Developer App' section. Then select the 'Trust' button, confirm, and rerun the deployment.
 
 ### Compatibility
 All used components are available for iOS 15 (iPhone 7, iPhone SE (gen 1), iPhone 6s) and upward. As of Oct. 2024, this covers [95.1%](https://iosref.com/ios-usage) of all iPhones in use. 
@@ -104,3 +118,14 @@ As UI, a sheet is displayed on top of the current view. SwiftUI has a build-in s
 
 SwiftUI does not have a built-in code scanner component (yet), thats why a custom `CodeScanner` was implemented. This scanner is a simplified version of [this project](https://github.com/twostraws/CodeScanner) supporting EAN8 and QR codes. Additionally, a `rectOfInterest` was added to the scanner aligning with the `ScannerOverlay` UI component.
 If debugging is required, the scanner's area of interest can be visualized in the `addRectOfInterest` function.
+
+### Short comparison CARWATCH Android vs. iOS
+
+### Helpful hacks and resources 
+- when building fails without any obvious reason, (force) cleaning the build folder can help: `(Option) + Command + Shift + K`
+- change language of XCode preview: Product -> Scheme -> Edit -> Options -> App language
+- use SF Symbols app for finding icons
+- use `.border(Color.black, width: 5)` for debugging UI elements
+- nice introduction to SwiftUI: https://developer.apple.com/tutorials/develop-in-swift/welcome-to-develop-in-swift-tutorials (note that many features shown there are not available for older iOS versions)
+- nice tutorial series to understand MVVM: https://www.youtube.com/playlist?list=PLwvDm4VfkdpheGqemblOIA7v3oq0MS30i
+- very helpful youtube channels with tutorials on everything Swift-related: https://www.youtube.com/@twostraws/featured
