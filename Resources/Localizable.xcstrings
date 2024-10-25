@@ -70,13 +70,34 @@
       }
     },
     "Camera access to enable scanning sample tube barcodes" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerazugriff, um die Barcodes von Speichelproben zu scannen"
+          }
+        }
+      }
     },
     "Configure the App" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfiguration der App"
+          }
+        }
+      }
     },
     "Continue" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter"
+          }
+        }
+      }
     },
     "Delete Logs" : {
       "extractionState" : "manual",
@@ -101,7 +122,14 @@
       }
     },
     "Duplicate barcode!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelter Barcode!"
+          }
+        }
+      }
     },
     "Expert Actions" : {
       "extractionState" : "manual",
@@ -115,7 +143,14 @@
       }
     },
     "Get Started" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter"
+          }
+        }
+      }
     },
     "Go to App Settings" : {
       "localizations" : {
@@ -150,6 +185,16 @@
       }
     },
     "Grant Permissions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigungen erteilen"
+          }
+        }
+      }
+    },
+    "In the bedtime screen, you can initiate the evening procedure before going to bed. You only need to do this if your study requires to take an evening sample. The 'LIGHTS OUT' button will activate the app's dark mode." : {
 
     },
     "Info" : {
@@ -163,10 +208,24 @@
       }
     },
     "Input invalid! Please enter a valid participant ID!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige Eingabe! Bitte geben Sie eine gültige Probanden-ID ein."
+          }
+        }
+      }
     },
     "Invalid barcode!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültiger Barcode!"
+          }
+        }
+      }
     },
     "Kill all Notifications" : {
       "localizations" : {
@@ -179,7 +238,14 @@
       }
     },
     "LIGHTS ON!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LICHT AN!"
+          }
+        }
+      }
     },
     "LIGHTS OUT!" : {
       "extractionState" : "manual",
@@ -191,6 +257,9 @@
           }
         }
       }
+    },
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." : {
+
     },
     "Menu" : {
       "extractionState" : "manual",
@@ -204,7 +273,14 @@
       }
     },
     "No" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nein"
+          }
+        }
+      }
     },
     "NO" : {
       "extractionState" : "manual",
@@ -218,7 +294,14 @@
       }
     },
     "No logs available" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Logs verfügbar"
+          }
+        }
+      }
     },
     "OK" : {
       "extractionState" : "manual",
@@ -232,16 +315,44 @@
       }
     },
     "Participant ID" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probanden-ID"
+          }
+        }
+      }
     },
     "Please enter the participant ID you received from us:" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte geben Sie die Probanden-ID ein, die Ihnen zugeteilt wurde:"
+          }
+        }
+      }
     },
     "Please point your camera at a barcode!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte richten Sie Ihre Kamera auf einen Barcode!"
+          }
+        }
+      }
     },
     "Please scan the QR Code that you received to configure the CARWatch App for your study." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte scannen Sie den QR-Code, den Sie für die Konfiguration der CARWatch App erhalten haben."
+          }
+        }
+      }
     },
     "Please set your desired alarm time for tomorrow." : {
       "extractionState" : "manual",
@@ -255,7 +366,34 @@
       }
     },
     "Please set your desired wakeup time for tomorrow." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte stellen Sie Ihre gewünschte Weckzeit für morgen ein."
+          }
+        }
+      }
+    },
+    "Report going to bed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bettzeit eingeben"
+          }
+        }
+      }
+    },
+    "Report waking up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufwachen eingeben"
+          }
+        }
+      }
     },
     "Reregister" : {
       "extractionState" : "manual",
@@ -290,27 +428,54 @@
       }
     },
     "Saliva sample reminders" : {
-
-    },
-    "Scan Barcode Here" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Barcode hier scannen"
+            "value" : "Erinnerungen für Speichelproben"
           }
         }
       }
     },
     "Scan now" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt scannen"
+          }
+        }
+      }
+    },
+    "Scan your sample" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proben einscannen"
+          }
+        }
+      }
     },
     "Schedule" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitplan"
+          }
+        }
+      }
     },
     "Sending notifications to inform you about upcoming samples" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen erhalten, um an anstehende Proben erinnert zu werden"
+          }
+        }
+      }
     },
     "Share Logs" : {
       "extractionState" : "manual",
@@ -335,22 +500,114 @@
       }
     },
     "Skip" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überspringen"
+          }
+        }
+      }
+    },
+    "Some Title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platzhalter Titel"
+          }
+        }
+      }
+    },
+    "Start sampling!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los geht's!"
+          }
+        }
+      }
     },
     "Take sample" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe nehmen"
+          }
+        }
+      }
+    },
+    "The barcode scanner opens automatically when you tap on a sample notification. After sampling, simply scan the barcode on the sample tube so that the sample can later be linked to the time of sampling." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Barcode-Scanner öffnet sich automatisch, wenn Sie auf eine Probenbenachrichtigung tippen. Scannen Sie nach der Probenahme einfach den Barcode auf dem Probenröhrchen, damit die Probe später mit dem Zeitpunkt der Probenahme verknüpft werden kann."
+          }
+        }
+      }
     },
     "The barcode was scanned successfully!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Barcode wurde erfolgreich gescannt!"
+          }
+        }
+      }
     },
-    "This alarm is required for the study. Are you sure to cancel this alarm?" : {
-
+    "The CARWatch app is now ready to go. To start the study, set the alarm for the next day or report your awakening in the morning. If you need to reconfigure the app or you want to do the tutorial again, press the respective entries in the top-right menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die CARWatch-App ist jetzt einsatzbereit. Um die Studie zu starten, stellen Sie einen Wecker für den nächsten Tag oder geben Sie am Morgen ein, dass Sie aufgewacht sind. Wenn Sie die App neu konfigurieren oder das Tutorial erneut durchführen möchten, wählen Sie die entsprechende Option im Menü oben rechts."
+          }
+        }
+      }
+    },
+    "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Scan sample' button opens the barcode scanner for the respective sample." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Symbole neben dem Probezeitpunkt zeigen an, ob eine Probe bereits genommen wurde (grünes Häkchen) oder fällig ist (oranges Ausrufezeichen). Erinnerungen für verbleibende Proben sind für später eingeplant. Durch Drücken der Schaltfläche „Probe scannen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
+          }
+        }
+      }
     },
     "This barcode was already scanned before. Please check and make sure to use a new salivette." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Barcode wurde bereits gescannt. Bitte stellen Sie sicher, dass sie eine neue Salivette verwenden."
+          }
+        }
+      }
+    },
+    "This sample is required for the study. Are you sure to cancel this sample?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Probe ist erforderlich für die Studie. Sind Sie sicher, dass Sie die Probe nicht nehmen möchten?"
+          }
+        }
+      }
     },
     "This sample is scheduled for later. Are you sure you want to scan the sample now?" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Probe soll erst später abgegeben werden. Sind Sie sicher, dass Sie sie jetzt nehmen wollen?"
+          }
+        }
+      }
     },
     "Title" : {
       "extractionState" : "manual",
@@ -364,7 +621,24 @@
       }
     },
     "To enable all of the features, CARWatch requires the following permissions:" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um alle Funktion bereitstellen zu können, braucht CARWatch folgende Berechtigungen:"
+          }
+        }
+      }
+    },
+    "Track your alarms" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erinnerungen verwalten"
+          }
+        }
+      }
     },
     "Unfortunately, CARWatch won't work when camera access is not granted. Please activate camera usage in the app settings." : {
       "localizations" : {
@@ -398,7 +672,14 @@
       }
     },
     "Unlock Features" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funktionen aktivieren"
+          }
+        }
+      }
     },
     "User Actions" : {
       "extractionState" : "manual",
@@ -423,10 +704,24 @@
       }
     },
     "Welcome to CARWatch!" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Willkommen bei CARWatch!"
+          }
+        }
+      }
     },
     "Yes" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ja"
+          }
+        }
+      }
     },
     "YES" : {
       "extractionState" : "manual",
@@ -435,6 +730,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "JA"
+          }
+        }
+      }
+    },
+    "You can set an alarm for the next morning directly from the alarm clock screen. Simply tap on the displayed time and choose your desired wake-up time. We recommend additionally setting an alarm in your usual alarm app for the same time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie können den Wecker für den nächsten Morgen direkt in der Alarmübersicht einstellen. Tippen Sie einfach auf die angezeigte Uhrzeit und wählen Sie Ihre gewünschte Weckzeit. Wir empfehlen, zusätzlich einen Alarm in Ihrer üblichen Wecker-App für dieselbe Zeit einzustellen."
+          }
+        }
+      }
+    },
+    "You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie müssen Ihr Aufwachen nur manuell eingeben, wenn Sie keinen Wecker für den Morgen gestellt haben oder wenn Sie aufgewacht sind, bevor der Wecker losging. Wenn Sie auf die Schaltfläche „JA“ klicken, werden die Probenerinnerungen für den aktuellen Tag geplant."
           }
         }
       }

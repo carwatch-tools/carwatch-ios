@@ -50,3 +50,7 @@ func logParticipantId(participantId: String){
     msg[LoggerConstants.loggerExtraParticipantId] = participantId
     Logger.instance.log(tag: LoggerConstants.loggerActionParticipantIdSet, message: msg)
 }
+
+func localized(_ key: String) -> String {
+    return NSLocalizedString(key, comment: "")
+}

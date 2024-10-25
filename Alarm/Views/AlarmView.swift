@@ -138,7 +138,7 @@ struct AlarmView: View {
                     }
                     )
                 case .toggleActivityAlert:
-                    return Alert(title: Text("This alarm is required for the study. Are you sure to cancel this alarm?"),
+                    return Alert(title: Text("This sample is required for the study. Are you sure to cancel this sample?"),
                                  primaryButton: .destructive(Text("Yes")) {
                         toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
                         showAlert = false

@@ -2,8 +2,8 @@ import SwiftUI
 
 struct TutorialSlide: View {
     let imageName : String
-    let titleText : String
-    let explanationText : String
+    let titleText : LocalizedStringKey
+    let explanationText : LocalizedStringKey
     
     var body: some View {
             VStack {
