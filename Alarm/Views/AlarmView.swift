@@ -40,10 +40,20 @@ struct AlarmView: View {
                 .font(.system(size: StyleConstants.mainScreenFontSize))
                 DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                     .onChange(of: initialAlarmTime, perform: { _ in
+                        // backup old initial alarm value in case the selection is invalid
+                        let backupTime = alarmVM.getInitialAlarm().time
                         alarmVM.updateAlarmTime(time: initialAlarmTime)
+                        if initialAlarmTime > alarmVM.timedAlarms[0].time {
+                            // this can happen when using fixed time alarms, where the alarm times won't update depending on the initial alarm
+                            initialAlarmTime = backupTime
+                            alarmVM.updateAlarmTime(time: initialAlarmTime)
+                        }
                         if(alarmVM.getInitialAlarm().isActive) {
                             showToast = true
                         }
+                        
+                        
+                        
                     })
                     .labelsHidden()
                     .scaledToFit()

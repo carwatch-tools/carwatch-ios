@@ -34,6 +34,7 @@ class AlarmViewModel : ObservableObject {
     
     // no didSet required because these are shared properties with the study data view model
     @Published var timeIntervals: [Int] = [Int]()
+    @Published var fixedTimes: [Time] = [Time]()
     @Published var numStudyDays: Int = 0
     @Published var hasEveningSample: Bool = false
     @Published var startSample: Int = 1
@@ -258,7 +259,7 @@ class AlarmViewModel : ObservableObject {
             // schedule all notifications -> standard case when not waking up earlier than expected
             scheduleAlarmNotifications()
         } else {
-            // only schedule timed notifications, as wakeup eas reported manually
+            // only schedule timed notifications, as wakeup was reported manually
             scheduleAlarmNotificationsWithoutInitial()
         }
     }
@@ -297,30 +298,51 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateTimedAlarms() {
-        if timeIntervals.isEmpty {
+        if timeIntervals.isEmpty && fixedTimes.isEmpty {
             // do nothing until study was configured
             return
         }
-        var previousAlarmTime = getInitialAlarm().time
-        if timeIntervals.count != timedAlarms.count {
+        let updatedAlarmTimes = updateAlarmTimes()
+        if updatedAlarmTimes.count != timedAlarms.count {
             // if timed alarms is set for the first time -> create entire array
             var updatedTimedAlarms = [Alarm]()
-            for (index, interval) in timeIntervals.enumerated() {
-                let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
-                updatedTimedAlarms.append(Alarm(id: index, isActive: getInitialAlarm().isActive, time: newAlarmTime))
-                previousAlarmTime = newAlarmTime
+            for (index, time) in updatedAlarmTimes.enumerated(){
+                // create Alarm objects
+                updatedTimedAlarms.append(Alarm(id: index, isActive: getInitialAlarm().isActive, time: time))
             }
             timedAlarms = updatedTimedAlarms
             
-            // if timed alarm was set before -> only update entries
+        // if timed alarm was set before -> only update entries
         } else {
-            for (index, interval) in timeIntervals.enumerated() {
+            for (index, time) in updatedAlarmTimes.enumerated(){
+                // create Alarm objects
                 let currentAlarm = timedAlarms[index]
-                let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
-                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, time: newAlarmTime)
-                previousAlarmTime = newAlarmTime
+                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, time: time)
             }
         }
+    }
+    
+    private func updateAlarmTimes() -> [Date] {
+        var previousAlarmTime = getInitialAlarm().time
+        var updatedAlarmTimes = [Date]()
+        for interval in timeIntervals {
+            // add times of timed alarms
+            let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
+            updatedAlarmTimes.append(newAlarmTime)
+            previousAlarmTime = newAlarmTime
+        }
+        for time in fixedTimes {
+            // add times of fixed alarms
+            var dc = Calendar.current.dateComponents([.year, .month, .day], from: getInitialAlarm().time)
+            dc.hour = time.hour
+            dc.minute = time.minute
+            if let fixedTime = Calendar.current.date(from: dc) {
+                updatedAlarmTimes.append(fixedTime)
+            }
+        }
+        // bring times in correct chronological order
+        updatedAlarmTimes.sort()
+        return updatedAlarmTimes
     }
     
     func updateTimedAlarmActivity() {

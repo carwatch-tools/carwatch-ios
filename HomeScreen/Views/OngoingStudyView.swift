@@ -126,6 +126,7 @@ struct OngoingStudyView: View {
     
     func initializeStudyData() {
         alarmVM.timeIntervals = studyDataVM.studyData.salivaDistances
+        alarmVM.fixedTimes = studyDataVM.studyData.salivaTimes
         alarmVM.numStudyDays = studyDataVM.studyData.studyDays
         alarmVM.hasEveningSample = studyDataVM.studyData.hasEveningSample
         if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst())

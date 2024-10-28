@@ -33,10 +33,11 @@ func logStudyData(studyData: StudyData){
     }
 
     var msg = [String: Any]()
+    let salivaTimeStrings = studyData.salivaTimes.compactMap({$0.stringValue()})
     msg[LoggerConstants.loggerExtraStudyName] = studyData.studyName
     msg[LoggerConstants.loggerExtraNumParticipants] = studyData.numParticipants
     msg[LoggerConstants.loggerExtraSalivaDistances] = studyData.salivaDistances
-    msg[LoggerConstants.loggerExtraSalivaTimes] = studyData.salivaTimes
+    msg[LoggerConstants.loggerExtraSalivaTimes] = salivaTimeStrings
     msg[LoggerConstants.loggerExtraStudyDays] = studyData.studyDays
     msg[LoggerConstants.loggerExtraSalivaIds] = salivaIds
     msg[LoggerConstants.loggerExtraHasEveningSalivette] = studyData.hasEveningSample

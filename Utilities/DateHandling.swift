@@ -44,3 +44,12 @@ func formatDateForLogs(_ date: Date) -> String {
     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     return dateFormatter.string(from: date)
 }
+
+struct Time: Codable {
+    var hour: Int
+    var minute: Int
+    
+    func stringValue() -> String {
+        return "\(String(format: "%02d", hour)):\(String(format: "%02d", minute))"
+    }
+}
