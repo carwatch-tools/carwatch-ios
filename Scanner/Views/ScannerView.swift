@@ -24,6 +24,23 @@ struct ScannerView: View {
                 ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
             }
         }
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Button {
+                    isPresented = false
+                } label: {
+                    Label("Back", systemImage: "chevron.backward")
+                        .font(.headline)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial, in: Capsule())
+
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+        }
         .alert(isPresented: $showAlert) {
             switch alertType {
             case .success:
@@ -208,4 +225,3 @@ struct ScannerView: View {
     }
     return PreviewContainer()
 }
-

@@ -15,6 +15,7 @@ struct MainViewToolbarMenu: View {
     @Binding var toastType: MenuConstants.ToastType
     
     @State var showShareSheet = false
+    @State private var showStudyInfoSheet = false
     
     var body: some View {
         Menu {
@@ -35,6 +36,12 @@ struct MainViewToolbarMenu: View {
                     sessionVM.startTutorial()
                 } label: {
                     Label("Show Tutorial", systemImage: "questionmark.circle")
+                }
+
+                Button {
+                    showStudyInfoSheet = true
+                } label: {
+                    Label("Study Information", systemImage: "doc.text.magnifyingglass")
                 }
             }
             
@@ -99,6 +106,69 @@ struct MainViewToolbarMenu: View {
                 Text("No logs available")
             }
         })
+        .sheet(isPresented: $showStudyInfoSheet) {
+            StudyInformationSheet(studyData: studyDataVM.studyData)
+        }
+    }
+}
+
+private struct StudyInformationSheet: View {
+    let studyData: StudyData
+    @Environment(\.dismiss) private var dismiss
+
+    private var intervalDescription: String {
+        if studyData.salivaDistances.isEmpty {
+            return String(localized: "No interval-based samples configured.")
+        }
+
+        return studyData.salivaDistances
+            .map { "\($0) min" }
+            .joined(separator: ", ")
+    }
+
+    private var fixedTimesDescription: String {
+        if studyData.salivaTimes.isEmpty {
+            return String(localized: "No fixed sample times configured.")
+        }
+
+        return studyData.salivaTimes
+            .map { $0.stringValue() }
+            .joined(separator: ", ")
+    }
+
+    private var participantIdDescription: String {
+        studyData.participantId.isEmpty ? String(localized: "Not set") : studyData.participantId
+    }
+
+    private var contactEmailDescription: String {
+        studyData.shareEmailAdress.isEmpty ? String(localized: "Not available") : studyData.shareEmailAdress
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Study") {
+                    LabeledContent("Study Name", value: studyData.studyName)
+                    LabeledContent("Participant ID", value: participantIdDescription)
+                    LabeledContent("Contact Email", value: contactEmailDescription)
+                }
+
+                Section("Sampling Plan") {
+                    LabeledContent("Interval Samples", value: intervalDescription)
+                    LabeledContent("Fixed Sample Times", value: fixedTimesDescription)
+                    LabeledContent("Evening Sample", value: String(localized: studyData.hasEveningSample ? "Yes" : "No"))
+                }
+            }
+            .navigationTitle("Study Information")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 

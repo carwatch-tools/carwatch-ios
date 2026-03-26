@@ -47,6 +47,16 @@
         }
       }
     },
+    "Back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurueck"
+          }
+        }
+      }
+    },
     "Are you going to bed?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -89,6 +99,16 @@
         }
       }
     },
+    "Contact Email" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontakt-E-Mail"
+          }
+        }
+      }
+    },
     "Continue" : {
       "localizations" : {
         "de" : {
@@ -121,12 +141,32 @@
         }
       }
     },
+    "Done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        }
+      }
+    },
     "Duplicate barcode!" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Doppelter Barcode!"
+          }
+        }
+      }
+    },
+    "Evening Sample" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abendprobe"
           }
         }
       }
@@ -138,6 +178,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expertenoptionen"
+          }
+        }
+      }
+    },
+    "Fixed Sample Times" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feste Probenzeiten"
           }
         }
       }
@@ -224,6 +274,16 @@
         }
       }
     },
+    "Interval Samples" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervallproben"
+          }
+        }
+      }
+    },
     "Invalid barcode!" : {
       "localizations" : {
         "de" : {
@@ -297,12 +357,52 @@
         }
       }
     },
+    "No fixed sample times configured." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine festen Probenzeiten konfiguriert."
+          }
+        }
+      }
+    },
+    "No interval-based samples configured." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine intervallbasierten Proben konfiguriert."
+          }
+        }
+      }
+    },
     "No logs available" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine Logs verfügbar"
+          }
+        }
+      }
+    },
+    "Not available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar"
+          }
+        }
+      }
+    },
+    "Not set" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht gesetzt"
           }
         }
       }
@@ -358,17 +458,6 @@
         }
       }
     },
-    "Please remember to take your sample\nwhen you wake up." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bitte denken Sie daran, Ihre Probe\nbeim Aufwachen zu nehmen."
-          }
-        }
-      }
-    },
     "Please scan the QR Code that you received to configure the CARWatch App for your study." : {
       "localizations" : {
         "de" : {
@@ -396,17 +485,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitte stellen Sie Ihre gewünschte Weckzeit für morgen ein."
-          }
-        }
-      }
-    },
-    "Remember to take your sample\nright before going to bed." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denken Sie daran, Ihre Probe\nunmittelbar vor dem Schlafengehen\nzu nehmen."
           }
         }
       }
@@ -469,6 +547,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erinnerungen für Speichelproben"
+          }
+        }
+      }
+    },
+    "Sampling Plan" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probenplan"
           }
         }
       }
@@ -545,17 +633,6 @@
         }
       }
     },
-    "Some Title" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Platzhalter Titel"
-          }
-        }
-      }
-    },
     "Start sampling!" : {
       "localizations" : {
         "de" : {
@@ -566,23 +643,42 @@
         }
       }
     },
+    "Study" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studie"
+          }
+        }
+      }
+    },
+    "Study Information" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studieninformationen"
+          }
+        }
+      }
+    },
+    "Study Name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studienname"
+          }
+        }
+      }
+    },
     "Take sample" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Probe nehmen"
-          }
-        }
-      }
-    },
-    "Thank you for your feedback!" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Danke für Ihre Rückmeldung!"
           }
         }
       }
@@ -674,17 +770,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um alle Funktion bereitstellen zu können, braucht CARWatch folgende Berechtigungen:"
-          }
-        }
-      }
-    },
-    "Tonight no sample is required." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute Abend ist keine Probe erforderlich."
           }
         }
       }
@@ -803,34 +888,12 @@
         }
       }
     },
-    "You have already taken\nyour evening sample.\nGood night!" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sie haben Ihre Abendprobe bereits genommen.\nGute Nacht!"
-          }
-        }
-      }
-    },
     "You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sie müssen Ihr Aufwachen nur manuell eingeben, wenn Sie keinen Wecker für den Morgen gestellt haben oder wenn Sie aufgewacht sind, bevor der Wecker losging. Wenn Sie auf die Schaltfläche „JA“ klicken, werden die Probenerinnerungen für den aktuellen Tag geplant."
-          }
-        }
-      }
-    },
-    "Your study does not require\nan evening sample.\nGood night!" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ihre Studie erfordert keine Abendprobe.\nGute Nacht!"
           }
         }
       }
