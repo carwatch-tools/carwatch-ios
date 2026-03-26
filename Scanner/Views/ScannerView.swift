@@ -175,16 +175,37 @@ struct ScannerView: View {
     }
 }
 
-#Preview {
-    @State var isPresented = true
-    @State var currentAlarmId: Int? = 0
-    @StateObject var alarmViewModel: AlarmViewModel = AlarmViewModel()
-    @StateObject var sessionViewModel: SessionViewModel = SessionViewModel()
-    @StateObject var studyDataViewModel: StudyDataViewModel = StudyDataViewModel()
-    
-    return ScannerView(isPresented: $isPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
-        .environmentObject(alarmViewModel)
-        .environmentObject(sessionViewModel)
-        .environmentObject(studyDataViewModel)
+#Preview("Interactive ScannerView") {
+    struct PreviewContainer: View {
+        @State private var isPresented: Bool = true
+        @State private var currentAlarmId: Int? = 0
+        @StateObject private var alarmViewModel = AlarmViewModel()
+        @StateObject private var sessionViewModel = SessionViewModel()
+        @StateObject private var studyDataViewModel = StudyDataViewModel()
+        // Provide an AppDelegate instance for the environment
+        @StateObject private var appDelegate = AppDelegate()
+
+        var body: some View {
+            NavigationStack {
+                ScannerView(
+                    isPresented: $isPresented,
+                    alarmId: $currentAlarmId,
+                    codeType: ScannerConstants.CodeType.ean8
+                )
+                .environmentObject(alarmViewModel)
+                .environmentObject(sessionViewModel)
+                .environmentObject(studyDataViewModel)
+                .environmentObject(appDelegate)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(isPresented ? "Dismiss" : "Present") {
+                            isPresented.toggle()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return PreviewContainer()
 }
 

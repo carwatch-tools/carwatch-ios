@@ -20,7 +20,7 @@ struct MissingPermissionView: View {
                     .font(.system(size: StyleConstants.explanationFontSize))
                     .multilineTextAlignment(.center)
             } else {
-                Text("Unknown Permission Type \(type).")
+                Text(verbatim: "Unknown Permission Type " + String(describing: type) + ".")
             }
             
             Button("Go to App Settings"){
@@ -38,3 +38,4 @@ struct MissingPermissionView: View {
 #Preview {
     MissingPermissionView(type: PermissionConstants.PermissionType.camera)
 }
+

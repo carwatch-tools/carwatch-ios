@@ -12,45 +12,53 @@ struct BedtimeView: View {
     @State var alarmId : Int? = AlarmConstants.eveningAlarmId
 
     var body: some View {
-        VStack {
-            Image(systemName: "bed.double")
-                .font(.system(size: StyleConstants.mainScreenIconSize))
-                .foregroundStyle(.blue)
-                .opacity(StyleConstants.mainScreenIconOpacity)
-            Text("Good Evening")
-                .font(.system(size: StyleConstants.mainScreenFontSize))
-            Text("Are you going to bed?")
-                .font(.system(size: StyleConstants.mainScreenFontSize))
-                .multilineTextAlignment(.center)
-            HStack{
-                Button("YES") {
-                    if studyDataVM.studyData.hasEveningSample {
-                        if !alarmVM.isEveningScanned {
-                            isBarcodeScannerPresented = true
+        ZStack {
+            // Optional background to emphasize mode change
+            (alarmVM.isDarkModeOn ? Color.black : Color(UIColor.systemBackground))
+                .ignoresSafeArea()
+
+            VStack {
+                Image(systemName: "bed.double")
+                    .font(.system(size: StyleConstants.mainScreenIconSize))
+                    .foregroundStyle(.blue)
+                    .opacity(StyleConstants.mainScreenIconOpacity)
+                Text("Good Evening")
+                    .font(.system(size: StyleConstants.mainScreenFontSize))
+                Text("Are you going to bed?")
+                    .font(.system(size: StyleConstants.mainScreenFontSize))
+                    .multilineTextAlignment(.center)
+                HStack{
+                    Button("YES") {
+                        if studyDataVM.studyData.hasEveningSample {
+                            if !alarmVM.isEveningScanned {
+                                isBarcodeScannerPresented = true
+                            } else {
+                                toastType = .eveningSampleTakenToast
+                                showToast = true
+                            }
                         } else {
-                            toastType = .eveningSampleTakenToast
+                            toastType = .feedbackToast
                             showToast = true
                         }
-                    } else {
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Button("NO") {
                         toastType = .feedbackToast
                         showToast = true
                     }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.bottom)
+                Button(alarmVM.isDarkModeOn ? "LIGHTS ON!" : "LIGHTS OUT!") {
+                    Logger.instance.log(tag: alarmVM.isDarkModeOn ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
+                    alarmVM.isDarkModeOn.toggle()
                 }
                 .buttonStyle(.borderedProminent)
-                Button("NO") {
-                    toastType = .feedbackToast
-                    showToast = true
-                }
-                .buttonStyle(.bordered)
+                .tint(Color.orange)
             }
-            .padding(.bottom)
-            Button(alarmVM.isDarkModeOn ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                Logger.instance.log(tag: alarmVM.isDarkModeOn ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                alarmVM.isDarkModeOn.toggle()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.orange)
+            .foregroundStyle(alarmVM.isDarkModeOn ? .white : .primary)
         }
+        .preferredColorScheme(alarmVM.isDarkModeOn ? .dark : .light)
         .sheet(isPresented: $isBarcodeScannerPresented) {
             ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $alarmId, codeType: .ean8)
                 .interactiveDismissDisabled()

@@ -180,12 +180,32 @@ struct AlarmView: View {
     }
 }
 
-#Preview {
+struct AlarmView_PreviewContainer: View {
+    @State var initialAlarmTime: Date = getDateTomorrowMorning()
     @State var isScannerPresented: Bool = false
     @State var currentAlarmId: Int? = nil
-    @State var initialAlarmTime = getDateTomorrowMorning()
-    let alarmVM = AlarmViewModel()
-    alarmVM.timedAlarms = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: true, isTriggered: false), Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: true), Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: false)]
-    
-    return AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented, currentAlarmId: $currentAlarmId).environmentObject(alarmVM).environmentObject(StudyDataViewModel())
+
+    let alarmVM: AlarmViewModel = {
+        let vm = AlarmViewModel()
+        vm.timedAlarms = [
+            Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: true, isTriggered: false),
+            Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: true),
+            Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: false)
+        ]
+        return vm
+    }()
+
+    var body: some View {
+        AlarmView(
+            initialAlarmTime: $initialAlarmTime,
+            isScannerPresented: $isScannerPresented,
+            currentAlarmId: $currentAlarmId
+        )
+        .environmentObject(alarmVM)
+        .environmentObject(StudyDataViewModel())
+    }
+}
+
+#Preview {
+    AlarmView_PreviewContainer()
 }

@@ -94,7 +94,7 @@ struct RegistrationView: View {
 }
 
 #Preview {
-    @State var isScannerPresented: Bool = false
-    
-    return RegistrationView(isScannerPresented: $isScannerPresented).environmentObject(SessionViewModel()).environmentObject(PermissionDataViewModel())
+    RegistrationView(isScannerPresented: .constant(false))
+        .environmentObject(SessionViewModel())
+        .environmentObject(PermissionDataViewModel())
 }

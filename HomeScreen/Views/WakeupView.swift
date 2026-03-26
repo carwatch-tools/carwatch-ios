@@ -75,10 +75,12 @@ struct WakeupView: View {
 }
 
 #Preview {
-    @State var initialAlarmTime = Date()
-    @State var isScannerPresented = false
-    
     let alarmVM = AlarmViewModel()
 
-    return WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isScannerPresented).environmentObject(alarmVM).environmentObject(StudyDataViewModel())
+    return WakeupView(
+        initialAlarmTime: .constant(Date()),
+        isScannerPresented: .constant(false)
+    )
+    .environmentObject(alarmVM)
+    .environmentObject(StudyDataViewModel())
 }

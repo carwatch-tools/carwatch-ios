@@ -104,11 +104,14 @@ struct MainViewToolbarMenu: View {
 
 
 #Preview {
-    @State var showAppInfoDialog: Bool = false
-    @State var appVersion: String? = "preview"
-    @State var showToast: Bool = false
-    @State var killButtonClickCount: Int = 0
-    @State var toastType: MenuConstants.ToastType = .clickToKill
-    
-    return MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType).environmentObject(SessionViewModel())
+    MainViewToolbarMenu(
+        showAppInfoDialog: .constant(false),
+        appVersion: .constant("preview"),
+        showToast: .constant(false),
+        killButtonClickCount: .constant(0),
+        toastType: .constant(.clickToKill)
+    )
+    .environmentObject(SessionViewModel())
+    .environmentObject(StudyDataViewModel())
+    .environmentObject(AlarmViewModel())
 }
