@@ -6,10 +6,15 @@ struct RegistrationView: View {
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     
     @Binding var isScannerPresented: Bool
-    @State var permissionButtonTapped: Bool = false
+    @State private var permissionButtonTapped: Bool = false
+    @State private var pageIndex: Int = 0
+
+    private var hasRequiredPermissions: Bool {
+        permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
+    }
     
     var body: some View {
-        TabView {
+        TabView(selection: $pageIndex) {
             VStack {
                 Image("CarwatchLogo")
                     .resizable()
@@ -17,7 +22,13 @@ struct RegistrationView: View {
                     .padding()
                 Text("Welcome to CARWatch!")
                     .font(.title.weight(.bold))
+                Button("Continue") {
+                    pageIndex = 1
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top)
             }
+            .tag(0)
             
             if !sessionVM.isReregistration {
                 VStack {
@@ -61,9 +72,26 @@ struct RegistrationView: View {
                     .padding()
                     .frame(alignment: .center)
                     .buttonStyle(.borderedProminent)
+                    .disabled(hasRequiredPermissions)
+                    .opacity(hasRequiredPermissions ? 0.5 : 1)
+                    if !hasRequiredPermissions {
+                        Text("Please grant camera and notification access to continue.")
+                            .font(.system(size: StyleConstants.explanationFontSize))
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 8)
+                    }
+                    Button("Continue") {
+                        pageIndex = 2
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!hasRequiredPermissions)
+                    .opacity(hasRequiredPermissions ? 1 : 0.5)
+                    .padding(.top, 8)
                 }
                 .gesture(permissionButtonTapped ? nil : DragGesture())
                 .padding(StyleConstants.edgePadding)
+                .tag(1)
             }
             
             VStack {
@@ -87,6 +115,7 @@ struct RegistrationView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
+            .tag(sessionVM.isReregistration ? 1 : 2)
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))

@@ -23,9 +23,13 @@ class AlarmViewModel : ObservableObject {
             saveDateOfLastInitialAlarm()
         }
     }
-    @Published var isDarkModeOn: Bool = false {
+    @Published var isDarkModeOn: Bool? = nil {
         didSet {
-            UserDefaults.standard.set(isDarkModeOn, forKey: isDarkModeOnKey)
+            if let isDarkModeOn {
+                UserDefaults.standard.set(isDarkModeOn, forKey: isDarkModeOnKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: isDarkModeOnKey)
+            }
         }
     }
     
@@ -53,7 +57,11 @@ class AlarmViewModel : ObservableObject {
     
     func getAlarmData() {
         isEveningScanned = UserDefaults.standard.bool(forKey: isEveningScannedKey)
-        isDarkModeOn = UserDefaults.standard.bool(forKey: isDarkModeOnKey)
+        if let isDarkModeOn = UserDefaults.standard.object(forKey: isDarkModeOnKey) as? Bool {
+            self.isDarkModeOn = isDarkModeOn
+        } else {
+            self.isDarkModeOn = nil
+        }
         guard
             let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
             let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData)
@@ -437,7 +445,7 @@ class AlarmViewModel : ObservableObject {
         timedAlarms = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)]
         isEveningScanned = false
         studyDayCounter = 0
-        isDarkModeOn = false
+        isDarkModeOn = nil
         dateOfLastInitialAlarm = Date.distantPast
         timedAlarmActivity = [false]
     }

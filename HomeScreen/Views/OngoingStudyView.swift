@@ -19,6 +19,13 @@ struct OngoingStudyView: View {
     @State private var showToast: Bool = false
     @State private var toastType: MenuConstants.ToastType = .clickToKill
     @State private var killButtonClickCount: Int = 0
+
+    private var preferredColorScheme: ColorScheme? {
+        guard let isDarkModeOn = alarmVM.isDarkModeOn else {
+            return nil
+        }
+        return isDarkModeOn ? .dark : .light
+    }
     
     init() {
         // Use the shared property from firstViewModel for secondViewModel initialization
@@ -87,8 +94,7 @@ struct OngoingStudyView: View {
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
             }
-            .preferredColorScheme(alarmVM.isDarkModeOn ? .dark : .light)
-            
+            .preferredColorScheme(preferredColorScheme)
         } else if permissionDataVM.permissionData.notificationPermissionGranted {
             MissingPermissionView(type: PermissionConstants.PermissionType.camera)
         } else {
@@ -143,8 +149,8 @@ struct OngoingStudyView: View {
     
     func updateAlarmStatus() {
         if !Calendar.current.isDateInToday(alarmVM.dateOfLastInitialAlarm) {
-            // reset to light mode because a new day has started
-            alarmVM.isDarkModeOn = false
+            // reset to the phone's current appearance because a new day has started
+            alarmVM.isDarkModeOn = nil
         }
         alarmVM.updateAlarmStatus()
     }

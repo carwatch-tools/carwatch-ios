@@ -2,6 +2,7 @@ import SwiftUI
 import AlertToast
 
 struct BedtimeView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     
@@ -11,10 +12,21 @@ struct BedtimeView: View {
     @State var isBarcodeScannerPresented : Bool = false
     @State var alarmId : Int? = AlarmConstants.eveningAlarmId
 
+    private var isDarkModeEnabled: Bool {
+        alarmVM.isDarkModeOn ?? (colorScheme == .dark)
+    }
+
+    private var bedtimeBackgroundColor: Color {
+        isDarkModeEnabled ? .black : .white
+    }
+
+    private var bedtimeForegroundColor: Color {
+        isDarkModeEnabled ? .white : .black
+    }
+
     var body: some View {
         ZStack {
-            // Optional background to emphasize mode change
-            (alarmVM.isDarkModeOn ? Color.black : Color(UIColor.systemBackground))
+            bedtimeBackgroundColor
                 .ignoresSafeArea()
 
             VStack {
@@ -37,28 +49,27 @@ struct BedtimeView: View {
                                 showToast = true
                             }
                         } else {
-                            toastType = .feedbackToast
+                            toastType = .noEveningSampleToast
                             showToast = true
                         }
                     }
                     .buttonStyle(.borderedProminent)
                     Button("NO") {
-                        toastType = .feedbackToast
+                        toastType = studyDataVM.studyData.hasEveningSample ? .bedtimeReminderToast : .noSampleTonightToast
                         showToast = true
                     }
                     .buttonStyle(.bordered)
                 }
                 .padding(.bottom)
-                Button(alarmVM.isDarkModeOn ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                    Logger.instance.log(tag: alarmVM.isDarkModeOn ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                    alarmVM.isDarkModeOn.toggle()
+                Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
+                    Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
+                    alarmVM.isDarkModeOn = !isDarkModeEnabled
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.orange)
             }
-            .foregroundStyle(alarmVM.isDarkModeOn ? .white : .primary)
+            .foregroundStyle(bedtimeForegroundColor)
         }
-        .preferredColorScheme(alarmVM.isDarkModeOn ? .dark : .light)
         .sheet(isPresented: $isBarcodeScannerPresented) {
             ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $alarmId, codeType: .ean8)
                 .interactiveDismissDisabled()
@@ -69,8 +80,14 @@ struct BedtimeView: View {
             switch toastType {
             case .feedbackToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Thank you for your feedback!", style: .style(backgroundColor: color))
+            case .bedtimeReminderToast:
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Remember to take your sample\nright before going to bed.", style: .style(backgroundColor: color))
+            case .noSampleTonightToast:
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Tonight no sample is required.", style: .style(backgroundColor: color))
+            case .noEveningSampleToast:
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Your study does not require an evening sample.\nGood night!", style: .style(backgroundColor: color))
             case .eveningSampleTakenToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "You have already taken your evening sample.", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "You have already taken\nyour evening sample.\nGood night!", style: .style(backgroundColor: color))
             }
         }
     }

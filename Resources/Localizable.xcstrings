@@ -195,7 +195,14 @@
       }
     },
     "In the bedtime screen, you can initiate the evening procedure before going to bed. You only need to do this if your study requires to take an evening sample. The 'LIGHTS OUT' button will activate the app's dark mode." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Bettzeit-Bildschirm können Sie vor dem Schlafengehen die Abendprobe starten. Dies ist nur erforderlich, wenn in Ihrer Studie eine Abendprobe vorgesehen ist. Die Schaltfläche 'LICHT AUS' aktiviert den Dunkelmodus der App."
+          }
+        }
+      }
     },
     "Info" : {
       "localizations" : {
@@ -331,12 +338,33 @@
         }
       }
     },
+    "Please grant camera and notification access to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte erlauben Sie Kamera- und Mitteilungszugriff, um fortzufahren."
+          }
+        }
+      }
+    },
     "Please point your camera at a barcode!" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitte richten Sie Ihre Kamera auf einen Barcode!"
+          }
+        }
+      }
+    },
+    "Please remember to take your sample\nwhen you wake up." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte denken Sie daran, Ihre Probe\nbeim Aufwachen zu nehmen."
           }
         }
       }
@@ -368,6 +396,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitte stellen Sie Ihre gewünschte Weckzeit für morgen ein."
+          }
+        }
+      }
+    },
+    "Remember to take your sample\nright before going to bed." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denken Sie daran, Ihre Probe\nunmittelbar vor dem Schlafengehen\nzu nehmen."
           }
         }
       }
@@ -537,6 +576,17 @@
         }
       }
     },
+    "Thank you for your feedback!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danke für Ihre Rückmeldung!"
+          }
+        }
+      }
+    },
     "The barcode scanner opens automatically when you tap on a sample notification. After sampling, simply scan the barcode on the sample tube so that the sample can later be linked to the time of sampling." : {
       "localizations" : {
         "de" : {
@@ -624,6 +674,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um alle Funktion bereitstellen zu können, braucht CARWatch folgende Berechtigungen:"
+          }
+        }
+      }
+    },
+    "Tonight no sample is required." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Abend ist keine Probe erforderlich."
           }
         }
       }
@@ -742,12 +803,34 @@
         }
       }
     },
+    "You have already taken\nyour evening sample.\nGood night!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben Ihre Abendprobe bereits genommen.\nGute Nacht!"
+          }
+        }
+      }
+    },
     "You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sie müssen Ihr Aufwachen nur manuell eingeben, wenn Sie keinen Wecker für den Morgen gestellt haben oder wenn Sie aufgewacht sind, bevor der Wecker losging. Wenn Sie auf die Schaltfläche „JA“ klicken, werden die Probenerinnerungen für den aktuellen Tag geplant."
+          }
+        }
+      }
+    },
+    "Your study does not require\nan evening sample.\nGood night!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Studie erfordert keine Abendprobe.\nGute Nacht!"
           }
         }
       }

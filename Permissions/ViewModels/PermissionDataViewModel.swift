@@ -71,6 +71,7 @@ class PermissionDataViewModel : ObservableObject {
         CameraManager.instance.requestPermission { isDone in
             self.setCameraPermissionDialogHandled()
             CameraManager.instance.reloadCameraPermission()
+            self.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
         }
     }
 }

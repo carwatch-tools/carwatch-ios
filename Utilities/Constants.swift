@@ -12,10 +12,10 @@ struct NotificationConstants {
     static let numberOfSubsequentNotifications = 2
     static let minutesBetweenNotifications = 1
     enum WakeupToastType {
-        case feedbackToast, wakeupReportedToast, studyFinishedToast
+        case feedbackToast, wakeupReminderToast, wakeupReportedToast, studyFinishedToast
     }
     enum BedtimeToastType {
-        case feedbackToast, eveningSampleTakenToast
+        case feedbackToast, bedtimeReminderToast, noSampleTonightToast, noEveningSampleToast, eveningSampleTakenToast
     }
 }
 
