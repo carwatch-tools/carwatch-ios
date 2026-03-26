@@ -1,6 +1,12 @@
 import SwiftUI
 import AlertToast
 
+enum ScannerPresentationSource {
+    case wakeup
+    case schedule
+    case notification
+}
+
 struct OngoingStudyView: View {
     @StateObject var alarmVM: AlarmViewModel
     
@@ -13,6 +19,7 @@ struct OngoingStudyView: View {
     @State var initialAlarmTime: Date = getDateTomorrowMorning()
     
     @State private var selectedTab = 0
+    @State private var scannerSource: ScannerPresentationSource? = nil
     
     @State private var showAppInfoDialog = false
     @State private var appVersion: String? = nil
@@ -36,13 +43,22 @@ struct OngoingStudyView: View {
         if permissionDataVM.permissionData.notificationPermissionGranted && permissionDataVM.permissionData.cameraPermissionGranted {
             NavigationStack{
                 TabView(selection: $selectedTab){
-                    WakeupView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isBarcodeScannerPresented)
+                    WakeupView(
+                        initialAlarmTime: $initialAlarmTime,
+                        isScannerPresented: $isBarcodeScannerPresented,
+                        scannerSource: $scannerSource
+                    )
                         .tabItem {
                             Label("Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
                         .environmentObject(alarmVM)
-                    AlarmView(initialAlarmTime: $initialAlarmTime, isScannerPresented: $isBarcodeScannerPresented, currentAlarmId: $currentAlarmId)
+                    AlarmView(
+                        initialAlarmTime: $initialAlarmTime,
+                        isScannerPresented: $isBarcodeScannerPresented,
+                        currentAlarmId: $currentAlarmId,
+                        scannerSource: $scannerSource
+                    )
                         .tabItem {
                             Label("Schedule", systemImage: "alarm")
                         }.tag(1)
@@ -65,11 +81,14 @@ struct OngoingStudyView: View {
                     switch toastType {
                     case .clickToKill:
                         let clicksLeft = MenuConstants.killButtonClickCountActivate - killButtonClickCount
-                        toastMsg = "Click \(clicksLeft) more times to kill all reminders!"
+                        toastMsg = String(
+                            format: String(localized: "Click %lld more times to kill all reminders!"),
+                            Int64(clicksLeft)
+                        )
                     case .killSuccess:
-                        toastMsg = "All reminders were deactivated!"
+                        toastMsg = String(localized: "All reminders were deactivated!")
                     case .zipLogsFailed:
-                        toastMsg = "Generating the logs failed.\nPlease try again later!"
+                        toastMsg = String(localized: "Generating the logs failed.\nPlease try again later!")
                     }
                     let color = Color(UIColor.secondarySystemBackground)
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
@@ -88,6 +107,20 @@ struct OngoingStudyView: View {
             .onAppear {
                 initializeStudyData()
                 updateTimedAlarms()
+            }
+            .onChange(of: isBarcodeScannerPresented) { isPresented in
+                if isPresented {
+                    return
+                }
+
+                if scannerSource == .wakeup && alarmVM.getInitialAlarm().isScanned {
+                    selectedTab = 1
+                } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
+                    selectedTab = 2
+                }
+
+                alarmVM.didCompleteLastScheduledSample = false
+                scannerSource = nil
             }
             .sheet(isPresented: $isBarcodeScannerPresented) {
                 ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
@@ -118,6 +151,7 @@ struct OngoingStudyView: View {
             // unhandled notification is present
             alarmVM.setUpcomingAlarmTriggered()
             currentAlarmId = nil
+            scannerSource = .notification
             isBarcodeScannerPresented = true
         }
         /*

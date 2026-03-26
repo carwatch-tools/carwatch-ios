@@ -7,7 +7,7 @@ class NotificationManager {
     
     func scheduleCalendarBasedNotification(id: String, salivaId: String, day: Int,  hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "Please take saliva sample #\(salivaId)!"
+        content.title = notificationTitle(for: salivaId)
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         var dateComponents = DateComponents()
         dateComponents.day = day
@@ -16,6 +16,14 @@ class NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+    }
+
+    private func notificationTitle(for salivaId: String) -> String {
+        if salivaId == "0" {
+            return "Please take the first saliva sample (sample #0)!"
+        }
+
+        return "Please take saliva sample #\(salivaId)!"
     }
     
     func cancelNotificationsById(alarmId: Int) {

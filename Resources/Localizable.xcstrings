@@ -15,6 +15,16 @@
         }
       }
     },
+    "All reminders were deactivated!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Erinnerungen wurden deaktiviert!"
+          }
+        }
+      }
+    },
     "App Info" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -47,16 +57,6 @@
         }
       }
     },
-    "Back" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zurueck"
-          }
-        }
-      }
-    },
     "Are you going to bed?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -64,6 +64,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sind Sie dabei, ins Bett zu gehen?"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück"
           }
         }
       }
@@ -85,6 +95,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kamerazugriff, um die Barcodes von Speichelproben zu scannen"
+          }
+        }
+      }
+    },
+    "Choose Language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache auswählen"
+          }
+        }
+      }
+    },
+    "Click %lld more times to kill all reminders!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld-mal tippen, um alle Erinnerungen zu deaktivieren!"
           }
         }
       }
@@ -188,6 +218,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Feste Probenzeiten"
+          }
+        }
+      }
+    },
+    "Generating the logs failed.\nPlease try again later!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Erstellen der Logs ist fehlgeschlagen.\nBitte versuchen Sie es später erneut!"
           }
         }
       }
@@ -407,6 +447,16 @@
         }
       }
     },
+    "Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigung in\n%lld Stunden %lld Minuten geplant.\nBitte stellen Sie\nIhren Wecker entsprechend ein!"
+          }
+        }
+      }
+    },
     "OK" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -424,6 +474,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Probanden-ID"
+          }
+        }
+      }
+    },
+    "Permissions granted" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigungen erteilt"
           }
         }
       }
@@ -458,6 +518,16 @@
         }
       }
     },
+    "Please remember to take your sample\nwhen you wake up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte denken Sie daran, Ihre Probe zu nehmen,\nwenn Sie aufwachen."
+          }
+        }
+      }
+    },
     "Please scan the QR Code that you received to configure the CARWatch App for your study." : {
       "localizations" : {
         "de" : {
@@ -485,6 +555,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitte stellen Sie Ihre gewünschte Weckzeit für morgen ein."
+          }
+        }
+      }
+    },
+    "Remember to take your sample\nright before going to bed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denken Sie daran, Ihre Probe\nunmittelbar vor dem Schlafengehen zu nehmen."
           }
         }
       }
@@ -683,6 +763,16 @@
         }
       }
     },
+    "Thank you for your feedback!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vielen Dank für Ihre Rückmeldung!"
+          }
+        }
+      }
+    },
     "The barcode scanner opens automatically when you tap on a sample notification. After sampling, simply scan the barcode on the sample tube so that the sample can later be linked to the time of sampling." : {
       "localizations" : {
         "de" : {
@@ -713,12 +803,32 @@
         }
       }
     },
+    "The study is already finished, so the wakeup time can no longer be changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Studie ist bereits beendet, daher kann die Weckzeit nicht mehr geändert werden."
+          }
+        }
+      }
+    },
     "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Scan sample' button opens the barcode scanner for the respective sample." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Symbole neben dem Probezeitpunkt zeigen an, ob eine Probe bereits genommen wurde (grünes Häkchen) oder fällig ist (oranges Ausrufezeichen). Erinnerungen für verbleibende Proben sind für später eingeplant. Durch Drücken der Schaltfläche „Probe scannen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
+          }
+        }
+      }
+    },
+    "The wakeup time can only be changed after all samples for the current day have been recorded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Weckzeit kann erst geändert werden, nachdem alle Proben des aktuellen Tages erfasst wurden."
           }
         }
       }
@@ -753,6 +863,16 @@
         }
       }
     },
+    "This was your last sample.\nThank you for participating in the study!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dies war Ihre letzte Probe.\nVielen Dank für Ihre Teilnahme an der Studie!"
+          }
+        }
+      }
+    },
     "Title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -770,6 +890,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um alle Funktion bereitstellen zu können, braucht CARWatch folgende Berechtigungen:"
+          }
+        }
+      }
+    },
+    "Tonight no sample is required." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute Abend ist keine Probe erforderlich."
           }
         }
       }
@@ -847,6 +977,16 @@
         }
       }
     },
+    "Wakeup time unavailable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weckzeit nicht verfügbar"
+          }
+        }
+      }
+    },
     "Welcome to CARWatch!" : {
       "localizations" : {
         "de" : {
@@ -856,6 +996,9 @@
           }
         }
       }
+    },
+    "Why is wakeup time disabled?" : {
+
     },
     "Yes" : {
       "localizations" : {
@@ -888,12 +1031,52 @@
         }
       }
     },
+    "You have already finished the study.\nThanks for participating!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben die Studie bereits abgeschlossen.\nVielen Dank für Ihre Teilnahme!"
+          }
+        }
+      }
+    },
+    "You have already reported your wakeup." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben Ihr Aufwachen bereits eingetragen."
+          }
+        }
+      }
+    },
+    "You have already taken your evening sample.\nGood night!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben Ihre Abendprobe bereits genommen.\nGute Nacht!"
+          }
+        }
+      }
+    },
     "You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sie müssen Ihr Aufwachen nur manuell eingeben, wenn Sie keinen Wecker für den Morgen gestellt haben oder wenn Sie aufgewacht sind, bevor der Wecker losging. Wenn Sie auf die Schaltfläche „JA“ klicken, werden die Probenerinnerungen für den aktuellen Tag geplant."
+          }
+        }
+      }
+    },
+    "Your study does not require an evening sample.\nGood night!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Studie erfordert keine Abendprobe.\nGute Nacht!"
           }
         }
       }

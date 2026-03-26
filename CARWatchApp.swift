@@ -4,6 +4,7 @@ import SwiftUI
 struct CARWatchApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    @AppStorage(LocalizationConstants.languageStorageKey) private var selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     @StateObject var permissionViewModel: PermissionDataViewModel = PermissionDataViewModel()
     @StateObject var sessionViewModel : SessionViewModel = SessionViewModel()
     @StateObject var studyDataViewModel : StudyDataViewModel = StudyDataViewModel()
@@ -17,6 +18,7 @@ struct CARWatchApp: App {
                 .environmentObject(sessionViewModel)
                 .environmentObject(studyDataViewModel)
                 .environmentObject(appDelegate)
+                .environment(\.locale, Locale(identifier: selectedLanguageCode))
                 .onAppear(){
                    checkPermissionsDuringOngoingStudy()
                 }

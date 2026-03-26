@@ -15,7 +15,7 @@ struct NotificationConstants {
         case feedbackToast, wakeupReminderToast, wakeupReportedToast, studyFinishedToast
     }
     enum BedtimeToastType {
-        case feedbackToast, bedtimeReminderToast, noSampleTonightToast, noEveningSampleToast, eveningSampleTakenToast
+        case feedbackToast, bedtimeReminderToast, noSampleTonightToast, noEveningSampleToast, eveningSampleTakenToast, studyFinishedToast
     }
 }
 
@@ -56,6 +56,23 @@ struct StyleConstants {
     static let overlayStrokeWidth: CGFloat = 5
     static let roundedCornerRadius: CGFloat = 15
     static let roundedCornerStrokeLength: CGFloat = 15
+}
+
+struct LocalizationConstants {
+    static let languageStorageKey = "selectedLanguageCode"
+    static let supportedLanguageCodes = ["en", "de"]
+
+    static var defaultLanguageCode: String {
+        let preferredCode = Locale.preferredLanguages
+            .compactMap { Locale(identifier: $0).language.languageCode?.identifier }
+            .first
+
+        guard let preferredCode, supportedLanguageCodes.contains(preferredCode) else {
+            return "en"
+        }
+
+        return preferredCode
+    }
 }
 
 struct MenuConstants {

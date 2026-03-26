@@ -32,6 +32,7 @@ class AlarmViewModel : ObservableObject {
             }
         }
     }
+    @Published var didCompleteLastScheduledSample: Bool = false
     
     // no didSet required because this info is retrieved from timedAlarms and automatically updated when timedAlarms is set
     @Published var timedAlarmActivity: [Bool] = [false]
@@ -54,6 +55,16 @@ class AlarmViewModel : ObservableObject {
         getStudyDayCounterData()
         getLastInitialAlarmData()
     }
+
+    private func defaultInitialAlarm() -> Alarm {
+        Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)
+    }
+
+    private func ensureInitialAlarmExists() {
+        if timedAlarms.isEmpty {
+            timedAlarms = [defaultInitialAlarm()]
+        }
+    }
     
     func getAlarmData() {
         isEveningScanned = UserDefaults.standard.bool(forKey: isEveningScannedKey)
@@ -68,7 +79,7 @@ class AlarmViewModel : ObservableObject {
         else {
             return
         }
-        timedAlarms = savedTimedAlarms
+        timedAlarms = savedTimedAlarms.isEmpty ? [defaultInitialAlarm()] : savedTimedAlarms
         updateAlarmTime(time: getInitialAlarm().time)
     }
     
@@ -87,14 +98,17 @@ class AlarmViewModel : ObservableObject {
     }
     
     func getInitialAlarm() -> Alarm {
+        ensureInitialAlarmExists()
         return timedAlarms[0]
     }
     
     func setInitialAlarm(alarm: Alarm) {
+        ensureInitialAlarmExists()
         timedAlarms[0] = alarm
     }
     
     func setInitialAlarmTriggered() {
+        ensureInitialAlarmExists()
         timedAlarms[0] = timedAlarms[0].setTriggered()
         dateOfLastInitialAlarm = Date()
         studyDayCounter += 1
@@ -179,6 +193,9 @@ class AlarmViewModel : ObservableObject {
     }
     
     func setTimedAlarmActivity(index: Int, isActive: Bool) {
+        guard timedAlarms.indices.contains(index) else {
+            return
+        }
         timedAlarms[index] = timedAlarms[index].setIsActive(isActive: isActive)
         if !isActive {
             NotificationManager.instance.cancelNotificationsById(alarmId: timedAlarms[index].id)
@@ -204,6 +221,7 @@ class AlarmViewModel : ObservableObject {
     
     func setCurrentAlarmScanned(alarmId: Int? = nil) {
         var alarm: Alarm?
+        didCompleteLastScheduledSample = false
         switch alarmId {
         case nil:
             alarm = getCurrentlyTriggeredAlarm()
@@ -215,6 +233,7 @@ class AlarmViewModel : ObservableObject {
         }
         
         if alarm != nil {
+            didCompleteLastScheduledSample = alarm?.id == timedAlarms.last?.id
             // set alarm as scanned and inactive
             modifyAlarmById(alarm: alarm!.setScanned())
             // cancel all remaining alarms
@@ -306,26 +325,39 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateTimedAlarms() {
+        ensureInitialAlarmExists()
+
         if timeIntervals.isEmpty && fixedTimes.isEmpty {
             // do nothing until study was configured
             return
         }
+
         let updatedAlarmTimes = updateAlarmTimes()
-        if updatedAlarmTimes.count != timedAlarms.count {
-            // if timed alarms is set for the first time -> create entire array
-            var updatedTimedAlarms = [Alarm]()
-            for (index, time) in updatedAlarmTimes.enumerated(){
-                // create Alarm objects
-                updatedTimedAlarms.append(Alarm(id: index, isActive: getInitialAlarm().isActive, time: time))
+
+        let initialAlarm = getInitialAlarm()
+        let expectedAlarmCount = updatedAlarmTimes.count + 1
+
+        if timedAlarms.count != expectedAlarmCount {
+            // Rebuild the list when the configured sample count changed, while preserving
+            // the current initial alarm state at index 0.
+            var rebuiltAlarms = [initialAlarm]
+            for (offset, time) in updatedAlarmTimes.enumerated() {
+                rebuiltAlarms.append(
+                    Alarm(id: offset + 1, isActive: initialAlarm.isActive, time: time)
+                )
             }
-            timedAlarms = updatedTimedAlarms
-            
-        // if timed alarm was set before -> only update entries
+            timedAlarms = rebuiltAlarms
         } else {
-            for (index, time) in updatedAlarmTimes.enumerated(){
-                // create Alarm objects
+            for (offset, time) in updatedAlarmTimes.enumerated() {
+                let index = offset + 1
                 let currentAlarm = timedAlarms[index]
-                timedAlarms[index] = Alarm(id: currentAlarm.id, isActive: currentAlarm.isActive, isScanned: currentAlarm.isScanned, isTriggered: currentAlarm.isTriggered, time: time)
+                timedAlarms[index] = Alarm(
+                    id: currentAlarm.id,
+                    isActive: currentAlarm.isActive,
+                    isScanned: currentAlarm.isScanned,
+                    isTriggered: currentAlarm.isTriggered,
+                    time: time
+                )
             }
         }
     }

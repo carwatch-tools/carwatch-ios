@@ -12,12 +12,24 @@ struct AlarmView: View {
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
     @Binding var currentAlarmId: Int?
+    @Binding var scannerSource: ScannerPresentationSource?
     
     @State private var showToast: Bool = false
     @State private var showAlert: Bool = false
+    @State private var showDisabledInfoAlert: Bool = false
     @State private var activeAlert: ActiveAlert = .toggleActivityAlert
     @State private var pendingToggleValue: Bool = false
     @State private var pendingToggleIndex: Int = 0
+
+    private var isWakeupTimeSelectionDisabled: Bool {
+        alarmVM.isAlarmOngoing() || alarmVM.isStudyFinished()
+    }
+
+    private var disabledWakeupMessage: LocalizedStringKey {
+        alarmVM.isStudyFinished()
+            ? "The study is already finished, so the wakeup time can no longer be changed."
+            : "The wakeup time can only be changed after all samples for the current day have been recorded."
+    }
     
     var body: some View {
         VStack {
@@ -29,36 +41,47 @@ struct AlarmView: View {
                 .font(.system(size: StyleConstants.mainScreenFontSize))
                 .multilineTextAlignment(.center)
                 .font(.system(size: StyleConstants.mainScreenFontSize))
-            HStack{
-                Toggle("", isOn: Binding<Bool>(
-                    get: { alarmVM.timedAlarmActivity[0] },
-                    set: { newValue in
-                        setInitialAlarmActivity(isActive: newValue)
-                    }))
-                .labelsHidden()
-                .padding(StyleConstants.edgePadding)
-                .font(.system(size: StyleConstants.mainScreenFontSize))
-                DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
-                    .onChange(of: initialAlarmTime, perform: { _ in
-                        // backup old initial alarm value in case the selection is invalid
-                        let backupTime = alarmVM.getInitialAlarm().time
-                        alarmVM.updateAlarmTime(time: initialAlarmTime)
-                        if initialAlarmTime > alarmVM.timedAlarms[0].time {
-                            // this can happen when using fixed time alarms, where the alarm times won't update depending on the initial alarm
-                            initialAlarmTime = backupTime
-                            alarmVM.updateAlarmTime(time: initialAlarmTime)
-                        }
-                        if(alarmVM.getInitialAlarm().isActive) {
-                            showToast = true
-                        }
-                        
-                        
-                        
-                    })
+            HStack {
+                HStack{
+                    Toggle("", isOn: Binding<Bool>(
+                        get: { alarmVM.timedAlarmActivity[0] },
+                        set: { newValue in
+                            setInitialAlarmActivity(isActive: newValue)
+                        }))
                     .labelsHidden()
-                    .scaledToFit()
-                    .scaleEffect(CGSize(width: 1.5, height: 1.5))
-            }.disabled(alarmVM.isAlarmOngoing() || alarmVM.isStudyFinished())
+                    .padding(StyleConstants.edgePadding)
+                    .font(.system(size: StyleConstants.mainScreenFontSize))
+                    DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
+                        .onChange(of: initialAlarmTime, perform: { _ in
+                            // backup old initial alarm value in case the selection is invalid
+                            let backupTime = alarmVM.getInitialAlarm().time
+                            alarmVM.updateAlarmTime(time: initialAlarmTime)
+                            if initialAlarmTime > alarmVM.timedAlarms[0].time {
+                                // this can happen when using fixed time alarms, where the alarm times won't update depending on the initial alarm
+                                initialAlarmTime = backupTime
+                                alarmVM.updateAlarmTime(time: initialAlarmTime)
+                            }
+                            if(alarmVM.getInitialAlarm().isActive) {
+                                showToast = true
+                            }
+                        })
+                        .labelsHidden()
+                        .scaledToFit()
+                        .scaleEffect(CGSize(width: 1.5, height: 1.5))
+                }
+                .disabled(isWakeupTimeSelectionDisabled)
+
+                if isWakeupTimeSelectionDisabled {
+                    Button {
+                        showDisabledInfoAlert = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Why is wakeup time disabled?")
+                }
+            }
             
             
             Divider()
@@ -104,6 +127,7 @@ struct AlarmView: View {
                                             showAlert = true
                                         } else {
                                             // alarm is due alreadyon
+                                            scannerSource = .schedule
                                             isScannerPresented = true
                                         }
                                     })
@@ -130,7 +154,11 @@ struct AlarmView: View {
             .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
                 let color = Color(UIColor.secondarySystemBackground)
                 let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
-                let toastMsg = "Notification scheduled for\n\(diffHours) hours \(diffMinutes) minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"
+                let toastMsg = String(
+                    format: String(localized: "Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
+                    Int64(diffHours),
+                    Int64(diffMinutes)
+                )
                 return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
                 
             }
@@ -140,6 +168,7 @@ struct AlarmView: View {
                     return Alert(title: Text("This sample is scheduled for later. Are you sure you want to scan the sample now?"),
                                  primaryButton: .destructive(Text("Yes")) {
                         showAlert = false
+                        scannerSource = .schedule
                         isScannerPresented = true
                     },
                                  secondaryButton: .cancel(Text("No")) {
@@ -158,6 +187,11 @@ struct AlarmView: View {
                     }
                     )
                 }
+            }
+            .alert(String(localized: "Wakeup time unavailable"), isPresented: $showDisabledInfoAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(disabledWakeupMessage)
             }
             Spacer()
         }
@@ -199,7 +233,8 @@ struct AlarmView_PreviewContainer: View {
         AlarmView(
             initialAlarmTime: $initialAlarmTime,
             isScannerPresented: $isScannerPresented,
-            currentAlarmId: $currentAlarmId
+            currentAlarmId: $currentAlarmId,
+            scannerSource: .constant(nil)
         )
         .environmentObject(alarmVM)
         .environmentObject(StudyDataViewModel())

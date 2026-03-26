@@ -44,6 +44,9 @@ struct BedtimeView: View {
                         if studyDataVM.studyData.hasEveningSample {
                             if !alarmVM.isEveningScanned {
                                 isBarcodeScannerPresented = true
+                            } else if alarmVM.isStudyFinished() {
+                                toastType = .studyFinishedToast
+                                showToast = true
                             } else {
                                 toastType = .eveningSampleTakenToast
                                 showToast = true
@@ -75,19 +78,27 @@ struct BedtimeView: View {
                 .interactiveDismissDisabled()
                 .environmentObject(alarmVM)
         }
+        .onChange(of: isBarcodeScannerPresented) { isPresented in
+            if !isPresented && alarmVM.isStudyFinished() {
+                toastType = .studyFinishedToast
+                showToast = true
+            }
+        }
         .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
             let color = Color(UIColor.secondarySystemBackground)
             switch toastType {
             case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Thank you for your feedback!", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Thank you for your feedback!"), style: .style(backgroundColor: color))
             case .bedtimeReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Remember to take your sample\nright before going to bed.", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Remember to take your sample\nright before going to bed."), style: .style(backgroundColor: color))
             case .noSampleTonightToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Tonight no sample is required.", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Tonight no sample is required."), style: .style(backgroundColor: color))
             case .noEveningSampleToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Your study does not require an evening sample.\nGood night!", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Your study does not require an evening sample.\nGood night!"), style: .style(backgroundColor: color))
             case .eveningSampleTakenToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "You have already taken\nyour evening sample.\nGood night!", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
+            case .studyFinishedToast:
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "This was your last sample.\nThank you for participating in the study!"), style: .style(backgroundColor: color))
             }
         }
     }

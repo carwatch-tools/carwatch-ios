@@ -10,6 +10,7 @@ struct WakeupView: View {
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
+    @Binding var scannerSource: ScannerPresentationSource?
     
     var body: some View {
         ZStack {
@@ -52,6 +53,7 @@ struct WakeupView: View {
                             initialAlarmTime = Date()
                             alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
                             alarmVM.setInitialAlarmTriggered()
+                            scannerSource = .wakeup
                             isScannerPresented = true
                         }
                     }
@@ -69,13 +71,13 @@ struct WakeupView: View {
             let color = Color(UIColor.secondarySystemBackground)
             switch toastType {
             case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Thank you for your feedback!", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Thank you for your feedback!"), style: .style(backgroundColor: color))
             case .wakeupReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "Please remember to take your sample\nwhen you wake up.", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
             case .wakeupReportedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "You have already reported your wakeup.", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already reported your wakeup."), style: .style(backgroundColor: color))
             case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "You have already finished the study.\nThanks for participating!", style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already finished the study.\nThanks for participating!"), style: .style(backgroundColor: color))
             }
         }
     }
@@ -87,7 +89,8 @@ struct WakeupView: View {
 
     return WakeupView(
         initialAlarmTime: .constant(Date()),
-        isScannerPresented: .constant(false)
+        isScannerPresented: .constant(false),
+        scannerSource: .constant(nil)
     )
     .environmentObject(alarmVM)
     .environmentObject(StudyDataViewModel())

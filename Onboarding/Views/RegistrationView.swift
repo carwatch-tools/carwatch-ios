@@ -5,12 +5,17 @@ struct RegistrationView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     
+    @AppStorage(LocalizationConstants.languageStorageKey) private var selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     @Binding var isScannerPresented: Bool
     @State private var permissionButtonTapped: Bool = false
     @State private var pageIndex: Int = 0
 
     private var hasRequiredPermissions: Bool {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
+    }
+
+    private var permissionButtonTitle: LocalizedStringKey {
+        hasRequiredPermissions ? "Permissions granted" : "Grant Permissions"
     }
     
     var body: some View {
@@ -22,6 +27,13 @@ struct RegistrationView: View {
                     .padding()
                 Text("Welcome to CARWatch!")
                     .font(.title.weight(.bold))
+                Text("Choose Language")
+                    .font(.headline)
+                HStack(spacing: 12) {
+                    languageButton(title: "English", languageCode: "en")
+                    languageButton(title: "German", languageCode: "de")
+                }
+                .padding(.top, 8)
                 Button("Continue") {
                     pageIndex = 1
                 }
@@ -64,7 +76,7 @@ struct RegistrationView: View {
                                 .font(.system(size: StyleConstants.explanationFontSize))
                         }
                     }
-                    Button("Grant Permissions") {
+                    Button(permissionButtonTitle) {
                         permissionDataVM.checkNotificationPermission()
                         permissionDataVM.checkCameraPermission()
                         permissionButtonTapped = true
@@ -119,6 +131,15 @@ struct RegistrationView: View {
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))
+    }
+
+    @ViewBuilder
+    private func languageButton(title: String, languageCode: String) -> some View {
+        Button(title) {
+            selectedLanguageCode = languageCode
+        }
+        .buttonStyle(.bordered)
+        .tint(selectedLanguageCode == languageCode ? .blue : .gray)
     }
 }
 
