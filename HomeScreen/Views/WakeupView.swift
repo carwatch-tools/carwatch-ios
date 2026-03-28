@@ -7,6 +7,8 @@ struct WakeupView: View {
 
     @State var showToast: Bool = false
     @State var toastType: NotificationConstants.WakeupToastType = .feedbackToast
+    @State private var delayedSampleMinutes: Int = 0
+    @State private var showDelayedSampleAlert: Bool = false
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
@@ -53,8 +55,16 @@ struct WakeupView: View {
                             initialAlarmTime = Date()
                             alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
                             alarmVM.setInitialAlarmTriggered()
-                            scannerSource = .wakeup
-                            isScannerPresented = true
+                            if alarmVM.triggerWakeupSampleIfNeeded() != nil {
+                                scannerSource = .wakeup
+                                isScannerPresented = true
+                            } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
+                                delayedSampleMinutes = max(
+                                    1,
+                                    Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
+                                )
+                                showDelayedSampleAlert = true
+                            }
                         }
                     }
                 .buttonStyle(.borderedProminent)
@@ -76,9 +86,21 @@ struct WakeupView: View {
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
             case .wakeupReportedToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already reported your wakeup."), style: .style(backgroundColor: color))
+            case .delayedSampleToast:
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
             case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already finished the study.\nThanks for participating!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."), style: .style(backgroundColor: color))
             }
+        }
+        .alert(String(localized: "Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(
+                String(
+                    format: String(localized: "A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
+                    Int64(delayedSampleMinutes)
+                )
+            )
         }
     }
     

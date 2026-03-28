@@ -15,13 +15,21 @@ struct ScannerView: View {
     
     private let rotationChangePublisher = NotificationCenter.default
         .publisher(for: UIDevice.orientationDidChangeNotification)
+
+    private var scannedCodeLabel: String {
+        String(localized: codeType == .qr ? "QR code" : "barcode")
+    }
+
+    private var scannerPromptText: LocalizedStringKey {
+        codeType == .qr ? "Please point your camera at a QR code!" : "Please point your camera at a barcode!"
+    }
     
     var body: some View {
         GeometryReader { geometry in
             let overlayWidthHeightRatio = codeType == ScannerConstants.CodeType.ean8 ? ScannerConstants.barcodeWidthHeightRatio : ScannerConstants.defaultWidthHeightRatio
             ZStack{
                 CodeScanner(completion: handleScanResult, validation: validateScanResult, codeType: codeType, overlayWidthHeightRatio: overlayWidthHeightRatio)
-                ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio)
+                ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio, promptText: scannerPromptText)
             }
         }
         .safeAreaInset(edge: .top) {
@@ -44,7 +52,7 @@ struct ScannerView: View {
         .alert(isPresented: $showAlert) {
             switch alertType {
             case .success:
-                return Alert(title: Text("The barcode was scanned successfully!"),
+                return Alert(title: Text("The \(scannedCodeLabel) was scanned successfully!"),
                              dismissButton: Alert.Button.default(
                                 Text("OK"), action: {
                                     // go back to main view
@@ -54,7 +62,7 @@ struct ScannerView: View {
                              )
                 )
             case .invalid:
-                return Alert(title: Text("Invalid barcode!"),
+                return Alert(title: Text("Invalid \(scannedCodeLabel)!"),
                              dismissButton: Alert.Button.default(
                                 Text("OK"), action: {
                                     // go back to main view
@@ -63,7 +71,7 @@ struct ScannerView: View {
                              )
                 )
             case .duplicate:
-                return Alert(title: Text("Duplicate barcode!"), message: Text("This barcode was already scanned before. Please check and make sure to use a new salivette."),
+                return Alert(title: Text("Duplicate \(scannedCodeLabel)!"), message: Text("This barcode was already scanned before. Please check and make sure to use a new salivette."),
                              dismissButton: Alert.Button.default(
                                 Text("OK"), action: {
                                     // go back to main view

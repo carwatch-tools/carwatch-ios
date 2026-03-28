@@ -44,7 +44,7 @@ struct AlarmView: View {
             HStack {
                 HStack{
                     Toggle("", isOn: Binding<Bool>(
-                        get: { alarmVM.timedAlarmActivity[0] },
+                        get: { alarmVM.getInitialAlarm().isActive },
                         set: { newValue in
                             setInitialAlarmActivity(isActive: newValue)
                         }))
@@ -56,7 +56,7 @@ struct AlarmView: View {
                             // backup old initial alarm value in case the selection is invalid
                             let backupTime = alarmVM.getInitialAlarm().time
                             alarmVM.updateAlarmTime(time: initialAlarmTime)
-                            if initialAlarmTime > alarmVM.timedAlarms[0].time {
+                            if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
                                 // this can happen when using fixed time alarms, where the alarm times won't update depending on the initial alarm
                                 initialAlarmTime = backupTime
                                 alarmVM.updateAlarmTime(time: initialAlarmTime)
@@ -221,10 +221,11 @@ struct AlarmView_PreviewContainer: View {
 
     let alarmVM: AlarmViewModel = {
         let vm = AlarmViewModel()
+        vm.initialAlarm = Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)
         vm.timedAlarms = [
-            Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: true, isTriggered: false),
-            Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: true),
-            Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: false)
+            Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false),
+            Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true),
+            Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false)
         ]
         return vm
     }()

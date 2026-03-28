@@ -113,7 +113,7 @@ struct OngoingStudyView: View {
                     return
                 }
 
-                if scannerSource == .wakeup && alarmVM.getInitialAlarm().isScanned {
+                if scannerSource == .wakeup && alarmVM.timedAlarms.first?.isScanned == true {
                     selectedTab = 1
                 } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
                     selectedTab = 2
@@ -150,9 +150,11 @@ struct OngoingStudyView: View {
             print("App opened from notification")
             // unhandled notification is present
             alarmVM.setUpcomingAlarmTriggered()
-            currentAlarmId = nil
-            scannerSource = .notification
-            isBarcodeScannerPresented = true
+            if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
+                currentAlarmId = alarm.id
+                scannerSource = alarmVM.getInitialAlarm().isTriggered && alarm.id == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
+                isBarcodeScannerPresented = true
+            }
         }
         /*
          TODO: should the scanner be displayed if app was closed on barcode screen?

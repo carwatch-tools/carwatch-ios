@@ -6,9 +6,13 @@ struct TutorialView: View {
     
     @State var pageIndex: Int = 0
     
-    var imageNames: [String] = ["wakeup", "schedule", "sampleListSymbols", "bedtime", "scan", ""]
-    var titleTexts: [LocalizedStringKey] = ["Report waking up", "Track your alarms", "Track your alarms", "Report going to bed", "Scan your sample", "Start sampling!"]
-    var explanationTexts: [LocalizedStringKey] = ["You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day.", "You can set an alarm for the next morning directly from the alarm clock screen. Simply tap on the displayed time and choose your desired wake-up time. We recommend additionally setting an alarm in your usual alarm app for the same time.", "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Scan sample' button opens the barcode scanner for the respective sample.", "In the bedtime screen, you can initiate the evening procedure before going to bed. You only need to do this if your study requires to take an evening sample. The 'LIGHTS OUT' button will activate the app's dark mode.", "The barcode scanner opens automatically when you tap on a sample notification. After sampling, simply scan the barcode on the sample tube so that the sample can later be linked to the time of sampling.", "The CARWatch app is now ready to go. To start the study, set the alarm for the next day or report your awakening in the morning. If you need to reconfigure the app or you want to do the tutorial again, press the respective entries in the top-right menu."]
+    var imageNames: [String] = ["wakeup", "schedule", "sampleListSymbols", "bedtime", "scan", "export_logs", ""]
+    var titleTexts: [LocalizedStringKey] = ["Report waking up", "Track your alarms", "Track your alarms", "Report going to bed", "Scan your sample", "Export your logs", "Start sampling!"]
+    var explanationTexts: [LocalizedStringKey] = ["You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day.", "You can set an alarm for the next morning directly from the alarm clock screen. Simply tap on the displayed time and choose your desired wake-up time. We recommend additionally setting an alarm in your usual alarm app for the same time.", "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Scan sample' button opens the barcode scanner for the respective sample.", "In the bedtime screen, you can initiate the evening procedure before going to bed. You only need to do this if your study requires to take an evening sample. The 'LIGHTS OUT' button will activate the app's dark mode.", "The barcode scanner opens automatically when you tap on a sample notification. After sampling, simply scan the barcode on the sample tube so that the sample can later be linked to the time of sampling.", "After your study is completed, open the menu in the top-right corner and choose 'Share Logs'. Then send the exported logs to your study contact email.", "The CARWatch app is now ready to go. To start the study, set the alarm for the next day or report your awakening in the morning. If you need to reconfigure the app or you want to do the tutorial again, press the respective entries in the top-right menu."]
+
+    private var isLastPage: Bool {
+        pageIndex == titleTexts.count - 1
+    }
     
     var body: some View {
         VStack {
@@ -20,20 +24,16 @@ struct TutorialView: View {
                 }
             }
             .tabViewStyle(.page)
-            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
-            if (pageIndex == titleTexts.count - 1) {
-                Button("Get Started") {
-                    sessionVM.startStudy()
-                }
-                .buttonStyle(.borderedProminent)
-                .padding(.bottom)
-            } else {
-                Button("Skip") {
-                    sessionVM.startStudy()
-                }
-                .buttonStyle(.borderless)
-                .padding()
+            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            Button(isLastPage ? "Get Started" : "Skip") {
+                sessionVM.startStudy()
             }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal)
+            .padding(.bottom)
+            .buttonStyle(.borderedProminent)
+            .tint(isLastPage ? Color.accentColor : Color.clear)
+            .foregroundStyle(isLastPage ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.accentColor))
         }
     }
 }

@@ -98,7 +98,7 @@ struct BedtimeView: View {
             case .eveningSampleTakenToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
             case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "This was your last sample.\nThank you for participating in the study!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."), style: .style(backgroundColor: color))
             }
         }
     }

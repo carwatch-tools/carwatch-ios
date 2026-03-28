@@ -3,6 +3,7 @@ import SwiftUI
 struct ScanOverlayView: View {
     
     let overlayWidthHeightRatio: CGFloat
+    let promptText: LocalizedStringKey
     
     var body: some View {
         GeometryReader { geometry in
@@ -18,7 +19,7 @@ struct ScanOverlayView: View {
                     .blendMode(.destinationOut)
                 VStack {
                     Spacer()
-                    Text("Please point your camera at a barcode!")
+                    Text(promptText)
                         .padding()
                             .background(.black)
                             .opacity(StyleConstants.textBackgroundOpacity)

@@ -2,7 +2,12 @@ import Foundation
 
 class AlarmViewModel : ObservableObject {
     
-    @Published var timedAlarms: [Alarm]  = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)]  {
+    @Published var initialAlarm: Alarm = Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false) {
+        didSet {
+            saveInitialAlarm()
+        }
+    }
+    @Published var timedAlarms: [Alarm]  = []  {
         didSet {
             updateTimedAlarmActivity()
             saveTimedAlarms()
@@ -44,6 +49,7 @@ class AlarmViewModel : ObservableObject {
     @Published var hasEveningSample: Bool = false
     @Published var startSample: Int = 1
     
+    let initialAlarmDataKey = "initialAlarm"
     let timedAlarmDataKey = "alarmsList"
     let isEveningScannedKey = "isEveningScanned"
     let studyDayCounterKey = "studyDayCounter"
@@ -59,12 +65,6 @@ class AlarmViewModel : ObservableObject {
     private func defaultInitialAlarm() -> Alarm {
         Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)
     }
-
-    private func ensureInitialAlarmExists() {
-        if timedAlarms.isEmpty {
-            timedAlarms = [defaultInitialAlarm()]
-        }
-    }
     
     func getAlarmData() {
         isEveningScanned = UserDefaults.standard.bool(forKey: isEveningScannedKey)
@@ -73,13 +73,38 @@ class AlarmViewModel : ObservableObject {
         } else {
             self.isDarkModeOn = nil
         }
-        guard
-            let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
-            let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData)
-        else {
-            return
+
+        if let initialAlarmData = UserDefaults.standard.data(forKey: initialAlarmDataKey),
+           let savedInitialAlarm = try? JSONDecoder().decode(Alarm.self, from: initialAlarmData) {
+            initialAlarm = savedInitialAlarm
         }
-        timedAlarms = savedTimedAlarms.isEmpty ? [defaultInitialAlarm()] : savedTimedAlarms
+
+        if let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
+           let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData) {
+            if let legacyInitialAlarm = savedTimedAlarms.first(where: { $0.id == 0 }) {
+                initialAlarm = Alarm(
+                    id: AlarmConstants.initialAlarmId,
+                    isActive: legacyInitialAlarm.isActive,
+                    isScanned: false,
+                    isTriggered: legacyInitialAlarm.isTriggered,
+                    time: legacyInitialAlarm.time
+                )
+                timedAlarms = savedTimedAlarms
+                    .filter { $0.id != 0 }
+                    .map { alarm in
+                        Alarm(
+                            id: alarm.id - 1,
+                            isActive: alarm.isActive,
+                            isScanned: alarm.isScanned,
+                            isTriggered: alarm.isTriggered,
+                            time: alarm.time
+                        )
+                    }
+            } else {
+                timedAlarms = savedTimedAlarms
+            }
+        }
+
         updateAlarmTime(time: getInitialAlarm().time)
     }
     
@@ -98,18 +123,15 @@ class AlarmViewModel : ObservableObject {
     }
     
     func getInitialAlarm() -> Alarm {
-        ensureInitialAlarmExists()
-        return timedAlarms[0]
+        return initialAlarm
     }
     
     func setInitialAlarm(alarm: Alarm) {
-        ensureInitialAlarmExists()
-        timedAlarms[0] = alarm
+        initialAlarm = alarm
     }
     
     func setInitialAlarmTriggered() {
-        ensureInitialAlarmExists()
-        timedAlarms[0] = timedAlarms[0].setTriggered()
+        initialAlarm = initialAlarm.setTriggered()
         dateOfLastInitialAlarm = Date()
         studyDayCounter += 1
     }
@@ -200,21 +222,24 @@ class AlarmViewModel : ObservableObject {
         if !isActive {
             NotificationManager.instance.cancelNotificationsById(alarmId: timedAlarms[index].id)
         } else {
-            scheduleAlarmWithBackupNotifications(timedAlarms[index])
+            scheduleAlarmWithBackupNotifications(timedAlarms[index], salivaId: "\(startSample + timedAlarms[index].id)")
         }
     }
     
     func setUpcomingAlarmTriggered() {
+        if initialAlarm.isActive && !initialAlarm.isTriggered && !Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: Date()) {
+            setInitialAlarmTriggered()
+            _ = triggerWakeupSampleIfNeeded()
+            print("Alarm \(initialAlarm.id) set as triggered")
+            return
+        }
+
         if let alarm = getNextUpcomingAlarm() {
             // make sure study counter is only incremented once
             if alarm.isTriggered {
                 return
             }
-            if alarm.id == AlarmConstants.initialAlarmId {
-                setInitialAlarmTriggered()
-            } else {
-                modifyAlarmById(alarm: alarm.setTriggered())
-            }
+            modifyAlarmById(alarm: alarm.setTriggered())
             print("Alarm \(alarm.id) set as triggered")
         }
     }
@@ -325,33 +350,40 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateTimedAlarms() {
-        ensureInitialAlarmExists()
-
         if timeIntervals.isEmpty && fixedTimes.isEmpty {
             // do nothing until study was configured
             return
         }
 
         let updatedAlarmTimes = updateAlarmTimes()
-
-        let initialAlarm = getInitialAlarm()
-        let expectedAlarmCount = updatedAlarmTimes.count + 1
+        let expectedAlarmCount = updatedAlarmTimes.count
 
         if timedAlarms.count != expectedAlarmCount {
-            // Rebuild the list when the configured sample count changed, while preserving
-            // the current initial alarm state at index 0.
-            var rebuiltAlarms = [initialAlarm]
             for (offset, time) in updatedAlarmTimes.enumerated() {
-                rebuiltAlarms.append(
-                    Alarm(id: offset + 1, isActive: initialAlarm.isActive, time: time)
+                let rebuiltAlarm = Alarm(
+                    id: offset,
+                    isActive: initialAlarm.isActive,
+                    time: time
                 )
+                if timedAlarms.indices.contains(offset) {
+                    timedAlarms[offset] = Alarm(
+                        id: rebuiltAlarm.id,
+                        isActive: timedAlarms[offset].isActive,
+                        isScanned: timedAlarms[offset].isScanned,
+                        isTriggered: timedAlarms[offset].isTriggered,
+                        time: time
+                    )
+                } else {
+                    timedAlarms.append(rebuiltAlarm)
+                }
             }
-            timedAlarms = rebuiltAlarms
+            if timedAlarms.count > expectedAlarmCount {
+                timedAlarms.removeLast(timedAlarms.count - expectedAlarmCount)
+            }
         } else {
             for (offset, time) in updatedAlarmTimes.enumerated() {
-                let index = offset + 1
-                let currentAlarm = timedAlarms[index]
-                timedAlarms[index] = Alarm(
+                let currentAlarm = timedAlarms[offset]
+                timedAlarms[offset] = Alarm(
                     id: currentAlarm.id,
                     isActive: currentAlarm.isActive,
                     isScanned: currentAlarm.isScanned,
@@ -394,15 +426,18 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmStatus() {
+        if initialAlarm.isActive && !initialAlarm.isTriggered && initialAlarm.time < Date() {
+            setInitialAlarmTriggered()
+            _ = triggerWakeupSampleIfNeeded()
+            var msg = [String: Any]()
+            msg[LoggerConstants.loggerExtraAlarmId] = initialAlarm.id
+            Logger.instance.log(tag: LoggerConstants.loggerActionAlarmReceived, message: msg)
+        }
+
         // check if any unscanned alarms are in the past
         for alarm in timedAlarms {
             if alarm.isActive && !alarm.isScanned && !alarm.isTriggered && alarm.time < Date(){
-                // triggering the initial alarm requires to update the day counter and date of last initial alarm
-                if alarm.id == AlarmConstants.initialAlarmId {
-                    setInitialAlarmTriggered()
-                } else {
-                    modifyAlarmById(alarm: alarm.setTriggered())
-                }
+                modifyAlarmById(alarm: alarm.setTriggered())
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
                 Logger.instance.log(tag: LoggerConstants.loggerActionAlarmReceived, message: msg)
@@ -413,6 +448,12 @@ class AlarmViewModel : ObservableObject {
     func saveTimedAlarms() {
         if let encodedTimedAlarms = try? JSONEncoder().encode(timedAlarms) {
             UserDefaults.standard.set(encodedTimedAlarms, forKey: timedAlarmDataKey)
+        }
+    }
+    
+    func saveInitialAlarm() {
+        if let encodedInitialAlarm = try? JSONEncoder().encode(initialAlarm) {
+            UserDefaults.standard.set(encodedInitialAlarm, forKey: initialAlarmDataKey)
         }
     }
     
@@ -430,32 +471,52 @@ class AlarmViewModel : ObservableObject {
         if !getInitialAlarm().isActive {
             return
         }
+        scheduleAlarmWithBackupNotifications(getInitialAlarm(), salivaId: nil)
         for alarm in timedAlarms {
-            scheduleAlarmWithBackupNotifications(alarm)
+            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)")
         }
     }
     
     func scheduleAlarmNotificationsWithoutInitial() {
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
-        // schedule notifications for all but the intial alarm
-        for (index, alarm) in timedAlarms.enumerated() where index > 0 {
-            scheduleAlarmWithBackupNotifications(alarm)
+        // schedule notifications for all sample reminders, but not the wakeup alarm
+        for alarm in timedAlarms {
+            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)")
             logAlarmScheduled(alarm)
         }
     }
     
-    func scheduleAlarmWithBackupNotifications(_ alarm: Alarm){
+    func scheduleAlarmWithBackupNotifications(_ alarm: Alarm, salivaId: String?){
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
             // calculate notification time
             guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 return
             }
             let (day, hour, minute) = getDayHourMinuteFromTime(time: notificationTime)
-            let salivaId = "\(startSample + alarm.id)"
             // set notification for next day at the given alarm time
             NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", salivaId: salivaId, day: day, hour: hour, minute: minute)
         }
+    }
+
+    func triggerWakeupSampleIfNeeded() -> Alarm? {
+        guard let firstTimedAlarm = timedAlarms.first else {
+            return nil
+        }
+
+        let sameMinuteAsWakeup = Calendar.current.compare(
+            firstTimedAlarm.time,
+            to: initialAlarm.time,
+            toGranularity: .minute
+        ) == .orderedSame
+
+        guard sameMinuteAsWakeup, !firstTimedAlarm.isTriggered, !firstTimedAlarm.isScanned else {
+            return nil
+        }
+
+        let triggeredAlarm = firstTimedAlarm.setTriggered()
+        modifyAlarmById(alarm: triggeredAlarm)
+        return triggeredAlarm
     }
     
     func logAlarmScheduled(_ alarm: Alarm){
@@ -474,11 +535,12 @@ class AlarmViewModel : ObservableObject {
     }
     
     func resetAlarmDataForNewUser() {
-        timedAlarms = [Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)]
+        initialAlarm = defaultInitialAlarm()
+        timedAlarms = []
         isEveningScanned = false
         studyDayCounter = 0
         isDarkModeOn = nil
         dateOfLastInitialAlarm = Date.distantPast
-        timedAlarmActivity = [false]
+        timedAlarmActivity = []
     }
 }

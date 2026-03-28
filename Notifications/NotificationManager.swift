@@ -5,7 +5,7 @@ class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
     
-    func scheduleCalendarBasedNotification(id: String, salivaId: String, day: Int,  hour: Int, minute: Int) {
+    func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int) {
         let content = UNMutableNotificationContent()
         content.title = notificationTitle(for: salivaId)
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
@@ -18,7 +18,11 @@ class NotificationManager {
         UNUserNotificationCenter.current().add(request)
     }
 
-    private func notificationTitle(for salivaId: String) -> String {
+    private func notificationTitle(for salivaId: String?) -> String {
+        guard let salivaId else {
+            return "Wake up! Please confirm that you are awake in CARWatch."
+        }
+
         if salivaId == "0" {
             return "Please take the first saliva sample (sample #0)!"
         }
