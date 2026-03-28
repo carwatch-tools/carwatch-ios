@@ -2,6 +2,11 @@ import SwiftUI
 
 struct RegistrationView: View {
     
+    private enum RegistrationPath {
+        case participant
+        case studyConfiguration
+    }
+    
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     
@@ -9,38 +14,108 @@ struct RegistrationView: View {
     @Binding var isScannerPresented: Bool
     @State private var permissionButtonTapped: Bool = false
     @State private var pageIndex: Int = 0
+    @State private var selectedPath: RegistrationPath?
+    @State private var isInfoAlertPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
+    }
+
+    private var alternateLanguageCode: String {
+        selectedLanguageCode == "en" ? "de" : "en"
+    }
+
+    private var alternateLanguageLabel: String {
+        selectedLanguageCode == "en" ? "DE" : "EN"
     }
 
     private var permissionButtonTitle: LocalizedStringKey {
         hasRequiredPermissions ? "Permissions granted" : "Grant Permissions"
     }
     
+    private var pathSelectionTitle: LocalizedStringKey {
+        switch selectedPath {
+        case .participant:
+            return "Participant"
+        case .studyConfiguration:
+            return "Study configuration"
+        case nil:
+            return "Continue"
+        }
+    }
+    
     var body: some View {
         TabView(selection: $pageIndex) {
-            VStack {
-                Image("CarwatchLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .padding()
-                Text("Welcome to CARWatch!")
-                    .font(.title.weight(.bold))
-                Text("Choose Language")
-                    .font(.headline)
-                HStack(spacing: 12) {
-                    languageButton(title: "English", languageCode: "en")
-                    languageButton(title: "German", languageCode: "de")
+            ZStack {
+                VStack {
+                    Image("CarwatchLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .padding()
+                    Text("Welcome to CARWatch!")
+                        .font(.title.weight(.bold))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Button("Continue") {
+                        pageIndex = 1
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top)
                 }
-                .padding(.top, 8)
-                Button("Continue") {
-                    pageIndex = 1
+                VStack {
+                    HStack {
+                        infoButton()
+                        Spacer()
+                        languageToggleButton()
+                    }
+                    .padding(.top, 0)
+                    Spacer()
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.top)
+            }
+            .padding(StyleConstants.edgePadding)
+            .alert("App Info", isPresented: $isInfoAlertPresented) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("This app optimizes the intake of saliva samples to monitor the Cortisol Awakening Response (CAR).\nIt consists of an alarm plus repeating timers to remind subjects to accurately take their saliva samples. To turn off the alarm, the barcode on the saliva sample needs to be scanned in order to increase compliance and reduce possible human error.\n\nDeveloper Information\nPortabiles GmbH\ncontact@portabiles.de\nHenkestr. 91\n91052 Erlangen\nGermany")
             }
             .tag(0)
+            
+            VStack(spacing: 20) {
+                Text("How do you want to use CARWatch?")
+                    .font(.title.weight(.bold))
+                    .multilineTextAlignment(.center)
+                Text("Choose whether you want to participate in a study or prepare a study configuration.")
+                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .multilineTextAlignment(.center)
+                VStack(spacing: 12) {
+                    selectionButton(
+                        title: "Study participant",
+                        systemImage: "person.fill",
+                        path: .participant
+                    )
+                    selectionButton(
+                        title: "Design a study",
+                        systemImage: "slider.horizontal.3",
+                        path: .studyConfiguration
+                    )
+                }
+                Button(pathSelectionTitle) {
+                    switch selectedPath {
+                    case .participant:
+                        pageIndex = sessionVM.isReregistration ? 3 : 2
+                    case .studyConfiguration:
+                        pageIndex = 4
+                    case nil:
+                        break
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedPath == nil)
+                .padding(.top, 8)
+            }
+            .padding(StyleConstants.edgePadding)
+            .tag(1)
             
             if !sessionVM.isReregistration {
                 VStack {
@@ -94,7 +169,7 @@ struct RegistrationView: View {
                             .padding(.top, 8)
                     }
                     Button("Continue") {
-                        pageIndex = 2
+                        pageIndex = 3
                     }
                     .buttonStyle(.bordered)
                     .disabled(!hasRequiredPermissions)
@@ -103,7 +178,7 @@ struct RegistrationView: View {
                 }
                 .gesture(permissionButtonTapped ? nil : DragGesture())
                 .padding(StyleConstants.edgePadding)
-                .tag(1)
+                .tag(2)
             }
             
             VStack {
@@ -127,19 +202,103 @@ struct RegistrationView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-            .tag(sessionVM.isReregistration ? 1 : 2)
+            .tag(3)
+            
+            VStack(spacing: 20) {
+                Image(systemName: "laptopcomputer.and.arrow.down")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundStyle(.blue)
+                    .opacity(StyleConstants.mainScreenIconOpacity)
+                    .frame(width: 100, alignment: .center)
+                Text("Study Configuration")
+                    .font(.title.weight(.bold))
+                Text("Use the CARWatch web interface to prepare and manage your study setup.")
+                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .multilineTextAlignment(.center)
+                VStack(alignment: .leading, spacing: 12) {
+                    featureRow(icon: "alarm", text: "Specifically developed for Cortisol Awakening Response (CAR) studies")
+                    featureRow(icon: "house", text: "Suitable for supporting diurnal biomarker collection at home")
+                    featureRow(icon: "cross.case", text: "Suitable for lab-based biomarker collection")
+                    featureRow(icon: "checkmark.circle", text: "Supports study preparation, data collection & postprocessing")
+                }
+                .padding()
+                .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
+                Link(destination: URL(string: "https://mad-lab-fau.github.io/carwatch-web/")!) {
+                    Label("Open Study Designer", systemImage: "safari")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                Text("This opens the CARWatch website where your study can be configured.")
+                    .font(.system(size: 16))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(StyleConstants.edgePadding)
+            .tag(4)
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))
     }
 
     @ViewBuilder
-    private func languageButton(title: String, languageCode: String) -> some View {
-        Button(title) {
-            selectedLanguageCode = languageCode
+    private func languageToggleButton() -> some View {
+        Button {
+            selectedLanguageCode = alternateLanguageCode
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                Text(alternateLanguageLabel)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
         .buttonStyle(.bordered)
-        .tint(selectedLanguageCode == languageCode ? .blue : .gray)
+        .tint(.blue)
+    }
+
+    @ViewBuilder
+    private func infoButton() -> some View {
+        Button {
+            isInfoAlertPresented = true
+        } label: {
+            Image(systemName: "info.circle")
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+        }
+        .buttonStyle(.bordered)
+        .tint(.blue)
+    }
+
+    @ViewBuilder
+    private func featureRow(icon: String, text: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .frame(width: 22)
+                .foregroundStyle(.blue)
+            Text(text)
+                .font(.system(size: 18))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    @ViewBuilder
+    private func selectionButton(title: String, systemImage: String, path: RegistrationPath) -> some View {
+        Button {
+            selectedPath = path
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .frame(width: 20)
+                Text(title)
+                Spacer()
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(selectedPath == path ? .blue : .gray)
     }
 }
 
