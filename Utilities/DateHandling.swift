@@ -1,5 +1,11 @@
 import Foundation
 
+private func currentTimeFormatLocale() -> Locale {
+    let selectedLanguageCode = UserDefaults.standard.string(forKey: LocalizationConstants.languageStorageKey)
+        ?? LocalizationConstants.defaultLanguageCode
+
+    return Locale(identifier: selectedLanguageCode == "de" ? "de_DE" : "en_US")
+}
 
 func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
     let calendar = Calendar.current
@@ -10,8 +16,10 @@ func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
 }
 
 func getHourMinFormattedString(time: Date) -> String {
-    let (_, hour, minute) = getDayHourMinuteFromTime(time: time)
-    return "\(String(format: "%02d", hour)):\(String(format: "%02d", minute))"
+    let dateFormatter = DateFormatter()
+    dateFormatter.locale = currentTimeFormatLocale()
+    dateFormatter.dateFormat = dateFormatter.locale.identifier.hasPrefix("de") ? "HH:mm" : "h:mm a"
+    return dateFormatter.string(from: time)
 }
 
 func getDateTomorrowMorning() -> Date {
@@ -50,6 +58,15 @@ struct Time: Codable {
     var minute: Int
     
     func stringValue() -> String {
-        return "\(String(format: "%02d", hour)):\(String(format: "%02d", minute))"
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+
+        let calendar = Calendar.current
+        guard let date = calendar.date(from: dateComponents) else {
+            return "\(String(format: "%02d", hour)):\(String(format: "%02d", minute))"
+        }
+
+        return getHourMinFormattedString(time: date)
     }
 }

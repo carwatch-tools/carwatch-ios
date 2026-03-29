@@ -13,6 +13,7 @@ struct WakeupView: View {
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
     @Binding var scannerSource: ScannerPresentationSource?
+    var onDelayedSampleAcknowledged: () -> Void = {}
     
     var body: some View {
         ZStack {
@@ -93,7 +94,9 @@ struct WakeupView: View {
             }
         }
         .alert(String(localized: "Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {
+                onDelayedSampleAcknowledged()
+            }
         } message: {
             Text(
                 String(
@@ -112,7 +115,8 @@ struct WakeupView: View {
     return WakeupView(
         initialAlarmTime: .constant(Date()),
         isScannerPresented: .constant(false),
-        scannerSource: .constant(nil)
+        scannerSource: .constant(nil),
+        onDelayedSampleAcknowledged: {}
     )
     .environmentObject(alarmVM)
     .environmentObject(StudyDataViewModel())

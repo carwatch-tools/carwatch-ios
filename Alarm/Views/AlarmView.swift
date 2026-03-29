@@ -92,63 +92,30 @@ struct AlarmView: View {
                         .font(.system(size: StyleConstants.explanationFontSize))
                     ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
                         index, alarm in
-                        HStack{
-                            Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
-                                .font(.system(size: StyleConstants.explanationFontSize))
-                            Toggle("", isOn: Binding<Bool>(
-                                get: { alarmVM.timedAlarmActivity[index] },
-                                set: { newValue in
-                                    pendingToggleValue = newValue
-                                    pendingToggleIndex = index
-                                    if newValue == false {
-                                        // only show alert when switching alarm off
-                                        activeAlert = .toggleActivityAlert
-                                        showAlert = true
-                                    } else {
-                                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
-                                    }
-                                }))
-                            .labelsHidden()
-                            .disabled(alarm.isScanned)
-                            Text(getHourMinFormattedString(time: alarm.time))
-                                .font(.system(size: StyleConstants.explanationFontSize))
-                            if alarm.isScanned {
-                                Image(systemName: "checkmark.circle")
+                        HStack(alignment: .center, spacing: 12) {
+                            HStack(alignment: .center, spacing: 8) {
+                                Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
                                     .font(.system(size: StyleConstants.explanationFontSize))
-                                    .foregroundStyle(.green)
-                                    .padding(.leading, 2)
-                            } else {
-                                HStack {
-                                    Button(action: {
-                                        currentAlarmId = alarm.id
-                                        if !alarm.isTriggered {
-                                            // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
-                                            activeAlert = .takeSampleEarlyAlert
-                                            showAlert = true
-                                        } else {
-                                            // alarm is due alreadyon
-                                            scannerSource = .schedule
-                                            isScannerPresented = true
-                                        }
-                                    })
-                                    {
-                                        Label("Take sample", systemImage: "barcode.viewfinder")
-                                            .font(.system(size: StyleConstants.explanationFontSize))
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .disabled(!alarm.isActive)
-                                    if alarm.isTriggered && !alarm.isScanned {
-                                        Image(systemName: "exclamationmark.arrow.circlepath")
-                                            .font(.system(size: StyleConstants.explanationFontSize))
-                                            .foregroundStyle(.orange)
-                                            .padding(.leading, 2)
-                                    }
-                                }
-                                
+                                    .frame(width: 40, alignment: .leading)
+
+                                Toggle("", isOn: timedAlarmActivityBinding(index: index))
+                                .labelsHidden()
+                                .disabled(alarm.isScanned)
+                                .frame(width: 50)
+
+                                Color.clear
+                                    .frame(width: 6)
+
+                                Text(getHourMinFormattedString(time: alarm.time))
+                                    .font(.system(size: StyleConstants.explanationFontSize))
+                                    .frame(width: 60, alignment: .leading)
                             }
+                            sampleTrailingColumn(for: alarm)
                         }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
+                .padding(.horizontal, StyleConstants.onboardingPadding)
             })
             .frame(maxWidth: .infinity)
             .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
@@ -211,6 +178,89 @@ struct AlarmView: View {
     
     func toggleTimedAlarm(index: Int, isActive: Bool){
         alarmVM.setTimedAlarmActivity(index: index, isActive: isActive)
+    }
+
+    private func timedAlarmActivityBinding(index: Int) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard alarmVM.timedAlarmActivity.indices.contains(index) else {
+                    return false
+                }
+                return alarmVM.timedAlarmActivity[index]
+            },
+            set: { newValue in
+                guard alarmVM.timedAlarmActivity.indices.contains(index) else {
+                    return
+                }
+
+                pendingToggleValue = newValue
+                pendingToggleIndex = index
+
+                if newValue == false {
+                    // only show alert when switching alarm off
+                    activeAlert = .toggleActivityAlert
+                    showAlert = true
+                } else {
+                    toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
+                }
+            }
+        )
+    }
+
+    @ViewBuilder
+    private func sampleTrailingContent(for alarm: Alarm) -> some View {
+        if alarm.isScanned {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: StyleConstants.explanationFontSize))
+                .foregroundStyle(.green)
+        } else if alarm.isTriggered {
+            Image(systemName: "exclamationmark.arrow.circlepath")
+                .font(.system(size: StyleConstants.explanationFontSize))
+                .foregroundStyle(.orange)
+        } else {
+            Button(action: {
+                currentAlarmId = alarm.id
+                if !alarm.isTriggered {
+                    // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
+                    activeAlert = .takeSampleEarlyAlert
+                    showAlert = true
+                } else {
+                    // alarm is due alreadyon
+                    scannerSource = .schedule
+                    isScannerPresented = true
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "barcode.viewfinder")
+                        .frame(width: 16, alignment: .center)
+                    Text("Take sample")
+                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+            }
+            .buttonStyle(.borderless)
+            .disabled(!alarm.isActive)
+        }
+    }
+
+    private var sampleTrailingReference: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "barcode.viewfinder")
+                .frame(width: 16, alignment: .center)
+            Text("Take sample")
+                .font(.system(size: StyleConstants.explanationFontSize))
+                .lineLimit(1)
+        }
+    }
+
+    private func sampleTrailingColumn(for alarm: Alarm) -> some View {
+        ZStack(alignment: .leading) {
+            sampleTrailingReference
+                .hidden()
+            sampleTrailingContent(for: alarm)
+        }
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 

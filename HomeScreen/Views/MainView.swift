@@ -46,6 +46,23 @@ struct MainView: View {
     let sessionVM = SessionViewModel()
     sessionVM.startStudy()
     let sessionDataVM = StudyDataViewModel()
+    sessionDataVM.studyData = StudyData(
+        isValid: true,
+        studyName: "Preview Study",
+        salivaDistances: [],
+        salivaTimes: [
+            Time(hour: 8, minute: 0),
+            Time(hour: 8, minute: 2),
+            Time(hour: 8, minute: 5)
+        ],
+        startSample: "S0",
+        studyDays: 1,
+        numParticipants: 1,
+        hasEveningSample: true,
+        shareEmailAdress: "preview@example.com",
+        isCheckDuplicatesEnabled: false,
+        participantId: "preview"
+    )
     
     permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
     permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)

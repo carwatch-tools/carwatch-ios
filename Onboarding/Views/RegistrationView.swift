@@ -15,7 +15,9 @@ struct RegistrationView: View {
     @State private var permissionButtonTapped: Bool = false
     @State private var pageIndex: Int = 0
     @State private var selectedPath: RegistrationPath?
-    @State private var isInfoAlertPresented: Bool = false
+    @State private var hasAcceptedResearchConsent: Bool = false
+    @State private var isInfoSheetPresented: Bool = false
+    @State private var isPrivacyPolicyPresented: Bool = false
     @State private var isStudyConfigurationPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
@@ -44,30 +46,47 @@ struct RegistrationView: View {
             return "Continue"
         }
     }
+
+    private var consentPageIndex: Int { 2 }
+
+    private var permissionPageIndex: Int { 3 }
+
+    private var qrConfigurationPageIndex: Int {
+        sessionVM.isReregistration ? 3 : 4
+    }
     
     var body: some View {
         Group {
             if isStudyConfigurationPresented {
                 studyConfigurationView
             } else {
-                TabView(selection: $pageIndex) {
-                    welcomeView
-                        .tag(0)
-                    
-                    pathSelectionView
-                        .tag(1)
-                    
-                    if !sessionVM.isReregistration {
-                        permissionView
-                            .tag(2)
-                    }
-                    
-                    qrConfigurationView
-                        .tag(3)
-                }
-                .tabViewStyle(.page)
-                .indexViewStyle(.page(backgroundDisplayMode: .always))
+                currentRegistrationPageView
             }
+        }
+        .sheet(isPresented: $isPrivacyPolicyPresented) {
+            PrivacyPolicyView()
+        }
+    }
+
+    @ViewBuilder
+    private var currentRegistrationPageView: some View {
+        switch pageIndex {
+        case 0:
+            welcomeView
+        case 1:
+            pathSelectionView
+        case consentPageIndex:
+            consentView
+        case permissionPageIndex:
+            if sessionVM.isReregistration {
+                qrConfigurationView
+            } else {
+                permissionView
+            }
+        case qrConfigurationPageIndex:
+            qrConfigurationView
+        default:
+            welcomeView
         }
     }
 
@@ -91,7 +110,7 @@ struct RegistrationView: View {
     @ViewBuilder
     private func infoButton() -> some View {
         Button {
-            isInfoAlertPresented = true
+            isInfoSheetPresented = true
         } label: {
             Image(systemName: "info.circle")
                 .padding(.horizontal, 12)
@@ -165,10 +184,8 @@ struct RegistrationView: View {
             }
         }
         .padding(StyleConstants.edgePadding)
-        .alert("App Info", isPresented: $isInfoAlertPresented) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("This app optimizes the intake of saliva samples to monitor the Cortisol Awakening Response (CAR).\nIt consists of an alarm plus repeating timers to remind subjects to accurately take their saliva samples. To turn off the alarm, the barcode on the saliva sample needs to be scanned in order to increase compliance and reduce possible human error.\n\nDeveloper Information\nPortabiles GmbH\ncontact@portabiles.de\nHenkestr. 91\n91052 Erlangen\nGermany")
+        .sheet(isPresented: $isInfoSheetPresented) {
+            RegistrationInfoSheet()
         }
     }
 
@@ -195,7 +212,8 @@ struct RegistrationView: View {
             Button(pathSelectionTitle) {
                 switch selectedPath {
                 case .participant:
-                    pageIndex = sessionVM.isReregistration ? 3 : 2
+                    hasAcceptedResearchConsent = false
+                    pageIndex = consentPageIndex
                 case .studyConfiguration:
                     isStudyConfigurationPresented = true
                 case nil:
@@ -207,6 +225,76 @@ struct RegistrationView: View {
             .padding(.top, 8)
         }
         .padding(StyleConstants.edgePadding)
+    }
+
+    private var consentView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Research Consent")
+                    .font(.title.weight(.bold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Please review the following information before continuing as a study participant.")
+                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                consentSection(
+                    title: "Purpose",
+                    body: "CARWatch supports human-subject research by guiding study participants through scheduled saliva sample collection and barcode confirmation."
+                )
+
+                consentSection(
+                    title: "What Participation Involves",
+                    body: "If you continue, the app will use notifications for alarms and reminders, the camera for QR and barcode scanning, and on-device storage for study progress and log files."
+                )
+
+                consentSection(
+                    title: "Data Handling",
+                    body: "The app may store your participant ID, study configuration, barcode scan events, and app/device metadata on this device. Log files are only shared when you explicitly export them."
+                )
+
+                consentSection(
+                    title: "Questions Or Withdrawal",
+                    body: "If you have questions about the study, privacy, or want to withdraw, contact the study team using the contact details provided by your study organizer."
+                )
+
+                Button {
+                    isPrivacyPolicyPresented = true
+                } label: {
+                    Label("Read Privacy Policy", systemImage: "hand.raised")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    hasAcceptedResearchConsent.toggle()
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: hasAcceptedResearchConsent ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(hasAcceptedResearchConsent ? .blue : .secondary)
+                            .font(.title3)
+                        Text("I have read this information and consent to continue as a study participant.")
+                            .foregroundStyle(.primary)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
+                }
+                .buttonStyle(.plain)
+
+                HStack {
+                    Spacer()
+                    Button("Continue") {
+                        pageIndex = sessionVM.isReregistration ? qrConfigurationPageIndex : permissionPageIndex
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!hasAcceptedResearchConsent)
+                    .opacity(hasAcceptedResearchConsent ? 1 : 0.5)
+                }
+            }
+            .padding(StyleConstants.edgePadding)
+        }
     }
 
     private var permissionView: some View {
@@ -261,7 +349,7 @@ struct RegistrationView: View {
                     .padding(.top, 8)
             }
             Button("Continue") {
-                pageIndex = 3
+                pageIndex = qrConfigurationPageIndex
             }
             .buttonStyle(.bordered)
             .disabled(!hasRequiredPermissions)
@@ -270,6 +358,19 @@ struct RegistrationView: View {
         }
         .gesture(permissionButtonTapped ? nil : DragGesture())
         .padding(StyleConstants.edgePadding)
+    }
+
+    @ViewBuilder
+    private func consentSection(title: LocalizedStringKey, body: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            Text(body)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
     }
 
     private var qrConfigurationView: some View {
@@ -333,6 +434,50 @@ struct RegistrationView: View {
             .buttonStyle(.bordered)
         }
         .padding(StyleConstants.edgePadding)
+    }
+}
+
+private struct RegistrationInfoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("This app optimizes the intake of saliva samples to monitor the Cortisol Awakening Response (CAR). It consists of an alarm plus repeating timers to remind subjects to accurately take their saliva samples. To turn off the alarm, the barcode on the saliva sample needs to be scanned in order to increase compliance and reduce possible human error.")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Developer Information")
+                            .font(.headline)
+                        Text("Portabiles GmbH")
+                        Text("contact@portabiles.de")
+                        Text("Henkestr. 91")
+                        Text("91052 Erlangen")
+                        Text("Germany")
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    NavigationLink {
+                        PrivacyPolicyView()
+                    } label: {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(StyleConstants.edgePadding)
+            }
+            .navigationTitle("App Info")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 

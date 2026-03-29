@@ -46,7 +46,10 @@ struct OngoingStudyView: View {
                     WakeupView(
                         initialAlarmTime: $initialAlarmTime,
                         isScannerPresented: $isBarcodeScannerPresented,
-                        scannerSource: $scannerSource
+                        scannerSource: $scannerSource,
+                        onDelayedSampleAcknowledged: {
+                            selectedTab = 1
+                        }
                     )
                         .tabItem {
                             Label("Wakeup", systemImage: "sun.max")
@@ -148,13 +151,33 @@ struct OngoingStudyView: View {
         isBarcodeScannerPresented = false
         if appDelegate.openedFromNotification {
             print("App opened from notification")
-            // unhandled notification is present
-            alarmVM.setUpcomingAlarmTriggered()
-            if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
-                currentAlarmId = alarm.id
-                scannerSource = alarmVM.getInitialAlarm().isTriggered && alarm.id == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
-                isBarcodeScannerPresented = true
+            if let tappedAlarmId = tappedAlarmId() {
+                if tappedAlarmId == AlarmConstants.initialAlarmId {
+                    alarmVM.setUpcomingAlarmTriggered()
+                    if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
+                        currentAlarmId = alarm.id
+                        scannerSource = .wakeup
+                        isBarcodeScannerPresented = true
+                    }
+                } else if let tappedAlarm = alarmVM.getAlarmById(alarmId: tappedAlarmId) {
+                    currentAlarmId = tappedAlarmId
+                    if !tappedAlarm.isTriggered {
+                        alarmVM.modifyAlarmById(alarm: tappedAlarm.setTriggered())
+                    }
+                    scannerSource = alarmVM.getInitialAlarm().isTriggered && tappedAlarmId == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
+                    isBarcodeScannerPresented = true
+                }
+            } else {
+                // fallback when no specific notification identifier is available
+                alarmVM.setUpcomingAlarmTriggered()
+                if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
+                    currentAlarmId = alarm.id
+                    scannerSource = alarmVM.getInitialAlarm().isTriggered && alarm.id == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
+                    isBarcodeScannerPresented = true
+                }
             }
+
+            appDelegate.lastNotificationIdentifier = nil
         }
         /*
          TODO: should the scanner be displayed if app was closed on barcode screen?
@@ -164,6 +187,14 @@ struct OngoingStudyView: View {
          isScannerPresented = true
          }
          */
+    }
+
+    private func tappedAlarmId() -> Int? {
+        guard let identifier = appDelegate.lastNotificationIdentifier else {
+            return nil
+        }
+
+        return Int(identifier.split(separator: "_").first ?? "")
     }
     
     func initializeStudyData() {

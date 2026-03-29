@@ -16,6 +16,8 @@ struct MainViewToolbarMenu: View {
     
     @State var showShareSheet = false
     @State private var showStudyInfoSheet = false
+    @State private var showPrivacyPolicySheet = false
+    @State private var showReregisterConfirmation = false
     
     var body: some View {
         Menu {
@@ -43,6 +45,12 @@ struct MainViewToolbarMenu: View {
                 } label: {
                     Label("Study Information", systemImage: "doc.text.magnifyingglass")
                 }
+
+                Button {
+                    showPrivacyPolicySheet = true
+                } label: {
+                    Label("Privacy Policy", systemImage: "hand.raised")
+                }
             }
             
             Section("Expert Actions"){
@@ -63,8 +71,11 @@ struct MainViewToolbarMenu: View {
                     }
                 }
                 Button("Reregister"){
-                    alarmVM.resetAlarmDataForNewUser()
-                    sessionVM.reregister()
+                    if alarmVM.isStudyFinished() {
+                        performReregister()
+                    } else {
+                        showReregisterConfirmation = true
+                    }
                 }
             }
             
@@ -86,6 +97,14 @@ struct MainViewToolbarMenu: View {
                 Text("App version: \(appVersion ?? String(localized:"Unknown"))")
             }
         )
+        .alert("Study still ongoing", isPresented: $showReregisterConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reregister", role: .destructive) {
+                performReregister()
+            }
+        } message: {
+            Text("Your study is still ongoing. Are you sure you want to reregister with a new QR code?")
+        }
         .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
                 let subject = zipFileURL.lastPathComponent
@@ -109,6 +128,14 @@ struct MainViewToolbarMenu: View {
         .sheet(isPresented: $showStudyInfoSheet) {
             StudyInformationSheet(studyData: studyDataVM.studyData)
         }
+        .sheet(isPresented: $showPrivacyPolicySheet) {
+            PrivacyPolicyView()
+        }
+    }
+
+    private func performReregister() {
+        alarmVM.resetAlarmDataForNewUser()
+        sessionVM.reregister()
     }
 }
 

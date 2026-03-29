@@ -2,6 +2,7 @@ import SwiftUI
 
 class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
     @Published var openedFromNotification: Bool = false
+    @Published var lastNotificationIdentifier: String?
     static var orientationLock = UIInterfaceOrientationMask.portrait
 
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
@@ -14,4 +15,3 @@ class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
         return AppDelegate.orientationLock
     }
 }
-
