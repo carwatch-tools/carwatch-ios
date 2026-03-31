@@ -18,7 +18,7 @@
                BlueprintIdentifier = "91ED1E4E2C21D6AC0041751A"
                BuildableName = "CARWatch.app"
                BlueprintName = "CARWatch"
-               ReferencedContainer = "container:CARWatch.xcodeproj">
+               ReferencedContainer = "container:CARWatchApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -50,7 +50,7 @@
             BlueprintIdentifier = "91ED1E4E2C21D6AC0041751A"
             BuildableName = "CARWatch.app"
             BlueprintName = "CARWatch"
-            ReferencedContainer = "container:CARWatch.xcodeproj">
+            ReferencedContainer = "container:CARWatchApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
@@ -78,7 +78,7 @@
             BlueprintIdentifier = "91ED1E4E2C21D6AC0041751A"
             BuildableName = "CARWatch.app"
             BlueprintName = "CARWatch"
-            ReferencedContainer = "container:CARWatch.xcodeproj">
+            ReferencedContainer = "container:CARWatchApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
