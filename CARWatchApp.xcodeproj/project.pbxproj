@@ -84,7 +84,7 @@
 		84E6256F2CBE930B009E3BBA /* MailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailViewController.swift; sourceTree = "<group>"; };
 		84E625712CBE938D009E3BBA /* ActivityViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityViewController.swift; sourceTree = "<group>"; };
 		84F2F39C2CC127BA00EE4C36 /* MetadataLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetadataLogger.swift; sourceTree = "<group>"; };
-		91ED1E4F2C21D6AC0041751A /* CARWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CARWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		91ED1E4F2C21D6AC0041751A /* CARWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CARWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91ED1E522C21D6AC0041751A /* CARWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CARWatchApp.swift; sourceTree = "<group>"; };
 		91ED1E562C21D6B10041751A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -293,7 +293,7 @@
 		91ED1E502C21D6AC0041751A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				91ED1E4F2C21D6AC0041751A /* CARWatch.app */,
+				91ED1E4F2C21D6AC0041751A /* CARWatchApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -343,7 +343,7 @@
 				843171052C8A01DA00BEFD7D /* ZIPFoundation */,
 			);
 			productName = CARWatch;
-			productReference = 91ED1E4F2C21D6AC0041751A /* CARWatch.app */;
+			productReference = 91ED1E4F2C21D6AC0041751A /* CARWatchApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -591,8 +591,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.portabiles.carwatch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.portabiles.carwatch;
+				PRODUCT_NAME = CARWatchApp;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -627,8 +627,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.portabiles.carwatch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.portabiles.carwatch;
+				PRODUCT_NAME = CARWatchApp;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
