@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -88,6 +88,10 @@
 		91ED1E522C21D6AC0041751A /* CARWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CARWatchApp.swift; sourceTree = "<group>"; };
 		91ED1E562C21D6B10041751A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		4E907F922F7D2B0B003DEC3A /* PreviewContent */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PreviewContent; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		91ED1E4C2C21D6AC0041751A /* Frameworks */ = {
@@ -301,6 +305,7 @@
 		91ED1E512C21D6AC0041751A /* CARWatch */ = {
 			isa = PBXGroup;
 			children = (
+				4E907F922F7D2B0B003DEC3A /* PreviewContent */,
 				843C86C62C7E1E4C007AE1BC /* Onboarding */,
 				84CB0D9A2C4FFC8A004DF7EF /* HomeScreen */,
 				84CB0D8F2C4FFA4D004DF7EF /* Alarm */,
@@ -336,6 +341,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4E907F922F7D2B0B003DEC3A /* PreviewContent */,
 			);
 			name = CARWatch;
 			packageProductDependencies = (
