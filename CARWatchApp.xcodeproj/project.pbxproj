@@ -672,7 +672,7 @@
 		};
 		843171022C8A019800BEFD7D /* XCRemoteSwiftPackageReference "AlertToast" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/elai950/AlertToast?tab=readme-ov-file";
+			repositoryURL = "https://github.com/elai950/AlertToast.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.3.9;
