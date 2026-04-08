@@ -3,6 +3,7 @@ import SwiftUI
 struct RegistrationView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
+    @EnvironmentObject var studyDataVM: StudyDataViewModel
     
     @AppStorage(LocalizationConstants.languageStorageKey) private var selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     @Binding var isScannerPresented: Bool
@@ -323,8 +324,35 @@ struct RegistrationView: View {
                 isScannerPresented = true
             }
             .buttonStyle(.borderedProminent)
+
+#if DEBUG
+            Button("Load Demo Study") {
+                loadDemoStudy()
+            }
+            .buttonStyle(.bordered)
+            .padding(.top, 8)
+#endif
         }
     }
+
+#if DEBUG
+    private func loadDemoStudy() {
+        studyDataVM.studyData = StudyData(
+            isValid: true,
+            studyName: "Demo Cortisol Awakening Response Study",
+            salivaDistances: [0, 5, 10],
+            salivaTimes: [Time(hour: 13, minute: 0)],
+            startSample: "S1",
+            studyDays: 3,
+            numParticipants: 200,
+            hasEveningSample: true,
+            shareEmailAdress: "study@example.com",
+            isCheckDuplicatesEnabled: true,
+            participantId: "1001"
+        )
+        sessionVM.startStudyConfirmation()
+    }
+#endif
 
 }
 
@@ -376,4 +404,5 @@ private struct RegistrationInfoSheet: View {
     RegistrationView(isScannerPresented: .constant(false))
         .environmentObject(SessionViewModel())
         .environmentObject(PermissionDataViewModel())
+        .environmentObject(StudyDataViewModel())
 }
