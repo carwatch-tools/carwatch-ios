@@ -191,7 +191,7 @@ struct ScannerView: View {
                 msg[LoggerConstants.loggerExtraSalivaId] = salivaDayId
                 msg[LoggerConstants.loggerExtraBarcodeValue] = scanResult
                 msg[LoggerConstants.loggerExtraScannedDay] = scannedDayId
-                msg[LoggerConstants.loggerExtraExpectedDay] = alarmVM.numStudyDays
+                msg[LoggerConstants.loggerExtraExpectedDay] = alarmVM.studyDayCounter
                 msg[LoggerConstants.loggerExtraScannedSample] = scannedSample
                 msg[LoggerConstants.loggerExtraExpectedSample] = expectedSample
                 Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanned, message: msg)

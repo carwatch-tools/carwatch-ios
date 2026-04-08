@@ -1502,12 +1502,12 @@
         }
       }
     },
-    "This sample is required for the study. Are you sure to cancel this sample?" : {
+    "This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diese Probe ist erforderlich für die Studie. Sind Sie sicher, dass Sie die Probe nicht nehmen möchten?"
+            "value" : "Dadurch wird nur die Erinnerung deaktiviert. Die Probe muss weiterhin genommen und erfasst werden. Möchten Sie diese Erinnerung wirklich ausschalten?"
           }
         }
       }

@@ -144,7 +144,7 @@ struct AlarmView: View {
                     }
                     )
                 case .toggleActivityAlert:
-                    return Alert(title: Text("This sample is required for the study. Are you sure to cancel this sample?"),
+                    return Alert(title: Text("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"),
                                  primaryButton: .destructive(Text("Yes")) {
                         toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
                         showAlert = false
@@ -240,7 +240,6 @@ struct AlarmView: View {
                 }
             }
             .buttonStyle(.borderless)
-            .disabled(!alarm.isActive)
         }
     }
 
