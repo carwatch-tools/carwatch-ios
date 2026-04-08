@@ -60,18 +60,13 @@ struct StyleConstants {
 
 struct LocalizationConstants {
     static let languageStorageKey = "selectedLanguageCode"
-    static let supportedLanguageCodes = ["en", "de"]
 
     static var defaultLanguageCode: String {
         let preferredCode = Locale.preferredLanguages
             .compactMap { Locale(identifier: $0).language.languageCode?.identifier }
             .first
 
-        guard let preferredCode, supportedLanguageCodes.contains(preferredCode) else {
-            return "en"
-        }
-
-        return preferredCode
+        return preferredCode == "de" ? "de" : "en"
     }
 }
 

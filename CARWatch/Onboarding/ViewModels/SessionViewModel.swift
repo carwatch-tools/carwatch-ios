@@ -3,7 +3,7 @@ import Foundation
 class SessionViewModel : ObservableObject {
     
     enum CurrentState: String, Codable {
-        case registration, tutorial, studyOngoing
+        case registration, studyConfirmation, tutorial, studyOngoing
     }
     
     @Published private var currentState: CurrentState = .registration {
@@ -69,6 +69,11 @@ class SessionViewModel : ObservableObject {
     
     func startStudy() {
         currentState = .studyOngoing
+        isReregistration = false
+    }
+
+    func startStudyConfirmation() {
+        currentState = .studyConfirmation
         isReregistration = false
     }
     

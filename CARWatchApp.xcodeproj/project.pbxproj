@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		4E1A06A62F79255900B9804C /* PrivacyPolicyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A06A52F79255900B9804C /* PrivacyPolicyView.swift */; };
+		4E535FB72F86495800C6B40B /* StudyConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E535FB62F86495800C6B40B /* StudyConfirmationView.swift */; };
+		4E535FB92F86557800C6B40B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */; };
 		840037332C4156C1003835CE /* ScanOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840037322C4156C1003835CE /* ScanOverlayView.swift */; };
 		840C388C2C3E7A3F004DB9FE /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388B2C3E7A3F004DB9FE /* CameraManager.swift */; };
 		840C388F2C3E88E2004DB9FE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840C388E2C3E88E2004DB9FE /* Constants.swift */; };
@@ -50,6 +52,8 @@
 
 /* Begin PBXFileReference section */
 		4E1A06A52F79255900B9804C /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
+		4E535FB62F86495800C6B40B /* StudyConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyConfirmationView.swift; sourceTree = "<group>"; };
+		4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		840037322C4156C1003835CE /* ScanOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanOverlayView.swift; sourceTree = "<group>"; };
 		840C388B2C3E7A3F004DB9FE /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		840C388E2C3E88E2004DB9FE /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -146,6 +150,7 @@
 				843C86D12C7F3720007AE1BC /* TutorialView.swift */,
 				843C86D32C7F5AD5007AE1BC /* ParticipantIdView.swift */,
 				843C86D52C7F8BC6007AE1BC /* TutorialSlide.swift */,
+				4E535FB62F86495800C6B40B /* StudyConfirmationView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -315,6 +320,7 @@
 				847C381E2C240E34007548E8 /* Resources */,
 				91ED1E522C21D6AC0041751A /* CARWatchApp.swift */,
 				91ED1E562C21D6B10041751A /* Assets.xcassets */,
+				4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */,
 			);
 			path = CARWatch;
 			sourceTree = "<group>";
@@ -399,6 +405,7 @@
 			files = (
 				91ED1E572C21D6B10041751A /* Assets.xcassets in Resources */,
 				847C38192C240759007548E8 /* Localizable.xcstrings in Resources */,
+				4E535FB92F86557800C6B40B /* PrivacyInfo.xcprivacy in Resources */,
 				84594F7D2C4029F4003B4E3D /* dummy_ringtone.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -440,6 +447,7 @@
 				8420E0092C46B6520061ABA0 /* CodeScannerViewController.swift in Sources */,
 				841BADA12C89D79600FFA4B7 /* Logger.swift in Sources */,
 				84CB0D912C4FFB3E004DF7EF /* NotificationManagerExtension.swift in Sources */,
+				4E535FB72F86495800C6B40B /* StudyConfirmationView.swift in Sources */,
 				84F2F39D2CC127BA00EE4C36 /* MetadataLogger.swift in Sources */,
 				843219112C3C0D750029A9DD /* AppDelegate.swift in Sources */,
 				843C86CD2C7E1FFD007AE1BC /* RegistrationView.swift in Sources */,

@@ -26,6 +26,9 @@ struct OngoingStudyView: View {
     @State private var showToast: Bool = false
     @State private var toastType: MenuConstants.ToastType = .clickToKill
     @State private var killButtonClickCount: Int = 0
+    @State private var showScheduleCompletionAlert: Bool = false
+    @State private var scheduleCompletionTitle: String = ""
+    @State private var scheduleCompletionMessage: String = ""
 
     private var preferredColorScheme: ColorScheme? {
         guard let isDarkModeOn = alarmVM.isDarkModeOn else {
@@ -96,7 +99,6 @@ struct OngoingStudyView: View {
                     let color = Color(UIColor.secondarySystemBackground)
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
                 }
-                
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
                 print("App opened from notification")
@@ -120,6 +122,17 @@ struct OngoingStudyView: View {
                     selectedTab = 1
                 } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
                     selectedTab = 2
+                    if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
+                        scheduleCompletionTitle = String(localized: "Samples Recorded")
+                        scheduleCompletionMessage = String(localized: "You've recorded all samples for the day, but you are still required to record an evening sample tonight right before you go to bed.\nSee you later!")
+                    } else if alarmVM.isStudyFinished() {
+                        scheduleCompletionTitle = String(localized: "Study Finished")
+                        scheduleCompletionMessage = String(localized: "This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
+                    } else {
+                        scheduleCompletionTitle = String(localized: "Samples Recorded")
+                        scheduleCompletionMessage = String(localized: "You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
+                    }
+                    showScheduleCompletionAlert = true
                 }
 
                 alarmVM.didCompleteLastScheduledSample = false
@@ -129,6 +142,11 @@ struct OngoingStudyView: View {
                 ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
+            }
+            .alert(scheduleCompletionTitle, isPresented: $showScheduleCompletionAlert) {
+                Button(String(localized: "OK")) { }
+            } message: {
+                Text(scheduleCompletionMessage)
             }
             .preferredColorScheme(preferredColorScheme)
         } else if permissionDataVM.permissionData.notificationPermissionGranted {

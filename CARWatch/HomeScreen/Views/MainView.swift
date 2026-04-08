@@ -28,6 +28,12 @@ struct MainView: View {
                             .interactiveDismissDisabled()
                     }
             }
+        case .studyConfirmation:
+            if studyDataVM.isParticipantIdRequired() {
+                ParticipantIdView()
+            } else {
+                StudyConfirmationView()
+            }
         case .tutorial:
             if studyDataVM.isParticipantIdRequired() {
                 ParticipantIdView()
@@ -58,7 +64,7 @@ struct MainView: View {
         startSample: "S0",
         studyDays: 1,
         numParticipants: 1,
-        hasEveningSample: true,
+        hasEveningSample: false,
         shareEmailAdress: "preview@example.com",
         isCheckDuplicatesEnabled: false,
         participantId: "preview"
@@ -66,5 +72,10 @@ struct MainView: View {
     
     permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
     permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
-    return MainView().environmentObject(permissionDataVM).environmentObject(sessionVM).environmentObject(sessionDataVM).environmentObject(AppDelegate())
+    return MainView()
+        .environmentObject(permissionDataVM)
+        .environmentObject(sessionVM)
+        .environmentObject(sessionDataVM)
+        .environmentObject(AppDelegate())
+        .environment(\.locale, currentAppLocale())
 }

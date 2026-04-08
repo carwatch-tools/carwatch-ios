@@ -10,6 +10,10 @@ struct CARWatchApp: App {
     @StateObject var studyDataViewModel : StudyDataViewModel = StudyDataViewModel()
 
     @Environment(\.scenePhase) var scenePhase
+
+    private var appLocale: Locale {
+        currentAppLocale(languageCode: selectedLanguageCode)
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -18,14 +22,23 @@ struct CARWatchApp: App {
                 .environmentObject(sessionViewModel)
                 .environmentObject(studyDataViewModel)
                 .environmentObject(appDelegate)
-                .environment(\.locale, Locale(identifier: selectedLanguageCode))
+                .environment(\.locale, appLocale)
                 .onAppear(){
+                   initializeLanguageIfNeeded()
                    checkPermissionsDuringOngoingStudy()
                 }
                 .onForeground {
                     checkPermissionsDuringOngoingStudy()
                 }
         }
+    }
+
+    func initializeLanguageIfNeeded() {
+        guard UserDefaults.standard.object(forKey: LocalizationConstants.languageStorageKey) == nil else {
+            return
+        }
+
+        selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     }
     
     func checkPermissionsDuringOngoingStudy() {

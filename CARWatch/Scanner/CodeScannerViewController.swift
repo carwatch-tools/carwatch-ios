@@ -21,6 +21,8 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
     var cameraView: AVCaptureVideoPreviewLayer?
     // AV capture session and dispatch queue
     let captureSession = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "de.portabiles.carwatch.scanner.session")
+    private var isSessionConfigured = false
     
     var codeType: ScannerConstants.CodeType
     var codeWidthHeightRatio: CGFloat
@@ -46,49 +48,70 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
     
     private func setupSession() {
         if cameraView == nil {
-            cameraView = AVCaptureVideoPreviewLayer(session: captureSession)
-        }
-        cameraView?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        cameraView?.frame = view.layer.bounds
-        view.layer.addSublayer(cameraView!)
-        
-        captureSession.beginConfiguration()
-        
-        guard let captureDevice = AVCaptureDevice.default(for: .video) else {
-            parentView.completion(.failure(.badInput))
-            return
-        }
-        
-        let videoDeviceInput: AVCaptureDeviceInput
-        do {
-            videoDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
-        } catch {
-            parentView.completion(.failure(.initError(error)))
-            return
-        }
-        
-        if captureSession.canAddInput(videoDeviceInput) {
-            captureSession.addInput(videoDeviceInput)
+            let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+            previewLayer.videoGravity = .resizeAspectFill
+            previewLayer.frame = view.layer.bounds
+            view.layer.addSublayer(previewLayer)
+            cameraView = previewLayer
         } else {
-            parentView.completion(.failure(.badInput))
+            cameraView?.frame = view.layer.bounds
         }
-        
-        let metadataOutput = AVCaptureMetadataOutput()
-        if captureSession.canAddOutput(metadataOutput) {
-            captureSession.addOutput(metadataOutput)
-            let supportedCodeTypes = codeType == ScannerConstants.CodeType.ean8 ? [ AVMetadataObject.ObjectType.ean8] : [ AVMetadataObject.ObjectType.qr]
-            metadataOutput.metadataObjectTypes = supportedCodeTypes
-            metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            addRectOfInterest(metadataOutput)
-        } else {
-            parentView.completion(.failure(.badOutput))
-            return
-        }
-        
-        captureSession.commitConfiguration()
-        
-        DispatchQueue.global(qos: .userInteractive).async {
-            self.captureSession.startRunning()
+
+        sessionQueue.async {
+            if !self.isSessionConfigured {
+                self.captureSession.beginConfiguration()
+                defer {
+                    self.captureSession.commitConfiguration()
+                }
+
+                guard let captureDevice = AVCaptureDevice.default(for: .video) else {
+                    DispatchQueue.main.async {
+                        self.parentView.completion(.failure(.badInput))
+                    }
+                    return
+                }
+
+                let videoDeviceInput: AVCaptureDeviceInput
+                do {
+                    videoDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
+                } catch {
+                    DispatchQueue.main.async {
+                        self.parentView.completion(.failure(.initError(error)))
+                    }
+                    return
+                }
+
+                if self.captureSession.canAddInput(videoDeviceInput) {
+                    self.captureSession.addInput(videoDeviceInput)
+                } else {
+                    DispatchQueue.main.async {
+                        self.parentView.completion(.failure(.badInput))
+                    }
+                    return
+                }
+
+                let metadataOutput = AVCaptureMetadataOutput()
+                if self.captureSession.canAddOutput(metadataOutput) {
+                    self.captureSession.addOutput(metadataOutput)
+                    let supportedCodeTypes = self.codeType == ScannerConstants.CodeType.ean8 ? [AVMetadataObject.ObjectType.ean8] : [AVMetadataObject.ObjectType.qr]
+                    metadataOutput.metadataObjectTypes = supportedCodeTypes
+                    metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+                    DispatchQueue.main.async {
+                        self.addRectOfInterest(metadataOutput)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.parentView.completion(.failure(.badOutput))
+                    }
+                    return
+                }
+
+                self.isSessionConfigured = true
+            }
+
+            if !self.captureSession.isRunning {
+                self.captureSession.startRunning()
+            }
         }
         
         Logger.instance.log(tag: LoggerConstants.loggerActionBarcodeScanInit, message:[String: Any]())
@@ -112,8 +135,10 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         super.viewWillDisappear(animated)
         
         // Stop AV capture session
-        DispatchQueue.global(qos: .userInteractive).async {
-            self.captureSession.stopRunning()
+        sessionQueue.async {
+            if self.captureSession.isRunning {
+                self.captureSession.stopRunning()
+            }
         }
     }
     
@@ -135,8 +160,10 @@ class CodeScannerViewController: UIViewController, AVCaptureMetadataOutputObject
         AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
         
         // Stop AV capture session
-        DispatchQueue.global(qos: .userInteractive).async {
-            self.captureSession.stopRunning()
+        sessionQueue.async {
+            if self.captureSession.isRunning {
+                self.captureSession.stopRunning()
+            }
         }
         parentView.completion(.success(stringValue))
     }
@@ -149,4 +176,3 @@ func calculateScannerRectOfInterest(width: CGFloat, height: CGFloat, widthHeight
     let yPos = (height - rectHeight) / 2.0
     return CGRect(x: xPos, y: yPos, width: rectWidth, height: rectHeight)
 }
-

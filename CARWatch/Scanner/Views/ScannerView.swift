@@ -144,7 +144,7 @@ struct ScannerView: View {
                 handleSuccessfulEanScan()
             case .qr:
                 scanResult = result
-                sessionVM.startTutorial()
+                sessionVM.startStudyConfirmation()
             }
         case .failure(let error):
             print("Scan failed: \(error.localizedDescription)")

@@ -108,7 +108,7 @@ struct AlarmView: View {
 
                                 Text(getHourMinFormattedString(time: alarm.time))
                                     .font(.system(size: StyleConstants.explanationFontSize))
-                                    .frame(width: 60, alignment: .leading)
+                                    .frame(width: 78, alignment: .leading)
                             }
                             sampleTrailingColumn(for: alarm)
                         }
@@ -294,4 +294,5 @@ struct AlarmView_PreviewContainer: View {
 
 #Preview {
     AlarmView_PreviewContainer()
+        .environment(\.locale, currentAppLocale())
 }

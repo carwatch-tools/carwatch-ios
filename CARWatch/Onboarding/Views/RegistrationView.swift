@@ -1,12 +1,6 @@
 import SwiftUI
 
 struct RegistrationView: View {
-    
-    private enum RegistrationPath {
-        case participant
-        case studyConfiguration
-    }
-    
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     
@@ -14,11 +8,9 @@ struct RegistrationView: View {
     @Binding var isScannerPresented: Bool
     @State private var permissionButtonTapped: Bool = false
     @State private var pageIndex: Int = 0
-    @State private var selectedPath: RegistrationPath?
     @State private var hasAcceptedResearchConsent: Bool = false
     @State private var isInfoSheetPresented: Bool = false
     @State private var isPrivacyPolicyPresented: Bool = false
-    @State private var isStudyConfigurationPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
@@ -35,34 +27,17 @@ struct RegistrationView: View {
     private var permissionButtonTitle: LocalizedStringKey {
         hasRequiredPermissions ? "Permissions granted" : "Grant Permissions"
     }
-    
-    private var pathSelectionTitle: LocalizedStringKey {
-        switch selectedPath {
-        case .participant:
-            return "Participant"
-        case .studyConfiguration:
-            return "Study configuration"
-        case nil:
-            return "Continue"
-        }
-    }
 
-    private var consentPageIndex: Int { 2 }
+    private var consentPageIndex: Int { 1 }
 
-    private var permissionPageIndex: Int { 3 }
+    private var permissionPageIndex: Int { 2 }
 
     private var qrConfigurationPageIndex: Int {
-        sessionVM.isReregistration ? 3 : 4
+        sessionVM.isReregistration ? 2 : 3
     }
     
     var body: some View {
-        Group {
-            if isStudyConfigurationPresented {
-                studyConfigurationView
-            } else {
-                currentRegistrationPageView
-            }
-        }
+        currentRegistrationPageView
         .sheet(isPresented: $isPrivacyPolicyPresented) {
             PrivacyPolicyView()
         }
@@ -73,8 +48,6 @@ struct RegistrationView: View {
         switch pageIndex {
         case 0:
             welcomeView
-        case 1:
-            pathSelectionView
         case consentPageIndex:
             consentView
         case permissionPageIndex:
@@ -128,103 +101,59 @@ struct RegistrationView: View {
                 .foregroundStyle(.blue)
             Text(text)
                 .font(.system(size: 18))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
-    @ViewBuilder
-    private func selectionButton(title: LocalizedStringKey, systemImage: String, path: RegistrationPath) -> some View {
-        Button {
-            selectedPath = path
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .frame(width: 20)
-                Text(title)
-                Spacer()
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .tint(selectedPath == path ? .blue : .gray)
-    }
 
     private var welcomeView: some View {
-        ZStack {
-            VStack {
-                Spacer()
-                    .frame(height: 110)
-                Image("CarwatchLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 220)
-                    .padding()
-                Text("Welcome to CARWatch!")
-                    .font(.title.weight(.bold))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Button("Continue") {
-                    pageIndex = 1
-                }
-                .buttonStyle(.borderedProminent)
-                .padding(.top)
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            VStack {
+        ScrollView {
+            VStack(spacing: 20) {
                 HStack {
                     infoButton()
                     Spacer()
                     languageToggleButton()
                 }
-                .padding(.top, 0)
-                Spacer()
+
+                Image("CarwatchLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 180)
+                    .padding(.horizontal)
+
+                VStack(spacing: 8) {
+                    Text("Welcome to CARWatch!")
+                        .font(.title.weight(.bold))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+
+                    Text("CARWatch is intended for study participants. It helps you follow your study schedule by sending reminders, and confirming samples by barcode scans.")
+                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    featureRow(icon: "person.badge.shield.checkmark", text: "Use this app only if you were invited to take part in a study.")
+                    featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.")
+                    featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.")
+                }
+                .padding()
+                .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
+
+                Button("Continue") {
+                    pageIndex = consentPageIndex
+                }
+                .buttonStyle(.borderedProminent)
             }
+            .frame(maxWidth: .infinity, alignment: .top)
         }
         .padding(StyleConstants.edgePadding)
         .sheet(isPresented: $isInfoSheetPresented) {
             RegistrationInfoSheet()
         }
-    }
-
-    private var pathSelectionView: some View {
-        VStack(spacing: 20) {
-            Text("How do you want to use CARWatch?")
-                .font(.title.weight(.bold))
-                .multilineTextAlignment(.center)
-            Text("Choose whether you want to participate in a study or prepare a study configuration.")
-                .font(.system(size: StyleConstants.explanationFontSize))
-                .multilineTextAlignment(.center)
-            VStack(spacing: 12) {
-                selectionButton(
-                    title: "Study participant",
-                    systemImage: "person.fill",
-                    path: .participant
-                )
-                selectionButton(
-                    title: "Design a study",
-                    systemImage: "slider.horizontal.3",
-                    path: .studyConfiguration
-                )
-            }
-            Button(pathSelectionTitle) {
-                switch selectedPath {
-                case .participant:
-                    hasAcceptedResearchConsent = false
-                    pageIndex = consentPageIndex
-                case .studyConfiguration:
-                    isStudyConfigurationPresented = true
-                case nil:
-                    break
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(selectedPath == nil)
-            .padding(.top, 8)
-        }
-        .padding(StyleConstants.edgePadding)
     }
 
     private var consentView: some View {
@@ -397,44 +326,6 @@ struct RegistrationView: View {
         }
     }
 
-    private var studyConfigurationView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "laptopcomputer.and.arrow.down")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .foregroundStyle(.blue)
-                .opacity(StyleConstants.mainScreenIconOpacity)
-                .frame(width: 100, alignment: .center)
-            Text("Study Configuration")
-                .font(.title.weight(.bold))
-            Text("Use the CARWatch web interface to prepare and manage your study setup.")
-                .font(.system(size: StyleConstants.explanationFontSize))
-                .multilineTextAlignment(.center)
-            VStack(alignment: .leading, spacing: 12) {
-                featureRow(icon: "alarm", text: "Specifically developed for Cortisol Awakening Response (CAR) studies")
-                featureRow(icon: "house", text: "Suitable for supporting diurnal biomarker collection at home")
-                featureRow(icon: "cross.case", text: "Suitable for lab-based biomarker collection")
-                featureRow(icon: "checkmark.circle", text: "Supports study preparation, data collection & postprocessing")
-            }
-            .padding()
-            .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
-            Link(destination: URL(string: "https://mad-lab-fau.github.io/carwatch-web/")!) {
-                Label("Open Study Designer", systemImage: "safari")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            Text("This opens the CARWatch website where your study can be configured.")
-                .font(.system(size: 16))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            Button("Back") {
-                isStudyConfigurationPresented = false
-                selectedPath = nil
-            }
-            .buttonStyle(.bordered)
-        }
-        .padding(StyleConstants.edgePadding)
-    }
 }
 
 private struct RegistrationInfoSheet: View {

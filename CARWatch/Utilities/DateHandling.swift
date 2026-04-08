@@ -1,10 +1,13 @@
 import Foundation
 
-private func currentTimeFormatLocale() -> Locale {
+func currentAppLocale() -> Locale {
     let selectedLanguageCode = UserDefaults.standard.string(forKey: LocalizationConstants.languageStorageKey)
         ?? LocalizationConstants.defaultLanguageCode
+    return currentAppLocale(languageCode: selectedLanguageCode)
+}
 
-    return Locale(identifier: selectedLanguageCode == "de" ? "de_DE" : "en_US")
+func currentAppLocale(languageCode: String) -> Locale {
+    Locale(identifier: languageCode == "de" ? "de_DE" : "en_US")
 }
 
 func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
@@ -17,7 +20,7 @@ func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
 
 func getHourMinFormattedString(time: Date) -> String {
     let dateFormatter = DateFormatter()
-    dateFormatter.locale = currentTimeFormatLocale()
+    dateFormatter.locale = currentAppLocale()
     dateFormatter.dateFormat = dateFormatter.locale.identifier.hasPrefix("de") ? "HH:mm" : "h:mm a"
     return dateFormatter.string(from: time)
 }
