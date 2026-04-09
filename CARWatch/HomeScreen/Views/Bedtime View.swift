@@ -88,17 +88,17 @@ struct BedtimeView: View {
             let color = Color(UIColor.secondarySystemBackground)
             switch toastType {
             case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Thank you for your feedback!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Thank you for your feedback!"), style: .style(backgroundColor: color))
             case .bedtimeReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Remember to take your sample\nright before going to bed."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Remember to take your sample\nright before going to bed."), style: .style(backgroundColor: color))
             case .noSampleTonightToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Tonight no sample is required."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Tonight no sample is required."), style: .style(backgroundColor: color))
             case .noEveningSampleToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Your study does not require an evening sample.\nGood night!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Your study does not require an evening sample.\nGood night!"), style: .style(backgroundColor: color))
             case .eveningSampleTakenToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
             case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."), style: .style(backgroundColor: color))
             }
         }
     }

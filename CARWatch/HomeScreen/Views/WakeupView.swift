@@ -82,25 +82,25 @@ struct WakeupView: View {
             let color = Color(UIColor.secondarySystemBackground)
             switch toastType {
             case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Thank you for your feedback!"), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Thank you for your feedback!"), style: .style(backgroundColor: color))
             case .wakeupReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
             case .wakeupReportedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already reported your wakeup."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already reported your wakeup."), style: .style(backgroundColor: color))
             case .delayedSampleToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
             case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: String(localized: "You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."), style: .style(backgroundColor: color))
+                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."), style: .style(backgroundColor: color))
             }
         }
-        .alert(String(localized: "Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
+        .alert(localizedAppString("Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
             Button("OK", role: .cancel) {
                 onDelayedSampleAcknowledged()
             }
         } message: {
             Text(
                 String(
-                    format: String(localized: "A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
+                    format: localizedAppString("A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
                     Int64(delayedSampleMinutes)
                 )
             )

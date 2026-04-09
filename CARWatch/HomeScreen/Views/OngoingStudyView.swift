@@ -75,7 +75,7 @@ struct OngoingStudyView: View {
                         }.tag(2)
                         .environmentObject(alarmVM)
                 }
-                .navigationBarTitle(Text(tabTitle))
+                .navigationBarTitle(tabTitle)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType)
@@ -88,13 +88,13 @@ struct OngoingStudyView: View {
                     case .clickToKill:
                         let clicksLeft = MenuConstants.killButtonClickCountActivate - killButtonClickCount
                         toastMsg = String(
-                            format: String(localized: "Click %lld more times to kill all reminders!"),
+                            format: localizedAppString("Click %lld more times to kill all reminders!"),
                             Int64(clicksLeft)
                         )
                     case .killSuccess:
-                        toastMsg = String(localized: "All reminders were deactivated!")
+                        toastMsg = localizedAppString("All reminders were deactivated!")
                     case .zipLogsFailed:
-                        toastMsg = String(localized: "Generating the logs failed.\nPlease try again later!")
+                        toastMsg = localizedAppString("Generating the logs failed.\nPlease try again later!")
                     }
                     let color = Color(UIColor.secondarySystemBackground)
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
@@ -123,14 +123,14 @@ struct OngoingStudyView: View {
                 } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
                     selectedTab = 2
                     if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
-                        scheduleCompletionTitle = String(localized: "Samples Recorded")
-                        scheduleCompletionMessage = String(localized: "You've recorded all samples for the day, but you are still required to record an evening sample tonight right before you go to bed.\nSee you later!")
+                        scheduleCompletionTitle = localizedAppString("Samples Recorded")
+                        scheduleCompletionMessage = localizedAppString("You've recorded all samples for the day, but you are still required to record an evening sample tonight right before you go to bed.\nSee you later!")
                     } else if alarmVM.isStudyFinished() {
-                        scheduleCompletionTitle = String(localized: "Study Finished")
-                        scheduleCompletionMessage = String(localized: "This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
+                        scheduleCompletionTitle = localizedAppString("Study Finished")
+                        scheduleCompletionMessage = localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
                     } else {
-                        scheduleCompletionTitle = String(localized: "Samples Recorded")
-                        scheduleCompletionMessage = String(localized: "You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
+                        scheduleCompletionTitle = localizedAppString("Samples Recorded")
+                        scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
                     }
                     showScheduleCompletionAlert = true
                 }
@@ -144,7 +144,7 @@ struct OngoingStudyView: View {
                     .environmentObject(alarmVM)
             }
             .alert(scheduleCompletionTitle, isPresented: $showScheduleCompletionAlert) {
-                Button(String(localized: "OK")) { }
+                Button(localizedAppString("OK")) { }
             } message: {
                 Text(scheduleCompletionMessage)
             }
@@ -156,12 +156,12 @@ struct OngoingStudyView: View {
         }
     }
     
-    private var tabTitle: String {
+    private var tabTitle: LocalizedStringKey {
         switch selectedTab {
-        case 0: return String(localized: "Wakeup")
-        case 1: return String(localized: "Schedule")
-        case 2: return String(localized: "Bedtime")
-        default: return String(localized: "Title")
+        case 0: return "Wakeup"
+        case 1: return "Schedule"
+        case 2: return "Bedtime"
+        default: return "Title"
         }
     }
     

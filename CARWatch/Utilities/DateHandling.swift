@@ -10,6 +10,20 @@ func currentAppLocale(languageCode: String) -> Locale {
     Locale(identifier: languageCode == "de" ? "de_DE" : "en_US")
 }
 
+func localizedAppString(_ key: String) -> String {
+    let languageCode = UserDefaults.standard.string(forKey: LocalizationConstants.languageStorageKey)
+        ?? LocalizationConstants.defaultLanguageCode
+
+    guard
+        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+        let bundle = Bundle(path: path)
+    else {
+        return NSLocalizedString(key, comment: "")
+    }
+
+    return NSLocalizedString(key, bundle: bundle, comment: "")
+}
+
 func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: time)

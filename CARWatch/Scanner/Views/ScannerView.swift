@@ -17,7 +17,7 @@ struct ScannerView: View {
         .publisher(for: UIDevice.orientationDidChangeNotification)
 
     private var scannedCodeLabel: String {
-        String(localized: codeType == .qr ? "QR code" : "barcode")
+        localizedAppString(codeType == .qr ? "QR code" : "barcode")
     }
 
     private var scannerPromptText: LocalizedStringKey {

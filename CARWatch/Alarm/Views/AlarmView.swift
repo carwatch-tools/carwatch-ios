@@ -92,8 +92,8 @@ struct AlarmView: View {
                         .font(.system(size: StyleConstants.explanationFontSize))
                     ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
                         index, alarm in
-                        HStack(alignment: .center, spacing: 12) {
-                            HStack(alignment: .center, spacing: 8) {
+                        HStack(alignment: .center, spacing: 10) {
+                            HStack(alignment: .center, spacing: 6) {
                                 Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
                                     .font(.system(size: StyleConstants.explanationFontSize))
                                     .frame(width: 40, alignment: .leading)
@@ -108,13 +108,16 @@ struct AlarmView: View {
 
                                 Text(getHourMinFormattedString(time: alarm.time))
                                     .font(.system(size: StyleConstants.explanationFontSize))
-                                    .frame(width: 78, alignment: .leading)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.9)
+                                    .frame(width: 92, alignment: .leading)
                             }
                             sampleTrailingColumn(for: alarm)
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, StyleConstants.onboardingPadding)
             })
             .frame(maxWidth: .infinity)
@@ -122,7 +125,7 @@ struct AlarmView: View {
                 let color = Color(UIColor.secondarySystemBackground)
                 let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
                 let toastMsg = String(
-                    format: String(localized: "Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
+                    format: localizedAppString("Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
                     Int64(diffHours),
                     Int64(diffMinutes)
                 )
@@ -155,7 +158,7 @@ struct AlarmView: View {
                     )
                 }
             }
-            .alert(String(localized: "Wakeup time unavailable"), isPresented: $showDisabledInfoAlert) {
+            .alert(localizedAppString("Wakeup time unavailable"), isPresented: $showDisabledInfoAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(disabledWakeupMessage)

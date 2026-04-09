@@ -36,6 +36,10 @@ struct RegistrationView: View {
     private var qrConfigurationPageIndex: Int {
         sessionVM.isReregistration ? 2 : 3
     }
+
+    private var welcomeLogoMaxHeight: CGFloat {
+        UIDevice.current.userInterfaceIdiom == .pad ? 220 : 150
+    }
     
     var body: some View {
         currentRegistrationPageView
@@ -111,7 +115,7 @@ struct RegistrationView: View {
 
     private var welcomeView: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 14) {
                 HStack {
                     infoButton()
                     Spacer()
@@ -121,8 +125,8 @@ struct RegistrationView: View {
                 Image("CarwatchLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxHeight: 180)
-                    .padding(.horizontal)
+                    .frame(maxHeight: welcomeLogoMaxHeight)
+                    .padding(.horizontal, 8)
 
                 VStack(spacing: 8) {
                     Text("Welcome to CARWatch!")
@@ -141,7 +145,8 @@ struct RegistrationView: View {
                     featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.")
                     featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.")
                 }
-                .padding()
+                .padding(.vertical, 12)
+                .padding(.horizontal)
                 .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
 
                 Button("Continue") {
@@ -151,7 +156,8 @@ struct RegistrationView: View {
             }
             .frame(maxWidth: .infinity, alignment: .top)
         }
-        .padding(StyleConstants.edgePadding)
+        .padding(.horizontal, StyleConstants.edgePadding)
+        .padding(.vertical, 20)
         .sheet(isPresented: $isInfoSheetPresented) {
             RegistrationInfoSheet()
         }
@@ -340,8 +346,8 @@ struct RegistrationView: View {
         studyDataVM.studyData = StudyData(
             isValid: true,
             studyName: "Demo Cortisol Awakening Response Study",
-            salivaDistances: [0, 5, 10],
-            salivaTimes: [Time(hour: 13, minute: 0)],
+            salivaDistances: [0, 15, 30, 45],
+            salivaTimes: [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)],
             startSample: "S1",
             studyDays: 3,
             numParticipants: 200,

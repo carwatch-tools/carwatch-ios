@@ -9,7 +9,7 @@ struct StudyConfirmationView: View {
     }
 
     private var participantIdDescription: String {
-        studyData.participantId.isEmpty ? String(localized: "Will be entered next") : studyData.participantId
+        studyData.participantId.isEmpty ? localizedAppString("Will be entered next") : studyData.participantId
     }
 
     var body: some View {

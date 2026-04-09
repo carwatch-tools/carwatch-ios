@@ -94,7 +94,7 @@ struct MainViewToolbarMenu: View {
                 Button("OK", role: .cancel){ }
             },
             message: {
-                Text("App version: \(appVersion ?? String(localized:"Unknown"))")
+                Text("App version: \(appVersion ?? localizedAppString("Unknown"))")
             }
         )
         .alert("Study still ongoing", isPresented: $showReregisterConfirmation) {
@@ -145,7 +145,7 @@ private struct StudyInformationSheet: View {
 
     private var intervalDescription: String {
         if studyData.salivaDistances.isEmpty {
-            return String(localized: "No interval-based samples configured.")
+            return localizedAppString("No interval-based samples configured.")
         }
 
         return studyData.salivaDistances
@@ -155,7 +155,7 @@ private struct StudyInformationSheet: View {
 
     private var fixedTimesDescription: String {
         if studyData.salivaTimes.isEmpty {
-            return String(localized: "No fixed sample times configured.")
+            return localizedAppString("No fixed sample times configured.")
         }
 
         return studyData.salivaTimes
@@ -164,11 +164,11 @@ private struct StudyInformationSheet: View {
     }
 
     private var participantIdDescription: String {
-        studyData.participantId.isEmpty ? String(localized: "Not set") : studyData.participantId
+        studyData.participantId.isEmpty ? localizedAppString("Not set") : studyData.participantId
     }
 
     private var contactEmailDescription: String {
-        studyData.shareEmailAdress.isEmpty ? String(localized: "Not available") : studyData.shareEmailAdress
+        studyData.shareEmailAdress.isEmpty ? localizedAppString("Not available") : studyData.shareEmailAdress
     }
 
     var body: some View {
@@ -183,7 +183,7 @@ private struct StudyInformationSheet: View {
                 Section("Sampling Plan") {
                     LabeledContent("Interval Samples", value: intervalDescription)
                     LabeledContent("Fixed Sample Times", value: fixedTimesDescription)
-                    LabeledContent("Evening Sample", value: String(localized: studyData.hasEveningSample ? "Yes" : "No"))
+                    LabeledContent("Evening Sample", value: localizedAppString(studyData.hasEveningSample ? "Yes" : "No"))
                 }
             }
             .navigationTitle("Study Information")
