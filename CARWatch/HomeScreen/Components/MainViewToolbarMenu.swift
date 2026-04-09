@@ -7,6 +7,7 @@ struct MainViewToolbarMenu: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var alarmVM: AlarmViewModel
+    @Environment(\.openURL) private var openURL
 
     @Binding var showAppInfoDialog : Bool
     @Binding var appVersion: String?
@@ -16,7 +17,6 @@ struct MainViewToolbarMenu: View {
     
     @State var showShareSheet = false
     @State private var showStudyInfoSheet = false
-    @State private var showPrivacyPolicySheet = false
     @State private var showReregisterConfirmation = false
     
     var body: some View {
@@ -47,7 +47,7 @@ struct MainViewToolbarMenu: View {
                 }
 
                 Button {
-                    showPrivacyPolicySheet = true
+                    openURL(AppConstants.privacyPolicyURL)
                 } label: {
                     Label("Privacy Policy", systemImage: "hand.raised")
                 }
@@ -127,9 +127,6 @@ struct MainViewToolbarMenu: View {
         })
         .sheet(isPresented: $showStudyInfoSheet) {
             StudyInformationSheet(studyData: studyDataVM.studyData)
-        }
-        .sheet(isPresented: $showPrivacyPolicySheet) {
-            PrivacyPolicyView()
         }
     }
 

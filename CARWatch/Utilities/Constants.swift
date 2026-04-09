@@ -1,5 +1,9 @@
 import SwiftUI
 
+struct AppConstants {
+    static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
+}
+
 struct PermissionConstants {
     enum PermissionType {
         case notifications, camera

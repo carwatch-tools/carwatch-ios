@@ -4,6 +4,7 @@ struct RegistrationView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
+    @Environment(\.openURL) private var openURL
     
     @AppStorage(LocalizationConstants.languageStorageKey) private var selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     @Binding var isScannerPresented: Bool
@@ -11,7 +12,6 @@ struct RegistrationView: View {
     @State private var pageIndex: Int = 0
     @State private var hasAcceptedResearchConsent: Bool = false
     @State private var isInfoSheetPresented: Bool = false
-    @State private var isPrivacyPolicyPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
@@ -43,9 +43,6 @@ struct RegistrationView: View {
     
     var body: some View {
         currentRegistrationPageView
-        .sheet(isPresented: $isPrivacyPolicyPresented) {
-            PrivacyPolicyView()
-        }
     }
 
     @ViewBuilder
@@ -195,7 +192,7 @@ struct RegistrationView: View {
                 )
 
                 Button {
-                    isPrivacyPolicyPresented = true
+                    openURL(AppConstants.privacyPolicyURL)
                 } label: {
                     Label("Read Privacy Policy", systemImage: "hand.raised")
                         .frame(maxWidth: .infinity)
@@ -383,9 +380,7 @@ private struct RegistrationInfoSheet: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    NavigationLink {
-                        PrivacyPolicyView()
-                    } label: {
+                    Link(destination: AppConstants.privacyPolicyURL) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                             .frame(maxWidth: .infinity)
                     }
