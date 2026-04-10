@@ -4,7 +4,6 @@ struct RegistrationView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
-    @Environment(\.openURL) private var openURL
     
     @AppStorage(LocalizationConstants.languageStorageKey) private var selectedLanguageCode = LocalizationConstants.defaultLanguageCode
     @Binding var isScannerPresented: Bool
@@ -12,6 +11,7 @@ struct RegistrationView: View {
     @State private var pageIndex: Int = 0
     @State private var hasAcceptedResearchConsent: Bool = false
     @State private var isInfoSheetPresented: Bool = false
+    @State private var isPrivacyPolicyPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
@@ -43,6 +43,9 @@ struct RegistrationView: View {
     
     var body: some View {
         currentRegistrationPageView
+            .sheet(isPresented: $isPrivacyPolicyPresented) {
+                PrivacyPolicyView()
+            }
     }
 
     @ViewBuilder
@@ -192,7 +195,7 @@ struct RegistrationView: View {
                 )
 
                 Button {
-                    openURL(AppConstants.privacyPolicyURL)
+                    isPrivacyPolicyPresented = true
                 } label: {
                     Label("Read Privacy Policy", systemImage: "hand.raised")
                         .frame(maxWidth: .infinity)
@@ -361,6 +364,7 @@ struct RegistrationView: View {
 
 private struct RegistrationInfoSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var isPrivacyPolicyPresented = false
 
     var body: some View {
         NavigationStack {
@@ -380,7 +384,9 @@ private struct RegistrationInfoSheet: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Link(destination: AppConstants.privacyPolicyURL) {
+                    Button {
+                        isPrivacyPolicyPresented = true
+                    } label: {
                         Label("Privacy Policy", systemImage: "hand.raised")
                             .frame(maxWidth: .infinity)
                     }
@@ -396,6 +402,9 @@ private struct RegistrationInfoSheet: View {
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $isPrivacyPolicyPresented) {
+                PrivacyPolicyView()
             }
         }
     }

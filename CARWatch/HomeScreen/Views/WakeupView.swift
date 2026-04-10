@@ -9,6 +9,7 @@ struct WakeupView: View {
     @State var toastType: NotificationConstants.WakeupToastType = .feedbackToast
     @State private var delayedSampleMinutes: Int = 0
     @State private var showDelayedSampleAlert: Bool = false
+    @State private var showStudyFinishedAlert: Bool = false
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
@@ -34,8 +35,7 @@ struct WakeupView: View {
                     Button("YES") {
                         // don't allow any further interaction if the study is finished already
                         if alarmVM.isStudyFinished(){
-                            toastType = .studyFinishedToast
-                            showToast = true
+                            showStudyFinishedAlert = true
                             return
                         }
                         // check if initial alarm was already triggered at current day -> wakeup can't be reported twice
@@ -70,8 +70,13 @@ struct WakeupView: View {
                     }
                 .buttonStyle(.borderedProminent)
                 Button("NO") {
+                    if alarmVM.isStudyFinished() {
+                        showStudyFinishedAlert = true
+                        return
+                    }
+
                     let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
-                    toastType = (!alarmVM.isStudyFinished() && !wakeupAlreadyReportedToday) ? .wakeupReminderToast : .feedbackToast
+                    toastType = !wakeupAlreadyReportedToday ? .wakeupReminderToast : .feedbackToast
                     showToast = true
                 }
                 .buttonStyle(.bordered)
@@ -89,8 +94,6 @@ struct WakeupView: View {
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already reported your wakeup."), style: .style(backgroundColor: color))
             case .delayedSampleToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
-            case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."), style: .style(backgroundColor: color))
             }
         }
         .alert(localizedAppString("Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
@@ -104,6 +107,11 @@ struct WakeupView: View {
                     Int64(delayedSampleMinutes)
                 )
             )
+        }
+        .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."))
         }
     }
     

@@ -11,6 +11,7 @@ struct BedtimeView: View {
 
     @State var isBarcodeScannerPresented : Bool = false
     @State var alarmId : Int? = AlarmConstants.eveningAlarmId
+    @State private var showStudyFinishedAlert: Bool = false
 
     private var isDarkModeEnabled: Bool {
         alarmVM.isDarkModeOn ?? (colorScheme == .dark)
@@ -45,8 +46,7 @@ struct BedtimeView: View {
                             if !alarmVM.isEveningScanned {
                                 isBarcodeScannerPresented = true
                             } else if alarmVM.isStudyFinished() {
-                                toastType = .studyFinishedToast
-                                showToast = true
+                                showStudyFinishedAlert = true
                             } else {
                                 toastType = .eveningSampleTakenToast
                                 showToast = true
@@ -58,6 +58,11 @@ struct BedtimeView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     Button("NO") {
+                        if alarmVM.isStudyFinished() {
+                            showStudyFinishedAlert = true
+                            return
+                        }
+
                         toastType = studyDataVM.studyData.hasEveningSample ? .bedtimeReminderToast : .noSampleTonightToast
                         showToast = true
                     }
@@ -80,8 +85,7 @@ struct BedtimeView: View {
         }
         .onChange(of: isBarcodeScannerPresented) { isPresented in
             if !isPresented && alarmVM.isStudyFinished() {
-                toastType = .studyFinishedToast
-                showToast = true
+                showStudyFinishedAlert = true
             }
         }
         .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
@@ -97,9 +101,12 @@ struct BedtimeView: View {
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Your study does not require an evening sample.\nGood night!"), style: .style(backgroundColor: color))
             case .eveningSampleTakenToast:
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
-            case .studyFinishedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."), style: .style(backgroundColor: color))
             }
+        }
+        .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."))
         }
     }
 }
