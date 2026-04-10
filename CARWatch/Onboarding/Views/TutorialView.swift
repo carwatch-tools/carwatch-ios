@@ -15,25 +15,36 @@ struct TutorialView: View {
     }
     
     var body: some View {
-        VStack {
-            TabView(selection: $pageIndex) {
-                ForEach(Array(zip(imageNames, zip(titleTexts, explanationTexts)).enumerated()), id: \.0) { index, data in
-                    let (imageName, (titleText, explanationText)) = data
-                    TutorialSlide(imageName: imageName, titleText: titleText, explanationText: explanationText)
-                        .tag(index)
+        GeometryReader { geometry in
+            let size = geometry.size
+
+            VStack(spacing: 0) {
+                TabView(selection: $pageIndex) {
+                    ForEach(Array(zip(imageNames, zip(titleTexts, explanationTexts)).enumerated()), id: \.0) { index, data in
+                        let (imageName, (titleText, explanationText)) = data
+                        TutorialSlide(imageName: imageName, titleText: titleText, explanationText: explanationText)
+                            .tag(index)
+                    }
                 }
+                .tabViewStyle(.page)
+                .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .accessibilityLabel(localizedAppString("Tutorial pages"))
+                .accessibilityValue("\(pageIndex + 1) of \(titleTexts.count)")
+
+                Button(isLastPage ? "Get Started" : "Skip") {
+                    sessionVM.startStudy()
+                }
+                .frame(maxWidth: StyleConstants.onboardingContentMaxWidth(for: size) ?? .infinity)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, StyleConstants.edgePadding(for: size))
+                .padding(.top, StyleConstants.isExpandedPadLayout(for: size) ? 20 : 0)
+                .padding(.bottom, StyleConstants.isExpandedPadLayout(for: size) ? 32 : 16)
+                .buttonStyle(.borderedProminent)
+                .tint(isLastPage ? Color.accentColor : Color.clear)
+                .foregroundStyle(isLastPage ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.accentColor))
+                .accessibilityIdentifier(isLastPage ? "tutorial.getStarted" : "tutorial.skip")
+                .accessibilityHint(localizedAppString(isLastPage ? "Starts the study." : "Skips the tutorial and starts the study."))
             }
-            .tabViewStyle(.page)
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            Button(isLastPage ? "Get Started" : "Skip") {
-                sessionVM.startStudy()
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal)
-            .padding(.bottom)
-            .buttonStyle(.borderedProminent)
-            .tint(isLastPage ? Color.accentColor : Color.clear)
-            .foregroundStyle(isLastPage ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.accentColor))
         }
     }
 }

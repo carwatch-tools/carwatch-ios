@@ -14,15 +14,18 @@ struct MissingPermissionView: View {
                         .font(.system(size: StyleConstants.mainScreenIconSize(for: size)))
                         .foregroundStyle(.blue)
                         .opacity(StyleConstants.mainScreenIconOpacity)
+                        .accessibilityHidden(true)
                     
                     if type == PermissionConstants.PermissionType.notifications {
                         Text("Unfortunately, CARWatch won't work when notifications are turned off. Please activate all notifications in the app settings.")
                             .font(.system(size: StyleConstants.explanationFontSize(for: size)))
                             .multilineTextAlignment(.center)
+                            .accessibilityAddTraits(.isHeader)
                     } else if type == PermissionConstants.PermissionType.camera {
                         Text("Unfortunately, CARWatch won't work when camera access is not granted. Please activate camera usage in the app settings.")
                             .font(.system(size: StyleConstants.explanationFontSize(for: size)))
                             .multilineTextAlignment(.center)
+                            .accessibilityAddTraits(.isHeader)
                     } else {
                         Text(verbatim: "Unknown Permission Type " + String(describing: type) + ".")
                     }
@@ -33,6 +36,8 @@ struct MissingPermissionView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("permissions.openSettings")
+                    .accessibilityHint(Text("Opens the iPhone settings for this app."))
                 }
                 .padding(StyleConstants.edgePadding(for: size))
                 .frame(minHeight: size.height)

@@ -2,6 +2,8 @@ import SwiftUI
 import AlertToast
 
 struct WakeupView: View {
+    @AccessibilityFocusState private var isWakeupHeaderFocused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
 
@@ -15,6 +17,14 @@ struct WakeupView: View {
     @Binding var isScannerPresented: Bool
     @Binding var scannerSource: ScannerPresentationSource?
     var onDelayedSampleAcknowledged: () -> Void = {}
+
+    private var shouldUseVerticalActionLayout: Bool {
+        StyleConstants.isAccessibilitySize(dynamicTypeSize)
+    }
+
+    private func usesExpandedPadLayout(for size: CGSize) -> Bool {
+        StyleConstants.isExpandedPadLayout(for: size)
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -22,63 +32,73 @@ struct WakeupView: View {
             let mainFontSize = StyleConstants.mainScreenFontSize(for: size)
             let iconSize = StyleConstants.mainScreenIconSize(for: size)
             let edgePadding = StyleConstants.edgePadding(for: size)
+            let usesExpandedLayout = usesExpandedPadLayout(for: size)
 
             ScrollView(showsIndicators: false) {
-                VStack {
-                    Image(systemName: "sun.max.fill")
-                        .font(.system(size: iconSize))
-                        .foregroundStyle(.blue)
-                        .opacity(StyleConstants.mainScreenIconOpacity)
-                    Text("Good Morning")
-                        .font(.system(size: mainFontSize))
-                    Text("Did you just wake up?")
-                        .font(.system(size: mainFontSize))
-                        .multilineTextAlignment(.center)
-                    HStack{
-                        Button("YES") {
-                            if alarmVM.isStudyFinished(){
-                                showStudyFinishedAlert = true
-                                return
-                            }
-                            if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
-                                toastType = .wakeupReportedToast
-                                showToast = true
-                            } else {
-                                var msg = [String: Any]()
-                                msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
-                                Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
-                                alarmVM.setInitialAlarmActivity(isActive: true)
-                                for (index, _) in alarmVM.timedAlarms.enumerated() {
-                                    alarmVM.setTimedAlarmActivity(index: index, isActive: true)
-                                }
-                                initialAlarmTime = Date()
-                                alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
-                                alarmVM.setInitialAlarmTriggered()
-                                if alarmVM.triggerWakeupSampleIfNeeded() != nil {
-                                    scannerSource = .wakeup
-                                    isScannerPresented = true
-                                } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
-                                    delayedSampleMinutes = max(
-                                        1,
-                                        Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
-                                    )
-                                    showDelayedSampleAlert = true
-                                }
-                            }
-                        }
-                    .buttonStyle(.borderedProminent)
-                    Button("NO") {
-                        if alarmVM.isStudyFinished() {
-                            showStudyFinishedAlert = true
-                            return
-                        }
+                Group {
+                    if usesExpandedLayout {
+                        VStack(spacing: 28) {
+                            VStack(spacing: 16) {
+                                Image(systemName: "sun.max.fill")
+                                    .font(.system(size: iconSize + 48))
+                                    .foregroundStyle(.blue)
+                                    .opacity(StyleConstants.mainScreenIconOpacity)
+                                    .frame(width: 180, height: 180)
+                                    .accessibilityHidden(true)
 
-                        let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
-                        toastType = !wakeupAlreadyReportedToday ? .wakeupReminderToast : .feedbackToast
-                        showToast = true
+                                VStack(alignment: .center, spacing: 10) {
+                                    Text("Good Morning")
+                                        .font(.system(size: mainFontSize + 6, weight: .bold))
+                                        .accessibilityAddTraits(.isHeader)
+                                        .accessibilityFocused($isWakeupHeaderFocused)
+                                    Text("Did you just wake up?")
+                                        .font(.system(size: mainFontSize))
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+
+                            VStack(spacing: 16) {
+                                HStack(spacing: 6) {
+                                    wakeupYesButton
+                                    wakeupNoButton
+                                }
+                            }
+                            .frame(maxWidth: 320, alignment: .leading)
+                        }
+                        .frame(maxWidth: 760, alignment: .leading)
+                        .padding(.top, 12)
+                        .padding(36)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    } else {
+                        VStack {
+                            Image(systemName: "sun.max.fill")
+                                .font(.system(size: iconSize))
+                                .foregroundStyle(.blue)
+                                .opacity(StyleConstants.mainScreenIconOpacity)
+                                .accessibilityHidden(true)
+                            Text("Good Morning")
+                                .font(.system(size: mainFontSize))
+                                .accessibilityAddTraits(.isHeader)
+                                .accessibilityFocused($isWakeupHeaderFocused)
+                            Text("Did you just wake up?")
+                                .font(.system(size: mainFontSize))
+                                .multilineTextAlignment(.center)
+                            Group {
+                                if shouldUseVerticalActionLayout {
+                                    VStack(spacing: 12) {
+                                        wakeupYesButton
+                                        wakeupNoButton
+                                    }
+                                } else {
+                                    HStack {
+                                        wakeupYesButton
+                                        wakeupNoButton
+                                    }
+                                }
+                            }
+                        }
                     }
-                    .buttonStyle(.bordered)
-                }
                 }
                 .padding(edgePadding)
                 .frame(minHeight: size.height)
@@ -116,8 +136,86 @@ struct WakeupView: View {
         } message: {
             Text(localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."))
         }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isWakeupHeaderFocused = true
+            }
+        }
+        .onChange(of: showDelayedSampleAlert) { isPresented in
+            if isPresented {
+                postAccessibilityAnnouncement(
+                    String(
+                        format: localizedAppString("A delayed sample is planned. You will receive a reminder in %lld minutes."),
+                        Int64(delayedSampleMinutes)
+                    )
+                )
+            }
+        }
+        .onChange(of: showStudyFinishedAlert) { isPresented in
+            if isPresented {
+                postAccessibilityAnnouncement(localizedAppString("Study finished. Please export your logs and send them to your study contact email."))
+            }
+        }
     }
     
+    private var wakeupYesButton: some View {
+        Button("YES") {
+            if alarmVM.isStudyFinished(){
+                showStudyFinishedAlert = true
+                return
+            }
+            if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
+                toastType = .wakeupReportedToast
+                showToast = true
+            } else {
+                var msg = [String: Any]()
+                msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
+                Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
+                alarmVM.setInitialAlarmActivity(isActive: true)
+                for (index, _) in alarmVM.timedAlarms.enumerated() {
+                    alarmVM.setTimedAlarmActivity(index: index, isActive: true)
+                }
+                initialAlarmTime = Date()
+                alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
+                alarmVM.setInitialAlarmTriggered()
+                if alarmVM.triggerWakeupSampleIfNeeded() != nil {
+                    scannerSource = .wakeup
+                    isScannerPresented = true
+                } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
+                    delayedSampleMinutes = max(
+                        1,
+                        Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
+                    )
+                    showDelayedSampleAlert = true
+                }
+            }
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("wakeup.yes")
+        .accessibilityLabel(localizedAppString("Yes, I just woke up"))
+        .accessibilityHint(localizedAppString("Reports your wakeup and may open the scanner for the next sample."))
+    }
+
+    private var wakeupNoButton: some View {
+        Button("NO") {
+            if alarmVM.isStudyFinished() {
+                showStudyFinishedAlert = true
+                return
+            }
+
+            let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+            toastType = !wakeupAlreadyReportedToday ? .wakeupReminderToast : .feedbackToast
+            showToast = true
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("wakeup.no")
+        .accessibilityLabel(localizedAppString("No, I did not just wake up"))
+        .accessibilityHint(localizedAppString("Keeps the wakeup report unchanged and shows a reminder if needed."))
+    }
 }
 
 #Preview {

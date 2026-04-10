@@ -6,6 +6,8 @@ enum ActiveAlert {
 }
 
 struct AlarmView: View {
+    @AccessibilityFocusState private var isScheduleHeaderFocused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     
@@ -30,6 +32,36 @@ struct AlarmView: View {
             ? "The study is already finished, so the wakeup time can no longer be changed."
             : "The wakeup time can only be changed after all samples for the current day have been recorded."
     }
+
+    private var disabledWakeupAnnouncement: String {
+        alarmVM.isStudyFinished()
+            ? localizedAppString("The study is already finished, so the wakeup time can no longer be changed.")
+            : localizedAppString("The wakeup time can only be changed after all samples for the current day have been recorded.")
+    }
+
+    private var shouldUseVerticalWakeupControls: Bool {
+        StyleConstants.isAccessibilitySize(dynamicTypeSize)
+    }
+
+    private func usesExpandedPadLayout(for size: CGSize) -> Bool {
+        StyleConstants.isExpandedPadLayout(for: size)
+    }
+
+    private func reminderAccessibilityLabel(for alarm: Alarm) -> String {
+        String(
+            format: localizedAppString("Reminder for sample %@ at %@"),
+            "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))",
+            getHourMinFormattedString(time: alarm.time)
+        )
+    }
+
+    private func sampleActionAccessibilityLabel(for alarm: Alarm) -> String {
+        String(
+            format: localizedAppString("Take sample %@ at %@"),
+            "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))",
+            getHourMinFormattedString(time: alarm.time)
+        )
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,90 +72,80 @@ struct AlarmView: View {
             let explanationFontSize = StyleConstants.explanationFontSize(for: size)
             let edgePadding = StyleConstants.edgePadding(for: size)
             let onboardingPadding = StyleConstants.onboardingPadding(for: size)
+            let usesExpandedLayout = usesExpandedPadLayout(for: size)
 
             VStack {
                 Image(systemName: "alarm")
-                    .font(.system(size: iconSize))
+                    .font(.system(size: usesExpandedLayout ? iconSize + 40 : iconSize))
                     .foregroundStyle(.blue)
                     .opacity(StyleConstants.mainScreenIconOpacity)
+                    .padding(.bottom, usesExpandedLayout ? 12 : 0)
+                    .accessibilityHidden(true)
                 Text("Please set your desired wakeup time for tomorrow.")
                     .font(.system(size: mainFontSize))
                     .multilineTextAlignment(.center)
-                HStack {
-                    HStack {
-                        Toggle("", isOn: Binding<Bool>(
-                            get: { alarmVM.getInitialAlarm().isActive },
-                            set: { newValue in
-                                setInitialAlarmActivity(isActive: newValue)
-                            }))
-                        .labelsHidden()
-                        .padding(edgePadding)
-                        .font(.system(size: mainFontSize))
-                        DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
-                            .onChange(of: initialAlarmTime, perform: { _ in
-                                let backupTime = alarmVM.getInitialAlarm().time
-                                alarmVM.updateAlarmTime(time: initialAlarmTime)
-                                if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
-                                    initialAlarmTime = backupTime
-                                    alarmVM.updateAlarmTime(time: initialAlarmTime)
-                                }
-                                if alarmVM.getInitialAlarm().isActive {
-                                    showToast = true
-                                }
-                            })
-                            .labelsHidden()
-                            .scaleEffect(isCompact ? CGSize(width: 1.15, height: 1.15) : CGSize(width: 1.35, height: 1.35))
-                    }
-                    .disabled(isWakeupTimeSelectionDisabled)
-
-                    if isWakeupTimeSelectionDisabled {
-                        Button {
-                            showDisabledInfoAlert = true
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .font(.title3)
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityFocused($isScheduleHeaderFocused)
+                    .padding(.bottom, usesExpandedLayout ? 18 : 0)
+                Group {
+                    if shouldUseVerticalWakeupControls {
+                        VStack(spacing: 12) {
+                            wakeupControls(isCompact: isCompact, edgePadding: edgePadding, mainFontSize: mainFontSize)
                         }
-                        .buttonStyle(.borderless)
-                        .accessibilityLabel("Why is wakeup time disabled?")
+                    } else {
+                        HStack(spacing: usesExpandedLayout ? 20 : 8) {
+                            wakeupControls(isCompact: isCompact, edgePadding: edgePadding, mainFontSize: mainFontSize)
+                        }
                     }
                 }
+                .padding(.bottom, usesExpandedLayout ? 18 : 0)
                 
                 Divider()
-                    .padding(.bottom)
+                    .padding(.top, usesExpandedLayout ? 18 : 0)
+                    .padding(.bottom, usesExpandedLayout ? 36 : 12)
                 ScrollView(showsIndicators: false, content: {
-                    VStack(alignment: .center) {
+                    VStack(alignment: .center, spacing: usesExpandedLayout ? 16 : 8) {
                         Text("Saliva sample reminders")
-                            .font(.system(size: explanationFontSize))
+                            .font(.system(size: usesExpandedLayout ? explanationFontSize + 2 : explanationFontSize))
                             .frame(maxWidth: .infinity, alignment: .center)
                         ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
                             index, alarm in
-                            HStack(alignment: .center, spacing: isCompact ? 8 : 10) {
+                            HStack(alignment: .center, spacing: usesExpandedLayout ? 16 : (isCompact ? 8 : 10)) {
                                 HStack(alignment: .center, spacing: 6) {
                                     Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
                                         .font(.system(size: explanationFontSize))
                                         .frame(width: isCompact ? 34 : 40, alignment: .leading)
+                                        .accessibilityHidden(true)
 
                                     Toggle("", isOn: timedAlarmActivityBinding(index: index))
                                         .labelsHidden()
                                         .disabled(alarm.isScanned)
                                         .frame(width: isCompact ? 40 : 50)
+                                        .accessibilityIdentifier("schedule.toggle.\(alarm.id)")
+                                        .accessibilityLabel(reminderAccessibilityLabel(for: alarm))
+                                        .accessibilityValue(alarmVM.timedAlarmActivity.indices.contains(index) && alarmVM.timedAlarmActivity[index] ? localizedAppString("On") : localizedAppString("Off"))
+                                        .accessibilityHint(localizedAppString("Turns this sample reminder on or off."))
 
                                     Color.clear
                                         .frame(width: isCompact ? 4 : 6)
+                                        .accessibilityHidden(true)
 
                                     Text(getHourMinFormattedString(time: alarm.time))
                                         .font(.system(size: explanationFontSize))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.85)
                                         .frame(width: isCompact ? 74 : 92, alignment: .leading)
+                                        .accessibilityHidden(true)
                                 }
                                 sampleTrailingColumn(for: alarm, fontSize: explanationFontSize)
                             }
                             .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, usesExpandedLayout ? 4 : 0)
+                            .accessibilityElement(children: .contain)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, onboardingPadding)
+                    .padding(.horizontal, usesExpandedLayout ? onboardingPadding + 8 : onboardingPadding)
                 })
                 .frame(maxWidth: .infinity)
                 .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
@@ -167,6 +189,28 @@ struct AlarmView: View {
                     Button("OK", role: .cancel) { }
                 } message: {
                     Text(disabledWakeupMessage)
+                }
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isScheduleHeaderFocused = true
+                    }
+                }
+                .onChange(of: showAlert) { isPresented in
+                    guard isPresented else {
+                        return
+                    }
+
+                    switch activeAlert {
+                    case .takeSampleEarlyAlert:
+                        postAccessibilityAnnouncement(localizedAppString("This sample is scheduled for later. Are you sure you want to scan the sample now?"))
+                    case .toggleActivityAlert:
+                        postAccessibilityAnnouncement(localizedAppString("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"))
+                    }
+                }
+                .onChange(of: showDisabledInfoAlert) { isPresented in
+                    if isPresented {
+                        postAccessibilityAnnouncement(disabledWakeupAnnouncement)
+                    }
                 }
                 Spacer()
             }
@@ -222,10 +266,22 @@ struct AlarmView: View {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: fontSize))
                 .foregroundStyle(.green)
+                .accessibilityLabel(
+                    String(
+                        format: localizedAppString("Sample %@ already recorded"),
+                        "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
+                    )
+                )
         } else if alarm.isTriggered {
             Image(systemName: "exclamationmark.arrow.circlepath")
                 .font(.system(size: fontSize))
                 .foregroundStyle(.orange)
+                .accessibilityLabel(
+                    String(
+                        format: localizedAppString("Sample %@ is due"),
+                        "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
+                    )
+                )
         } else {
             Button(action: {
                 currentAlarmId = alarm.id
@@ -249,6 +305,9 @@ struct AlarmView: View {
                 }
             }
             .buttonStyle(.borderless)
+            .accessibilityIdentifier("schedule.takeSample.\(alarm.id)")
+            .accessibilityLabel(sampleActionAccessibilityLabel(for: alarm))
+            .accessibilityHint(localizedAppString("Opens the barcode scanner for this sample."))
         }
     }
 
@@ -256,6 +315,7 @@ struct AlarmView: View {
         HStack(spacing: 6) {
             Image(systemName: "barcode.viewfinder")
                 .frame(width: 16, alignment: .center)
+                .accessibilityHidden(true)
             Text("Take sample")
                 .font(.system(size: fontSize))
                 .lineLimit(1)
@@ -267,6 +327,55 @@ struct AlarmView: View {
             sampleTrailingReference(fontSize: fontSize)
                 .hidden()
             sampleTrailingContent(for: alarm, fontSize: fontSize)
+        }
+    }
+
+    @ViewBuilder
+    private func wakeupControls(isCompact: Bool, edgePadding: CGFloat, mainFontSize: CGFloat) -> some View {
+        HStack {
+            Toggle("", isOn: Binding<Bool>(
+                get: { alarmVM.getInitialAlarm().isActive },
+                set: { newValue in
+                    setInitialAlarmActivity(isActive: newValue)
+                }))
+            .labelsHidden()
+            .padding(edgePadding)
+            .font(.system(size: mainFontSize))
+            .accessibilityIdentifier("schedule.initialToggle")
+            .accessibilityLabel(localizedAppString("Wakeup reminder"))
+            .accessibilityValue(alarmVM.getInitialAlarm().isActive ? localizedAppString("On") : localizedAppString("Off"))
+            .accessibilityHint(localizedAppString("Turns tomorrow's wakeup reminder on or off."))
+
+            DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
+                .onChange(of: initialAlarmTime, perform: { _ in
+                    let backupTime = alarmVM.getInitialAlarm().time
+                    alarmVM.updateAlarmTime(time: initialAlarmTime)
+                    if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
+                        initialAlarmTime = backupTime
+                        alarmVM.updateAlarmTime(time: initialAlarmTime)
+                    }
+                    if alarmVM.getInitialAlarm().isActive {
+                        showToast = true
+                    }
+                })
+                .labelsHidden()
+                .scaleEffect(isCompact ? CGSize(width: 1.15, height: 1.15) : CGSize(width: 1.35, height: 1.35))
+                .accessibilityIdentifier("schedule.initialTime")
+                .accessibilityLabel(localizedAppString("Wakeup time"))
+                .accessibilityHint(localizedAppString("Select your desired wakeup time for tomorrow."))
+        }
+        .disabled(isWakeupTimeSelectionDisabled)
+
+        if isWakeupTimeSelectionDisabled {
+            Button {
+                showDisabledInfoAlert = true
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityIdentifier("schedule.disabledInfo")
+            .accessibilityLabel("Why is wakeup time disabled?")
         }
     }
 }

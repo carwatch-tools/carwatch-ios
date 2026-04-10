@@ -1,6 +1,8 @@
 import SwiftUI
+import UIKit
 
 struct ScannerView: View {
+    @AccessibilityFocusState private var isBackButtonFocused: Bool
     @EnvironmentObject var alarmVM: AlarmViewModel
     @EnvironmentObject var appDelegate: AppDelegate
     @EnvironmentObject var sessionVM: SessionViewModel
@@ -23,13 +25,40 @@ struct ScannerView: View {
     private var scannerPromptText: LocalizedStringKey {
         codeType == .qr ? "Please point your camera at a QR code!" : "Please point your camera at a barcode!"
     }
+
+    private var scannerScreenAnnouncement: String {
+        codeType == .qr ? localizedAppString("QR code scanner opened. Please point your camera at a QR code.") : localizedAppString("Barcode scanner opened. Please point your camera at a barcode.")
+    }
     
     var body: some View {
         GeometryReader { geometry in
             let overlayWidthHeightRatio = codeType == ScannerConstants.CodeType.ean8 ? ScannerConstants.barcodeWidthHeightRatio : ScannerConstants.defaultWidthHeightRatio
             ZStack{
                 CodeScanner(completion: handleScanResult, validation: validateScanResult, codeType: codeType, overlayWidthHeightRatio: overlayWidthHeightRatio)
+                    .accessibilityHidden(true)
                 ScanOverlayView(overlayWidthHeightRatio: overlayWidthHeightRatio, promptText: scannerPromptText)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isBackButtonFocused = true
+                postAccessibilityScreenChanged(nil)
+                postAccessibilityAnnouncement(scannerScreenAnnouncement)
+            }
+        }
+        .onChange(of: showAlert) { isPresented in
+            guard isPresented else {
+                return
+            }
+
+            switch alertType {
+            case .success:
+                postAccessibilityAnnouncement(localizedAppString("Scan successful."))
+            case .invalid:
+                postAccessibilityAnnouncement(localizedAppString("Invalid code scanned."))
+            case .duplicate:
+                postAccessibilityAnnouncement(localizedAppString("Duplicate barcode scanned."))
             }
         }
         .safeAreaInset(edge: .top) {
@@ -43,6 +72,9 @@ struct ScannerView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(.ultraThinMaterial, in: Capsule())
+                .accessibilityIdentifier("scanner.back")
+                .accessibilityFocused($isBackButtonFocused)
+                .accessibilityHint(localizedAppString("Closes the scanner and returns to the previous screen."))
 
                 Spacer()
             }
@@ -145,6 +177,7 @@ struct ScannerView: View {
             case .qr:
                 scanResult = result
                 sessionVM.startStudyConfirmation()
+                postAccessibilityAnnouncement(localizedAppString("Study QR code accepted. Opening study details."))
             }
         case .failure(let error):
             print("Scan failed: \(error.localizedDescription)")

@@ -1,5 +1,6 @@
 import SwiftUI
 import AlertToast
+import UIKit
 
 enum ScannerPresentationSource {
     case wakeup
@@ -29,12 +30,35 @@ struct OngoingStudyView: View {
     @State private var showScheduleCompletionAlert: Bool = false
     @State private var scheduleCompletionTitle: String = ""
     @State private var scheduleCompletionMessage: String = ""
+    @State private var hasAppeared = false
 
     private var preferredColorScheme: ColorScheme? {
         guard let isDarkModeOn = alarmVM.isDarkModeOn else {
             return nil
         }
         return isDarkModeOn ? .dark : .light
+    }
+
+    private func configureTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+
+        let normalAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 14, weight: .semibold)
+        ]
+        let selectedAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 14, weight: .bold)
+        ]
+
+        [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance].forEach { itemAppearance in
+            itemAppearance.normal.titleTextAttributes = normalAttributes
+            itemAppearance.selected.titleTextAttributes = selectedAttributes
+            itemAppearance.normal.iconColor = UIColor.systemBlue.withAlphaComponent(0.8)
+            itemAppearance.selected.iconColor = UIColor.systemBlue
+        }
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     init(alarmViewModel: AlarmViewModel? = nil) {
@@ -54,7 +78,7 @@ struct OngoingStudyView: View {
                         }
                     )
                         .tabItem {
-                            Label("Wakeup", systemImage: "sun.max")
+                            tabItemLabel(title: "Wakeup", systemImage: "sun.max")
                         }.tag(0)
                         .padding(StyleConstants.edgePadding)
                         .environmentObject(alarmVM)
@@ -65,12 +89,12 @@ struct OngoingStudyView: View {
                         scannerSource: $scannerSource
                     )
                         .tabItem {
-                            Label("Schedule", systemImage: "alarm")
+                            tabItemLabel(title: "Schedule", systemImage: "alarm")
                         }.tag(1)
                         .environmentObject(alarmVM)
                     BedtimeView()
                         .tabItem {
-                            Label("Bedtime", systemImage: "bed.double")
+                            tabItemLabel(title: "Bedtime", systemImage: "bed.double")
                         }.tag(2)
                         .environmentObject(alarmVM)
                 }
@@ -109,8 +133,16 @@ struct OngoingStudyView: View {
                 checkScannerStatus()
             }
             .onAppear {
+                configureTabBarAppearance()
                 initializeStudyData()
                 updateTimedAlarms()
+                if !hasAppeared {
+                    hasAppeared = true
+                    announceCurrentTab()
+                }
+            }
+            .onChange(of: selectedTab) { _ in
+                announceCurrentTab()
             }
             .onChange(of: isBarcodeScannerPresented) { isPresented in
                 if isPresented {
@@ -147,6 +179,13 @@ struct OngoingStudyView: View {
             } message: {
                 Text(scheduleCompletionMessage)
             }
+            .onChange(of: showScheduleCompletionAlert) { isPresented in
+                guard isPresented else {
+                    return
+                }
+
+                postAccessibilityAnnouncement("\(scheduleCompletionTitle). \(scheduleCompletionMessage)")
+            }
             .preferredColorScheme(preferredColorScheme)
         } else if permissionDataVM.permissionData.notificationPermissionGranted {
             MissingPermissionView(type: PermissionConstants.PermissionType.camera)
@@ -161,6 +200,35 @@ struct OngoingStudyView: View {
         case 1: return "Schedule"
         case 2: return "Bedtime"
         default: return "Title"
+        }
+    }
+
+    @ViewBuilder
+    private func tabItemLabel(title: LocalizedStringKey, systemImage: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: systemImage)
+                .imageScale(.large)
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+        }
+    }
+
+    private func announceCurrentTab() {
+        let message: String
+        switch selectedTab {
+        case 0:
+            message = localizedAppString("Wakeup tab")
+        case 1:
+            message = localizedAppString("Schedule tab")
+        case 2:
+            message = localizedAppString("Bedtime tab")
+        default:
+            message = localizedAppString("Current tab")
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            postAccessibilityScreenChanged(nil)
+            postAccessibilityAnnouncement(message)
         }
     }
     

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ScanOverlayView: View {
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     
     let overlayWidthHeightRatio: CGFloat
     let promptText: LocalizedStringKey
@@ -11,21 +12,24 @@ struct ScanOverlayView: View {
             let height: CGFloat = width / overlayWidthHeightRatio
             ZStack {
                 Rectangle()
-                    .fill(Color.black.opacity(StyleConstants.overlayOpacity))
+                    .fill(Color.black.opacity(colorSchemeContrast == .increased ? 0.7 : StyleConstants.overlayOpacity))
+                    .accessibilityHidden(true)
                 
                 RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius)
                     .fill(Color.black)
                     .frame(width: width, height: height, alignment: .center)
                     .blendMode(.destinationOut)
+                    .accessibilityHidden(true)
                 VStack {
                     Spacer()
                     Text(promptText)
                         .padding()
                             .background(.black)
-                            .opacity(StyleConstants.textBackgroundOpacity)
+                            .opacity(colorSchemeContrast == .increased ? 0.9 : StyleConstants.textBackgroundOpacity)
                             .foregroundStyle(.white)
                             .cornerRadius(StyleConstants.roundedCornerRadius)
                             .padding()
+                            .accessibilityAddTraits(.isStaticText)
                 }
             }.compositingGroup()
             
@@ -48,6 +52,7 @@ struct ScanOverlayView: View {
             .stroke(Color.blue, lineWidth: StyleConstants.overlayStrokeWidth)
             .frame(width: width, height: height, alignment: .center)
             .aspectRatio(1, contentMode: .fit)
+            .accessibilityHidden(true)
         }
     }
     

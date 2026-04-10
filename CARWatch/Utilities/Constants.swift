@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
@@ -91,6 +92,42 @@ struct StyleConstants {
         let maxHeight: CGFloat = isCompactScreen(for: size) ? 240 : 420
         return min(size.height * heightFactor, maxHeight)
     }
+
+    static func isExpandedPadLayout(for size: CGSize) -> Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && size.height > 700
+    }
+
+    static func onboardingContentMaxWidth(for size: CGSize) -> CGFloat? {
+        isExpandedPadLayout(for: size) ? 720 : nil
+    }
+
+    static func onboardingVerticalSpacingInset(for size: CGSize) -> CGFloat {
+        isExpandedPadLayout(for: size) ? 48 : 0
+    }
+
+    static func isAccessibilitySize(_ dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize >= .accessibility1
+    }
+
+    static func cardBackgroundOpacity(for colorSchemeContrast: ColorSchemeContrast) -> Double {
+        colorSchemeContrast == .increased ? 0.16 : 0.08
+    }
+}
+
+func postAccessibilityAnnouncement(_ message: String) {
+    guard UIAccessibility.isVoiceOverRunning else {
+        return
+    }
+
+    UIAccessibility.post(notification: .announcement, argument: message)
+}
+
+func postAccessibilityScreenChanged(_ argument: Any? = nil) {
+    guard UIAccessibility.isVoiceOverRunning else {
+        return
+    }
+
+    UIAccessibility.post(notification: .screenChanged, argument: argument)
 }
 
 struct LocalizationConstants {

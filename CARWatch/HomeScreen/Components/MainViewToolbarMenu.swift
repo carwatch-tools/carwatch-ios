@@ -87,6 +87,9 @@ struct MainViewToolbarMenu: View {
             Label("Menu", systemImage: "ellipsis.circle")
                 .font(.title)
         }
+        .accessibilityLabel(localizedAppString("More options"))
+        .accessibilityIdentifier("main.menu")
+        .accessibilityHint(localizedAppString("Opens actions such as sharing logs, viewing the tutorial, and study information."))
         .alert(
             "App Info",
             isPresented: $showAppInfoDialog,
