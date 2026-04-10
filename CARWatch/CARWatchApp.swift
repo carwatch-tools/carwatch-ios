@@ -44,6 +44,11 @@ struct CARWatchApp: App {
     func checkPermissionsDuringOngoingStudy() {
         // after completing onboarding, make sure all permissions are granted
         if sessionViewModel.getCurrentState() == .studyOngoing {
+#if DEBUG
+            if UserDefaults.standard.bool(forKey: AppConstants.demoOngoingStudyModeKey) {
+                return
+            }
+#endif
             permissionViewModel.checkNotificationPermission()
             permissionViewModel.checkCameraPermission()
         }

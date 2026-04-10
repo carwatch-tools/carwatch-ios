@@ -5,9 +5,15 @@ struct MainView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var appDelegate: AppDelegate
+
+    private let ongoingStudyViewBuilder: () -> AnyView
     
     @State var isQrCodeScannerPresented = false
     @State var currentAlarmId: Int? = nil
+
+    init(ongoingStudyViewBuilder: @escaping () -> AnyView = { AnyView(OngoingStudyView()) }) {
+        self.ongoingStudyViewBuilder = ongoingStudyViewBuilder
+    }
     
     var body: some View {
         
@@ -41,11 +47,45 @@ struct MainView: View {
                 TutorialView()
             }
         case .studyOngoing:
-            OngoingStudyView()
+            ongoingStudyView()
         }
     }
 
+    @ViewBuilder
+    private func ongoingStudyView() -> some View {
+#if DEBUG
+        if UserDefaults.standard.bool(forKey: AppConstants.demoOngoingStudyModeKey) {
+            OngoingStudyView(alarmViewModel: makeDemoOngoingStudyAlarmViewModel())
+        } else {
+            ongoingStudyViewBuilder()
+        }
+#else
+        ongoingStudyViewBuilder()
+#endif
+    }
 }
+
+#if DEBUG
+private func makeDemoOngoingStudyAlarmViewModel() -> AlarmViewModel {
+    let alarmVM = AlarmViewModel()
+    alarmVM.initialAlarm = Alarm(
+        id: AlarmConstants.initialAlarmId,
+        isActive: true,
+        isScanned: false,
+        isTriggered: true,
+        time: getDateTomorrowMorning()
+    )
+    alarmVM.timedAlarms = [
+        Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false),
+        Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true),
+        Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false)
+    ]
+    return alarmVM
+}
+#endif
 
 #Preview {
     let permissionDataVM = PermissionDataViewModel()
@@ -69,10 +109,16 @@ struct MainView: View {
         isCheckDuplicatesEnabled: false,
         participantId: "preview"
     )
+
+    let alarmVM = makeDemoOngoingStudyAlarmViewModel()
     
     permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
     permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
-    return MainView()
+    return MainView(
+        ongoingStudyViewBuilder: {
+            AnyView(OngoingStudyView(alarmViewModel: alarmVM))
+        }
+    )
         .environmentObject(permissionDataVM)
         .environmentObject(sessionVM)
         .environmentObject(sessionDataVM)

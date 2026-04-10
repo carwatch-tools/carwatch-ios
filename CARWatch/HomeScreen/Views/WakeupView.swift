@@ -17,71 +17,74 @@ struct WakeupView: View {
     var onDelayedSampleAcknowledged: () -> Void = {}
     
     var body: some View {
-        ZStack {
-            Color.clear
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            let size = geometry.size
+            let mainFontSize = StyleConstants.mainScreenFontSize(for: size)
+            let iconSize = StyleConstants.mainScreenIconSize(for: size)
+            let edgePadding = StyleConstants.edgePadding(for: size)
 
-            VStack {
-                Image(systemName: "sun.max.fill")
-                    .font(.system(size: StyleConstants.mainScreenIconSize))
-                    .foregroundStyle(.blue)
-                    .opacity(StyleConstants.mainScreenIconOpacity)
-                Text("Good Morning")
-                    .font(.system(size: StyleConstants.mainScreenFontSize))
-                Text("Did you just wake up?")
-                    .font(.system(size: StyleConstants.mainScreenFontSize))
-                    .multilineTextAlignment(.center)
-                HStack{
-                    Button("YES") {
-                        // don't allow any further interaction if the study is finished already
-                        if alarmVM.isStudyFinished(){
+            ScrollView(showsIndicators: false) {
+                VStack {
+                    Image(systemName: "sun.max.fill")
+                        .font(.system(size: iconSize))
+                        .foregroundStyle(.blue)
+                        .opacity(StyleConstants.mainScreenIconOpacity)
+                    Text("Good Morning")
+                        .font(.system(size: mainFontSize))
+                    Text("Did you just wake up?")
+                        .font(.system(size: mainFontSize))
+                        .multilineTextAlignment(.center)
+                    HStack{
+                        Button("YES") {
+                            if alarmVM.isStudyFinished(){
+                                showStudyFinishedAlert = true
+                                return
+                            }
+                            if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
+                                toastType = .wakeupReportedToast
+                                showToast = true
+                            } else {
+                                var msg = [String: Any]()
+                                msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
+                                Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
+                                alarmVM.setInitialAlarmActivity(isActive: true)
+                                for (index, _) in alarmVM.timedAlarms.enumerated() {
+                                    alarmVM.setTimedAlarmActivity(index: index, isActive: true)
+                                }
+                                initialAlarmTime = Date()
+                                alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
+                                alarmVM.setInitialAlarmTriggered()
+                                if alarmVM.triggerWakeupSampleIfNeeded() != nil {
+                                    scannerSource = .wakeup
+                                    isScannerPresented = true
+                                } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
+                                    delayedSampleMinutes = max(
+                                        1,
+                                        Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
+                                    )
+                                    showDelayedSampleAlert = true
+                                }
+                            }
+                        }
+                    .buttonStyle(.borderedProminent)
+                    Button("NO") {
+                        if alarmVM.isStudyFinished() {
                             showStudyFinishedAlert = true
                             return
                         }
-                        // check if initial alarm was already triggered at current day -> wakeup can't be reported twice
-                        if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
-                            toastType = .wakeupReportedToast
-                            showToast = true
-                        } else {
-                            // log spontaneous awakening
-                            var msg = [String: Any]()
-                            msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
-                            Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
-                            // activate all alarms
-                            alarmVM.setInitialAlarmActivity(isActive: true)
-                            for (index, _) in alarmVM.timedAlarms.enumerated() {
-                                alarmVM.setTimedAlarmActivity(index: index, isActive: true)
-                            }
-                            // update initial alarm time to now
-                            initialAlarmTime = Date()
-                            alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
-                            alarmVM.setInitialAlarmTriggered()
-                            if alarmVM.triggerWakeupSampleIfNeeded() != nil {
-                                scannerSource = .wakeup
-                                isScannerPresented = true
-                            } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
-                                delayedSampleMinutes = max(
-                                    1,
-                                    Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
-                                )
-                                showDelayedSampleAlert = true
-                            }
-                        }
-                    }
-                .buttonStyle(.borderedProminent)
-                Button("NO") {
-                    if alarmVM.isStudyFinished() {
-                        showStudyFinishedAlert = true
-                        return
-                    }
 
-                    let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
-                    toastType = !wakeupAlreadyReportedToday ? .wakeupReminderToast : .feedbackToast
-                    showToast = true
+                        let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+                        toastType = !wakeupAlreadyReportedToday ? .wakeupReminderToast : .feedbackToast
+                        showToast = true
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
+                }
+                .padding(edgePadding)
+                .frame(minHeight: size.height)
             }
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.clear.ignoresSafeArea())
         }
         .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
             let color = Color(UIColor.secondarySystemBackground)

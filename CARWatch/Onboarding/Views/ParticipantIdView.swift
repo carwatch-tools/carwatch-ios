@@ -8,40 +8,46 @@ struct ParticipantIdView: View {
     @State var showAlert: Bool = false
     
     var body: some View {
-        VStack {
-            Image(systemName: "person.text.rectangle.fill")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .font(.system(size: StyleConstants.mainScreenIconSize))
-                .foregroundStyle(.blue)
-                .opacity(StyleConstants.mainScreenIconOpacity)
-                .padding()
-                .frame(width: 100, alignment: .center)
-            Text("Please enter the participant ID you received from us:")
-                .font(.system(size: StyleConstants.explanationFontSize))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            TextField(
-                "Participant ID",
-                text: $participantId
-            )
-            .frame(maxWidth: .infinity, alignment:  .leading)
-            .textFieldStyle(.roundedBorder)
-            .padding(.bottom)
-            Button("Continue") {
-                studyDataVM.studyData.participantId = participantId
-                if studyDataVM.isParticipantIdRequired() {
-                    showAlert = true
-                } else {
-                    logDeviceProperties()
-                    logAppMetadata()
-                    logParticipantId(participantId: participantId)
-                    logStudyData(studyData: studyDataVM.studyData)
+        GeometryReader { geometry in
+            let size = geometry.size
+
+            ScrollView(showsIndicators: false) {
+                VStack {
+                    Image(systemName: "person.text.rectangle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .font(.system(size: StyleConstants.mainScreenIconSize(for: size)))
+                        .foregroundStyle(.blue)
+                        .opacity(StyleConstants.mainScreenIconOpacity)
+                        .padding()
+                        .frame(width: StyleConstants.isCompactScreen(for: size) ? 80 : 100, alignment: .center)
+                    Text("Please enter the participant ID you received from us:")
+                        .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    TextField(
+                        "Participant ID",
+                        text: $participantId
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.bottom)
+                    Button("Continue") {
+                        studyDataVM.studyData.participantId = participantId
+                        if studyDataVM.isParticipantIdRequired() {
+                            showAlert = true
+                        } else {
+                            logDeviceProperties()
+                            logAppMetadata()
+                            logParticipantId(participantId: participantId)
+                            logStudyData(studyData: studyDataVM.studyData)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
+                .padding(StyleConstants.edgePadding(for: size))
+                .frame(minHeight: size.height)
             }
-            .buttonStyle(.borderedProminent)
-            
         }
-        .padding(StyleConstants.edgePadding)
         .alert(isPresented: $showAlert) {
             Alert(title: Text("Input invalid! Please enter a valid participant ID!"),
                   dismissButton: Alert.Button.default(

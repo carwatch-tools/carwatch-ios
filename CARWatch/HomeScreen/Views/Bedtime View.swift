@@ -26,57 +26,65 @@ struct BedtimeView: View {
     }
 
     var body: some View {
-        ZStack {
-            bedtimeBackgroundColor
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            let size = geometry.size
+            let mainFontSize = StyleConstants.mainScreenFontSize(for: size)
+            let iconSize = StyleConstants.mainScreenIconSize(for: size)
+            let edgePadding = StyleConstants.edgePadding(for: size)
 
-            VStack {
-                Image(systemName: "bed.double")
-                    .font(.system(size: StyleConstants.mainScreenIconSize))
-                    .foregroundStyle(.blue)
-                    .opacity(StyleConstants.mainScreenIconOpacity)
-                Text("Good Evening")
-                    .font(.system(size: StyleConstants.mainScreenFontSize))
-                Text("Are you going to bed?")
-                    .font(.system(size: StyleConstants.mainScreenFontSize))
-                    .multilineTextAlignment(.center)
-                HStack{
-                    Button("YES") {
-                        if studyDataVM.studyData.hasEveningSample {
-                            if !alarmVM.isEveningScanned {
-                                isBarcodeScannerPresented = true
-                            } else if alarmVM.isStudyFinished() {
-                                showStudyFinishedAlert = true
+            ScrollView(showsIndicators: false) {
+                VStack {
+                    Image(systemName: "bed.double")
+                        .font(.system(size: iconSize))
+                        .foregroundStyle(.blue)
+                        .opacity(StyleConstants.mainScreenIconOpacity)
+                    Text("Good Evening")
+                        .font(.system(size: mainFontSize))
+                    Text("Are you going to bed?")
+                        .font(.system(size: mainFontSize))
+                        .multilineTextAlignment(.center)
+                    HStack{
+                        Button("YES") {
+                            if studyDataVM.studyData.hasEveningSample {
+                                if !alarmVM.isEveningScanned {
+                                    isBarcodeScannerPresented = true
+                                } else if alarmVM.isStudyFinished() {
+                                    showStudyFinishedAlert = true
+                                } else {
+                                    toastType = .eveningSampleTakenToast
+                                    showToast = true
+                                }
                             } else {
-                                toastType = .eveningSampleTakenToast
+                                toastType = .noEveningSampleToast
                                 showToast = true
                             }
-                        } else {
-                            toastType = .noEveningSampleToast
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Button("NO") {
+                            if alarmVM.isStudyFinished() {
+                                showStudyFinishedAlert = true
+                                return
+                            }
+
+                            toastType = studyDataVM.studyData.hasEveningSample ? .bedtimeReminderToast : .noSampleTonightToast
                             showToast = true
                         }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.bottom)
+                    Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
+                        Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
+                        alarmVM.isDarkModeOn = !isDarkModeEnabled
                     }
                     .buttonStyle(.borderedProminent)
-                    Button("NO") {
-                        if alarmVM.isStudyFinished() {
-                            showStudyFinishedAlert = true
-                            return
-                        }
-
-                        toastType = studyDataVM.studyData.hasEveningSample ? .bedtimeReminderToast : .noSampleTonightToast
-                        showToast = true
-                    }
-                    .buttonStyle(.bordered)
+                    .tint(Color.orange)
                 }
-                .padding(.bottom)
-                Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                    Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                    alarmVM.isDarkModeOn = !isDarkModeEnabled
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.orange)
+                .padding(edgePadding)
+                .frame(minHeight: size.height)
+                .foregroundStyle(bedtimeForegroundColor)
             }
-            .foregroundStyle(bedtimeForegroundColor)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(bedtimeBackgroundColor.ignoresSafeArea())
         }
         .sheet(isPresented: $isBarcodeScannerPresented) {
             ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $alarmId, codeType: .ean8)

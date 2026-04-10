@@ -38,7 +38,25 @@ struct RegistrationView: View {
     }
 
     private var welcomeLogoMaxHeight: CGFloat {
-        UIDevice.current.userInterfaceIdiom == .pad ? 220 : 150
+        let size = UIScreen.main.bounds.size
+        let baseHeight: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 220 : 150
+        return StyleConstants.isCompactScreen(for: size) ? min(baseHeight, 120) : baseHeight
+    }
+
+    private var screenSize: CGSize {
+        UIScreen.main.bounds.size
+    }
+
+    private var adaptiveEdgePadding: CGFloat {
+        StyleConstants.edgePadding(for: screenSize)
+    }
+
+    private var adaptiveExplanationFontSize: CGFloat {
+        StyleConstants.explanationFontSize(for: screenSize)
+    }
+
+    private var adaptiveIconSize: CGFloat {
+        StyleConstants.mainScreenIconSize(for: screenSize)
     }
     
     var body: some View {
@@ -105,7 +123,7 @@ struct RegistrationView: View {
                 .frame(width: 22)
                 .foregroundStyle(.blue)
             Text(text)
-                .font(.system(size: 18))
+                .font(.system(size: adaptiveExplanationFontSize))
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .layoutPriority(1)
@@ -135,7 +153,7 @@ struct RegistrationView: View {
                         .frame(maxWidth: .infinity)
 
                     Text("CARWatch is intended for study participants. It helps you follow your study schedule by sending reminders, and confirming samples by barcode scans.")
-                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .font(.system(size: adaptiveExplanationFontSize))
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                 }
@@ -156,7 +174,7 @@ struct RegistrationView: View {
             }
             .frame(maxWidth: .infinity, alignment: .top)
         }
-        .padding(.horizontal, StyleConstants.edgePadding)
+        .padding(.horizontal, adaptiveEdgePadding)
         .padding(.vertical, 20)
         .sheet(isPresented: $isInfoSheetPresented) {
             RegistrationInfoSheet()
@@ -171,7 +189,7 @@ struct RegistrationView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("Please review the following information before continuing as a study participant.")
-                    .font(.system(size: StyleConstants.explanationFontSize))
+                    .font(.system(size: adaptiveExplanationFontSize))
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 consentSection(
@@ -229,71 +247,72 @@ struct RegistrationView: View {
                     .opacity(hasAcceptedResearchConsent ? 1 : 0.5)
                 }
             }
-            .padding(StyleConstants.edgePadding)
+            .padding(adaptiveEdgePadding)
         }
     }
 
     private var permissionView: some View {
-        VStack {
-            Text("Unlock Features")
-                .font(.title.weight(.bold))
-                .padding(StyleConstants.edgePadding)
-            Text("To enable all of the features, CARWatch requires the following permissions:")
-                .font(.system(size: StyleConstants.explanationFontSize))
-                .multilineTextAlignment(.leading)
-            VStack(alignment:.leading) {
-                HStack {
-                    Image(systemName: "camera.viewfinder")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .foregroundStyle(.blue)
-                        .opacity(StyleConstants.mainScreenIconOpacity)
-                        .padding()
-                        .frame(width: 80, alignment: .center)
-                    Text("Camera access to enable scanning sample tube barcodes")
-                        .font(.system(size: StyleConstants.explanationFontSize))
-                    
+        ScrollView {
+            VStack {
+                Text("Unlock Features")
+                    .font(.title.weight(.bold))
+                    .padding(adaptiveEdgePadding)
+                Text("To enable all of the features, CARWatch requires the following permissions:")
+                    .font(.system(size: adaptiveExplanationFontSize))
+                    .multilineTextAlignment(.leading)
+                VStack(alignment:.leading) {
+                    HStack {
+                        Image(systemName: "camera.viewfinder")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .foregroundStyle(.blue)
+                            .opacity(StyleConstants.mainScreenIconOpacity)
+                            .padding()
+                            .frame(width: StyleConstants.isCompactScreen(for: screenSize) ? 64 : 80, alignment: .center)
+                        Text("Camera access to enable scanning sample tube barcodes")
+                            .font(.system(size: adaptiveExplanationFontSize))
+                    }
+                    HStack {
+                        Image(systemName: "light.beacon.max.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .font(.system(size: adaptiveIconSize))
+                            .foregroundStyle(.blue)
+                            .opacity(StyleConstants.mainScreenIconOpacity)
+                            .padding()
+                            .frame(width: StyleConstants.isCompactScreen(for: screenSize) ? 64 : 80, alignment: .center)
+                        Text("Sending notifications to inform you about upcoming samples")
+                            .font(.system(size: adaptiveExplanationFontSize))
+                    }
                 }
-                HStack {
-                    Image(systemName: "light.beacon.max.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .font(.system(size: StyleConstants.mainScreenIconSize))
-                        .foregroundStyle(.blue)
-                        .opacity(StyleConstants.mainScreenIconOpacity)
-                        .padding()
-                        .frame(width: 80, alignment: .center)
-                    Text("Sending notifications to inform you about upcoming samples")
-                        .font(.system(size: StyleConstants.explanationFontSize))
+                Button(permissionButtonTitle) {
+                    permissionDataVM.checkNotificationPermission()
+                    permissionDataVM.checkCameraPermission()
+                    permissionButtonTapped = true
                 }
+                .padding()
+                .frame(alignment: .center)
+                .buttonStyle(.borderedProminent)
+                .disabled(hasRequiredPermissions)
+                .opacity(hasRequiredPermissions ? 0.5 : 1)
+                if !hasRequiredPermissions {
+                    Text("Please grant camera and notification access to continue.")
+                        .font(.system(size: adaptiveExplanationFontSize))
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8)
+                }
+                Button("Continue") {
+                    pageIndex = qrConfigurationPageIndex
+                }
+                .buttonStyle(.bordered)
+                .disabled(!hasRequiredPermissions)
+                .opacity(hasRequiredPermissions ? 1 : 0.5)
+                .padding(.top, 8)
             }
-            Button(permissionButtonTitle) {
-                permissionDataVM.checkNotificationPermission()
-                permissionDataVM.checkCameraPermission()
-                permissionButtonTapped = true
-            }
-            .padding()
-            .frame(alignment: .center)
-            .buttonStyle(.borderedProminent)
-            .disabled(hasRequiredPermissions)
-            .opacity(hasRequiredPermissions ? 0.5 : 1)
-            if !hasRequiredPermissions {
-                Text("Please grant camera and notification access to continue.")
-                    .font(.system(size: StyleConstants.explanationFontSize))
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 8)
-            }
-            Button("Continue") {
-                pageIndex = qrConfigurationPageIndex
-            }
-            .buttonStyle(.bordered)
-            .disabled(!hasRequiredPermissions)
-            .opacity(hasRequiredPermissions ? 1 : 0.5)
-            .padding(.top, 8)
+            .gesture(permissionButtonTapped ? nil : DragGesture())
+            .padding(adaptiveEdgePadding)
         }
-        .gesture(permissionButtonTapped ? nil : DragGesture())
-        .padding(StyleConstants.edgePadding)
     }
 
     @ViewBuilder
@@ -310,39 +329,49 @@ struct RegistrationView: View {
     }
 
     private var qrConfigurationView: some View {
-        VStack {
-            Text("Configure the App")
-                .font(.title.weight(.bold))
-                .padding(StyleConstants.edgePadding)
-            Text("Please scan the QR Code that you received to configure the CARWatch App for your study.")
-                .font(.system(size: StyleConstants.explanationFontSize))
-                .multilineTextAlignment(.leading)
-                .padding()
-            Image(systemName: "qrcode.viewfinder")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .font(.system(size: StyleConstants.mainScreenIconSize))
-                .foregroundStyle(.blue)
-                .opacity(StyleConstants.mainScreenIconOpacity)
-                .padding()
-                .frame(width: 100, alignment: .center)
-            Button("Scan now") {
-                isScannerPresented = true
-            }
-            .buttonStyle(.borderedProminent)
+        ScrollView {
+            VStack {
+                Text("Configure the App")
+                    .font(.title.weight(.bold))
+                    .padding(adaptiveEdgePadding)
+                Text("Please scan the QR Code that you received to configure the CARWatch App for your study.")
+                    .font(.system(size: adaptiveExplanationFontSize))
+                    .multilineTextAlignment(.leading)
+                    .padding()
+                Image(systemName: "qrcode.viewfinder")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .font(.system(size: adaptiveIconSize))
+                    .foregroundStyle(.blue)
+                    .opacity(StyleConstants.mainScreenIconOpacity)
+                    .padding()
+                    .frame(width: StyleConstants.isCompactScreen(for: screenSize) ? 80 : 100, alignment: .center)
+                Button("Scan now") {
+                    isScannerPresented = true
+                }
+                .buttonStyle(.borderedProminent)
 
 #if DEBUG
-            Button("Load Demo Study") {
-                loadDemoStudy()
-            }
-            .buttonStyle(.bordered)
-            .padding(.top, 8)
+                Button("Load Demo Study") {
+                    loadDemoStudy()
+                }
+                .buttonStyle(.bordered)
+                .padding(.top, 8)
+
+                Button("Open Demo Ongoing Study") {
+                    loadDemoOngoingStudy()
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 8)
 #endif
+            }
+            .padding(adaptiveEdgePadding)
         }
     }
 
 #if DEBUG
     private func loadDemoStudy() {
+        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
         studyDataVM.studyData = StudyData(
             isValid: true,
             studyName: "Demo Cortisol Awakening Response Study",
@@ -357,6 +386,40 @@ struct RegistrationView: View {
             participantId: "1001"
         )
         sessionVM.startStudyConfirmation()
+    }
+
+    private func loadDemoOngoingStudy() {
+        UserDefaults.standard.set(true, forKey: AppConstants.demoOngoingStudyModeKey)
+
+        permissionDataVM.permissionData = PermissionData(
+            notificationPermissionGranted: true,
+            notificationPermissionDialogHandled: true,
+            cameraPermissionGranted: true,
+            cameraPermissionDialogHandled: true
+        )
+
+        studyDataVM.studyData = StudyData(
+            isValid: true,
+            studyName: "Preview Study",
+            salivaDistances: [],
+            salivaTimes: [
+                Time(hour: 8, minute: 0),
+                Time(hour: 8, minute: 15),
+                Time(hour: 8, minute: 30),
+                Time(hour: 8, minute: 45),
+                Time(hour: 12, minute: 0),
+                Time(hour: 15, minute: 0)
+            ],
+            startSample: "S0",
+            studyDays: 1,
+            numParticipants: 1,
+            hasEveningSample: false,
+            shareEmailAdress: "preview@example.com",
+            isCheckDuplicatesEnabled: false,
+            participantId: "preview"
+        )
+
+        sessionVM.startStudy()
     }
 #endif
 

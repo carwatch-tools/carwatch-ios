@@ -32,138 +32,144 @@ struct AlarmView: View {
     }
     
     var body: some View {
-        VStack {
-            Image(systemName: "alarm")
-                .font(.system(size: StyleConstants.mainScreenIconSize))
-                .foregroundStyle(.blue)
-                .opacity(StyleConstants.mainScreenIconOpacity)
-            Text("Please set your desired wakeup time for tomorrow.")
-                .font(.system(size: StyleConstants.mainScreenFontSize))
-                .multilineTextAlignment(.center)
-                .font(.system(size: StyleConstants.mainScreenFontSize))
-            HStack {
-                HStack{
-                    Toggle("", isOn: Binding<Bool>(
-                        get: { alarmVM.getInitialAlarm().isActive },
-                        set: { newValue in
-                            setInitialAlarmActivity(isActive: newValue)
-                        }))
-                    .labelsHidden()
-                    .padding(StyleConstants.edgePadding)
-                    .font(.system(size: StyleConstants.mainScreenFontSize))
-                    DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
-                        .onChange(of: initialAlarmTime, perform: { _ in
-                            // backup old initial alarm value in case the selection is invalid
-                            let backupTime = alarmVM.getInitialAlarm().time
-                            alarmVM.updateAlarmTime(time: initialAlarmTime)
-                            if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
-                                // this can happen when using fixed time alarms, where the alarm times won't update depending on the initial alarm
-                                initialAlarmTime = backupTime
-                                alarmVM.updateAlarmTime(time: initialAlarmTime)
-                            }
-                            if(alarmVM.getInitialAlarm().isActive) {
-                                showToast = true
-                            }
-                        })
+        GeometryReader { geometry in
+            let size = geometry.size
+            let isCompact = StyleConstants.isCompactScreen(for: size)
+            let mainFontSize = StyleConstants.mainScreenFontSize(for: size)
+            let iconSize = StyleConstants.mainScreenIconSize(for: size)
+            let explanationFontSize = StyleConstants.explanationFontSize(for: size)
+            let edgePadding = StyleConstants.edgePadding(for: size)
+            let onboardingPadding = StyleConstants.onboardingPadding(for: size)
+
+            VStack {
+                Image(systemName: "alarm")
+                    .font(.system(size: iconSize))
+                    .foregroundStyle(.blue)
+                    .opacity(StyleConstants.mainScreenIconOpacity)
+                Text("Please set your desired wakeup time for tomorrow.")
+                    .font(.system(size: mainFontSize))
+                    .multilineTextAlignment(.center)
+                HStack {
+                    HStack {
+                        Toggle("", isOn: Binding<Bool>(
+                            get: { alarmVM.getInitialAlarm().isActive },
+                            set: { newValue in
+                                setInitialAlarmActivity(isActive: newValue)
+                            }))
                         .labelsHidden()
-                        .scaledToFit()
-                        .scaleEffect(CGSize(width: 1.5, height: 1.5))
-                }
-                .disabled(isWakeupTimeSelectionDisabled)
-
-                if isWakeupTimeSelectionDisabled {
-                    Button {
-                        showDisabledInfoAlert = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .font(.title3)
+                        .padding(edgePadding)
+                        .font(.system(size: mainFontSize))
+                        DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
+                            .onChange(of: initialAlarmTime, perform: { _ in
+                                let backupTime = alarmVM.getInitialAlarm().time
+                                alarmVM.updateAlarmTime(time: initialAlarmTime)
+                                if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
+                                    initialAlarmTime = backupTime
+                                    alarmVM.updateAlarmTime(time: initialAlarmTime)
+                                }
+                                if alarmVM.getInitialAlarm().isActive {
+                                    showToast = true
+                                }
+                            })
+                            .labelsHidden()
+                            .scaleEffect(isCompact ? CGSize(width: 1.15, height: 1.15) : CGSize(width: 1.35, height: 1.35))
                     }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel("Why is wakeup time disabled?")
+                    .disabled(isWakeupTimeSelectionDisabled)
+
+                    if isWakeupTimeSelectionDisabled {
+                        Button {
+                            showDisabledInfoAlert = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .font(.title3)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Why is wakeup time disabled?")
+                    }
                 }
-            }
-            
-            
-            Divider()
-                .padding(.bottom)
-            ScrollView(showsIndicators: false, content: {
-                VStack (alignment: .leading) {
-                    Text("Saliva sample reminders")
-                        .font(.system(size: StyleConstants.explanationFontSize))
-                    ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
-                        index, alarm in
-                        HStack(alignment: .center, spacing: 10) {
-                            HStack(alignment: .center, spacing: 6) {
-                                Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
-                                    .font(.system(size: StyleConstants.explanationFontSize))
-                                    .frame(width: 40, alignment: .leading)
+                
+                Divider()
+                    .padding(.bottom)
+                ScrollView(showsIndicators: false, content: {
+                    VStack(alignment: .center) {
+                        Text("Saliva sample reminders")
+                            .font(.system(size: explanationFontSize))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
+                            index, alarm in
+                            HStack(alignment: .center, spacing: isCompact ? 8 : 10) {
+                                HStack(alignment: .center, spacing: 6) {
+                                    Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
+                                        .font(.system(size: explanationFontSize))
+                                        .frame(width: isCompact ? 34 : 40, alignment: .leading)
 
-                                Toggle("", isOn: timedAlarmActivityBinding(index: index))
-                                .labelsHidden()
-                                .disabled(alarm.isScanned)
-                                .frame(width: 50)
+                                    Toggle("", isOn: timedAlarmActivityBinding(index: index))
+                                        .labelsHidden()
+                                        .disabled(alarm.isScanned)
+                                        .frame(width: isCompact ? 40 : 50)
 
-                                Color.clear
-                                    .frame(width: 6)
+                                    Color.clear
+                                        .frame(width: isCompact ? 4 : 6)
 
-                                Text(getHourMinFormattedString(time: alarm.time))
-                                    .font(.system(size: StyleConstants.explanationFontSize))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.9)
-                                    .frame(width: 92, alignment: .leading)
+                                    Text(getHourMinFormattedString(time: alarm.time))
+                                        .font(.system(size: explanationFontSize))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.85)
+                                        .frame(width: isCompact ? 74 : 92, alignment: .leading)
+                                }
+                                sampleTrailingColumn(for: alarm, fontSize: explanationFontSize)
                             }
-                            sampleTrailingColumn(for: alarm)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
                     }
-                }
-                .fixedSize(horizontal: true, vertical: false)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, onboardingPadding)
+                })
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, StyleConstants.onboardingPadding)
-            })
-            .frame(maxWidth: .infinity)
-            .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-                let color = Color(UIColor.secondarySystemBackground)
-                let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
-                let toastMsg = String(
-                    format: localizedAppString("Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
-                    Int64(diffHours),
-                    Int64(diffMinutes)
-                )
-                return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
-                
-            }
-            .alert(isPresented: $showAlert) {
-                switch activeAlert {
-                case .takeSampleEarlyAlert:
-                    return Alert(title: Text("This sample is scheduled for later. Are you sure you want to scan the sample now?"),
-                                 primaryButton: .destructive(Text("Yes")) {
-                        showAlert = false
-                        scannerSource = .schedule
-                        isScannerPresented = true
-                    },
-                                 secondaryButton: .cancel(Text("No")) {
-                        currentAlarmId = nil
-                        showAlert = false
-                    }
+                .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
+                    let color = Color(UIColor.secondarySystemBackground)
+                    let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
+                    let toastMsg = String(
+                        format: localizedAppString("Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
+                        Int64(diffHours),
+                        Int64(diffMinutes)
                     )
-                case .toggleActivityAlert:
-                    return Alert(title: Text("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"),
-                                 primaryButton: .destructive(Text("Yes")) {
-                        toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
-                        showAlert = false
-                    },
-                                 secondaryButton: .cancel(Text("No")) {
-                        showAlert = false
-                    }
-                    )
+                    return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
+                    
                 }
+                .alert(isPresented: $showAlert) {
+                    switch activeAlert {
+                    case .takeSampleEarlyAlert:
+                        return Alert(title: Text("This sample is scheduled for later. Are you sure you want to scan the sample now?"),
+                                     primaryButton: .destructive(Text("Yes")) {
+                            showAlert = false
+                            scannerSource = .schedule
+                            isScannerPresented = true
+                        },
+                                     secondaryButton: .cancel(Text("No")) {
+                            currentAlarmId = nil
+                            showAlert = false
+                        }
+                        )
+                    case .toggleActivityAlert:
+                        return Alert(title: Text("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"),
+                                     primaryButton: .destructive(Text("Yes")) {
+                            toggleTimedAlarm(index: pendingToggleIndex, isActive: !alarmVM.timedAlarmActivity[pendingToggleIndex])
+                            showAlert = false
+                        },
+                                     secondaryButton: .cancel(Text("No")) {
+                            showAlert = false
+                        }
+                        )
+                    }
+                }
+                .alert(localizedAppString("Wakeup time unavailable"), isPresented: $showDisabledInfoAlert) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text(disabledWakeupMessage)
+                }
+                Spacer()
             }
-            .alert(localizedAppString("Wakeup time unavailable"), isPresented: $showDisabledInfoAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(disabledWakeupMessage)
-            }
-            Spacer()
         }
     }
     
@@ -211,14 +217,14 @@ struct AlarmView: View {
     }
 
     @ViewBuilder
-    private func sampleTrailingContent(for alarm: Alarm) -> some View {
+    private func sampleTrailingContent(for alarm: Alarm, fontSize: CGFloat) -> some View {
         if alarm.isScanned {
             Image(systemName: "checkmark.circle")
-                .font(.system(size: StyleConstants.explanationFontSize))
+                .font(.system(size: fontSize))
                 .foregroundStyle(.green)
         } else if alarm.isTriggered {
             Image(systemName: "exclamationmark.arrow.circlepath")
-                .font(.system(size: StyleConstants.explanationFontSize))
+                .font(.system(size: fontSize))
                 .foregroundStyle(.orange)
         } else {
             Button(action: {
@@ -237,7 +243,7 @@ struct AlarmView: View {
                     Image(systemName: "barcode.viewfinder")
                         .frame(width: 16, alignment: .center)
                     Text("Take sample")
-                        .font(.system(size: StyleConstants.explanationFontSize))
+                        .font(.system(size: fontSize))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
                 }
@@ -246,23 +252,22 @@ struct AlarmView: View {
         }
     }
 
-    private var sampleTrailingReference: some View {
+    private func sampleTrailingReference(fontSize: CGFloat) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "barcode.viewfinder")
                 .frame(width: 16, alignment: .center)
             Text("Take sample")
-                .font(.system(size: StyleConstants.explanationFontSize))
+                .font(.system(size: fontSize))
                 .lineLimit(1)
         }
     }
 
-    private func sampleTrailingColumn(for alarm: Alarm) -> some View {
+    private func sampleTrailingColumn(for alarm: Alarm, fontSize: CGFloat) -> some View {
         ZStack(alignment: .leading) {
-            sampleTrailingReference
+            sampleTrailingReference(fontSize: fontSize)
                 .hidden()
-            sampleTrailingContent(for: alarm)
+            sampleTrailingContent(for: alarm, fontSize: fontSize)
         }
-        .fixedSize(horizontal: true, vertical: false)
     }
 }
 

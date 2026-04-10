@@ -6,31 +6,41 @@ struct TutorialSlide: View {
     let explanationText : LocalizedStringKey
     
     var body: some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+            let imageHeight = StyleConstants.onboardingImageHeight(for: size)
+            let onboardingPadding = StyleConstants.onboardingPadding(for: size)
+
             VStack {
                 if !imageName.isEmpty{
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
-                        .frame(height: StyleConstants.onboardingImageHeight)
+                        .frame(maxHeight: imageHeight)
                         .cornerRadius(StyleConstants.roundedCornerRadius)
                         .shadow(radius: StyleConstants.shadowRadius)
-                        .padding(StyleConstants.onboardingPadding)
+                        .padding(onboardingPadding)
                 } else {
                     Image("CarwatchLogo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: StyleConstants.onboardingImageHeight)
-                        .padding(StyleConstants.onboardingPadding)
+                        .frame(maxHeight: imageHeight)
+                        .padding(onboardingPadding)
                 }
                 ScrollView {
-                    Text(titleText)
-                        .font(.title.weight(.bold))
-                    Text(explanationText)
+                    VStack(spacing: 12) {
+                        Text(titleText)
+                            .font(.title.weight(.bold))
+                        Text(explanationText)
+                            .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Spacer()
             }
-            .padding([.leading, .trailing])
+            .padding(.horizontal, onboardingPadding)
         }
+    }
 }
 
 #Preview {

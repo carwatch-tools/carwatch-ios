@@ -37,9 +37,8 @@ struct OngoingStudyView: View {
         return isDarkModeOn ? .dark : .light
     }
     
-    init() {
-        // Use the shared property from firstViewModel for secondViewModel initialization
-        _alarmVM = StateObject(wrappedValue: AlarmViewModel())
+    init(alarmViewModel: AlarmViewModel? = nil) {
+        _alarmVM = StateObject(wrappedValue: alarmViewModel ?? AlarmViewModel())
     }
     
     var body: some View {
@@ -242,5 +241,50 @@ struct OngoingStudyView: View {
 }
 
 #Preview {
-    OngoingStudyView()
+    let alarmVM = AlarmViewModel()
+    alarmVM.initialAlarm = Alarm(id: AlarmConstants.initialAlarmId, isActive: true, isScanned: false, isTriggered: true)
+    alarmVM.timedAlarms = [
+        Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false),
+        Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true),
+        Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false),
+        Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false)
+    ]
+
+    let permissionDataVM = PermissionDataViewModel()
+    permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
+    permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
+
+    let sessionVM = SessionViewModel()
+    sessionVM.startStudy()
+
+    let studyDataVM = StudyDataViewModel()
+    studyDataVM.studyData = StudyData(
+        isValid: true,
+        studyName: "Preview Study",
+        salivaDistances: [],
+        salivaTimes: [
+            Time(hour: 8, minute: 0),
+            Time(hour: 8, minute: 15),
+            Time(hour: 8, minute: 30),
+            Time(hour: 8, minute: 45),
+            Time(hour: 12, minute: 0),
+            Time(hour: 15, minute: 0)
+        ],
+        startSample: "S0",
+        studyDays: 1,
+        numParticipants: 1,
+        hasEveningSample: false,
+        shareEmailAdress: "preview@example.com",
+        isCheckDuplicatesEnabled: false,
+        participantId: "preview"
+    )
+
+    return OngoingStudyView(alarmViewModel: alarmVM)
+        .environmentObject(permissionDataVM)
+        .environmentObject(sessionVM)
+        .environmentObject(studyDataVM)
+        .environmentObject(AppDelegate())
+        .environment(\.locale, Locale(identifier: "en_US"))
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
+    static let demoOngoingStudyModeKey = "demo_ongoing_study_mode"
 }
 
 struct PermissionConstants {
@@ -60,6 +61,36 @@ struct StyleConstants {
     static let overlayStrokeWidth: CGFloat = 5
     static let roundedCornerRadius: CGFloat = 15
     static let roundedCornerStrokeLength: CGFloat = 15
+
+    static func isCompactScreen(for size: CGSize) -> Bool {
+        size.width < 380 || size.height < 700
+    }
+
+    static func mainScreenFontSize(for size: CGSize) -> CGFloat {
+        isCompactScreen(for: size) ? 24 : mainScreenFontSize
+    }
+
+    static func mainScreenIconSize(for size: CGSize) -> CGFloat {
+        isCompactScreen(for: size) ? 56 : mainScreenIconSize
+    }
+
+    static func explanationFontSize(for size: CGSize) -> CGFloat {
+        isCompactScreen(for: size) ? 17 : explanationFontSize
+    }
+
+    static func edgePadding(for size: CGSize) -> CGFloat {
+        isCompactScreen(for: size) ? 20 : edgePadding
+    }
+
+    static func onboardingPadding(for size: CGSize) -> CGFloat {
+        isCompactScreen(for: size) ? 16 : onboardingPadding
+    }
+
+    static func onboardingImageHeight(for size: CGSize) -> CGFloat {
+        let heightFactor = isCompactScreen(for: size) ? 0.38 : 0.55
+        let maxHeight: CGFloat = isCompactScreen(for: size) ? 240 : 420
+        return min(size.height * heightFactor, maxHeight)
+    }
 }
 
 struct LocalizationConstants {

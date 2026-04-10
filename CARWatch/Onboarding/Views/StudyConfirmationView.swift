@@ -13,32 +13,36 @@ struct StudyConfirmationView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Study Details")
-                    .font(.title.weight(.bold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        GeometryReader { geometry in
+            let size = geometry.size
 
-                Text("Please confirm that this study configuration matches the information you received before continuing to the tutorial.")
-                    .font(.system(size: StyleConstants.explanationFontSize))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Study Details")
+                        .font(.title.weight(.bold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                Group {
-                    detailRow(title: "Study Name", value: Text(studyData.studyName))
-                    detailRow(title: "Participant ID", value: Text(participantIdDescription))
-                    detailRow(title: "Study Days", value: Text("\(studyData.studyDays)"))
-                    detailRow(title: "Samples Per Day", value: Text("\(studyData.numSamples)"))
-                    detailRow(title: "Evening Sample", value: Text(studyData.hasEveningSample ? "Yes" : "No"))
+                    Text("Please confirm that this study configuration matches the information you received before continuing to the tutorial.")
+                        .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Group {
+                        detailRow(title: "Study Name", value: Text(studyData.studyName))
+                        detailRow(title: "Participant ID", value: Text(participantIdDescription))
+                        detailRow(title: "Study Days", value: Text("\(studyData.studyDays)"))
+                        detailRow(title: "Samples Per Day", value: Text("\(studyData.numSamples)"))
+                        detailRow(title: "Evening Sample", value: Text(studyData.hasEveningSample ? "Yes" : "No"))
+                    }
+
+                    Button("Continue to Tutorial") {
+                        sessionVM.startTutorial()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 8)
                 }
-
-                Button("Continue to Tutorial") {
-                    sessionVM.startTutorial()
-                }
-                .frame(maxWidth: .infinity)
-                .buttonStyle(.borderedProminent)
-                .padding(.top, 8)
+                .padding(StyleConstants.edgePadding(for: size))
             }
-            .padding(StyleConstants.edgePadding)
         }
     }
 

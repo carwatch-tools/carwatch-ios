@@ -134,6 +134,9 @@ struct MainViewToolbarMenu: View {
     }
 
     private func performReregister() {
+#if DEBUG
+        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+#endif
         alarmVM.resetAlarmDataForNewUser()
         sessionVM.reregister()
     }
