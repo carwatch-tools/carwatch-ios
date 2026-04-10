@@ -87,41 +87,74 @@ private func makeDemoOngoingStudyAlarmViewModel() -> AlarmViewModel {
 }
 #endif
 
-#Preview {
-    let permissionDataVM = PermissionDataViewModel()
-    let sessionVM = SessionViewModel()
-    sessionVM.startStudy()
-    let sessionDataVM = StudyDataViewModel()
-    sessionDataVM.studyData = StudyData(
-        isValid: true,
-        studyName: "Preview Study",
-        salivaDistances: [],
-        salivaTimes: [
-            Time(hour: 8, minute: 0),
-            Time(hour: 8, minute: 2),
-            Time(hour: 8, minute: 5)
-        ],
-        startSample: "S0",
-        studyDays: 1,
-        numParticipants: 1,
-        hasEveningSample: false,
-        shareEmailAdress: "preview@example.com",
-        isCheckDuplicatesEnabled: false,
-        participantId: "preview"
-    )
+private struct MainViewPreviewContainer: View {
+    let permissionDataVM: PermissionDataViewModel
+    let sessionVM: SessionViewModel
+    let sessionDataVM: StudyDataViewModel
+    let alarmVM: AlarmViewModel
 
-    let alarmVM = makeDemoOngoingStudyAlarmViewModel()
-    
-    permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
-    permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
-    return MainView(
-        ongoingStudyViewBuilder: {
-            AnyView(OngoingStudyView(alarmViewModel: alarmVM))
-        }
-    )
-        .environmentObject(permissionDataVM)
-        .environmentObject(sessionVM)
-        .environmentObject(sessionDataVM)
-        .environmentObject(AppDelegate())
-        .environment(\.locale, currentAppLocale())
+    init() {
+        let permissionDataVM = PermissionDataViewModel()
+        let sessionVM = SessionViewModel()
+        sessionVM.startStudy()
+        let sessionDataVM = StudyDataViewModel()
+        sessionDataVM.studyData = StudyData(
+            isValid: true,
+            studyName: "Preview Study",
+            salivaDistances: [],
+            salivaTimes: [
+                Time(hour: 8, minute: 0),
+                Time(hour: 8, minute: 2),
+                Time(hour: 8, minute: 5)
+            ],
+            startSample: "S0",
+            studyDays: 1,
+            numParticipants: 1,
+            hasEveningSample: false,
+            shareEmailAdress: "preview@example.com",
+            isCheckDuplicatesEnabled: false,
+            participantId: "preview"
+        )
+
+        let alarmVM = AlarmViewModel()
+        alarmVM.initialAlarm = Alarm(
+            id: AlarmConstants.initialAlarmId,
+            isActive: true,
+            isScanned: false,
+            isTriggered: true,
+            time: getDateTomorrowMorning()
+        )
+        alarmVM.timedAlarms = [
+            Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false),
+            Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true),
+            Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false),
+            Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false),
+            Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false),
+            Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false)
+        ]
+
+        permissionDataVM.permissionData = permissionDataVM.permissionData.setCameraPermission(isGranted: true)
+        permissionDataVM.permissionData = permissionDataVM.permissionData.setNotificationPermission(isGranted: true)
+
+        self.permissionDataVM = permissionDataVM
+        self.sessionVM = sessionVM
+        self.sessionDataVM = sessionDataVM
+        self.alarmVM = alarmVM
+    }
+
+    var body: some View {
+        MainView(
+            ongoingStudyViewBuilder: {
+                AnyView(OngoingStudyView(alarmViewModel: alarmVM))
+            }
+        )
+            .environmentObject(permissionDataVM)
+            .environmentObject(sessionVM)
+            .environmentObject(sessionDataVM)
+            .environmentObject(AppDelegate())
+            .environment(\.locale, currentAppLocale())
+    }
+}
+#Preview {
+    MainViewPreviewContainer()
 }
