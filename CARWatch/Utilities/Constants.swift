@@ -150,6 +150,11 @@ struct MenuConstants {
     }
 }
 
+extension Notification.Name {
+    static let notificationTapped = Notification.Name("NotificationTapped")
+    static let foregroundNotificationReceived = Notification.Name("ForegroundNotificationReceived")
+}
+
 struct QrParserConstants {
     static let separator: String = ";"
     static let listSeparator: String = ","

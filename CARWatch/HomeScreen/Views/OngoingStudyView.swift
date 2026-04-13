@@ -31,7 +31,10 @@ struct OngoingStudyView: View {
     @State private var showScheduleCompletionAlert: Bool = false
     @State private var scheduleCompletionTitle: String = ""
     @State private var scheduleCompletionMessage: String = ""
+    @State private var showDueSampleAlert: Bool = false
+    @State private var dueSampleAlertTitle: String = ""
     @State private var hasAppeared = false
+    @State private var pendingBedtimeTabAfterEveningReminder = false
 
     private var preferredColorScheme: ColorScheme? {
         guard let isDarkModeOn = alarmVM.isDarkModeOn else {
@@ -124,10 +127,14 @@ struct OngoingStudyView: View {
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NotificationTapped"))) { _ in
+            .onReceive(NotificationCenter.default.publisher(for: .notificationTapped)) { _ in
                 print("App opened from notification")
                 updateAlarmStatus()
                 checkScannerStatus()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .foregroundNotificationReceived)) { notification in
+                updateAlarmStatus()
+                presentDueSampleAlert(for: notification)
             }
             .onForeground {
                 updateAlarmStatus()
@@ -153,14 +160,24 @@ struct OngoingStudyView: View {
                 if scannerSource == .wakeup && alarmVM.timedAlarms.first?.isScanned == true {
                     selectedTab = 1
                 } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
-                    selectedTab = 2
                     if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
+                        if alarmVM.eveningReminderTime == nil {
+                            pendingBedtimeTabAfterEveningReminder = true
+                            alarmVM.shouldPromptForEveningReminderSetup = true
+                        } else {
+                            pendingBedtimeTabAfterEveningReminder = false
+                            selectedTab = 2
+                        }
                         scheduleCompletionTitle = localizedAppString("Samples Recorded")
-                        scheduleCompletionMessage = localizedAppString("You've recorded all samples for the day, but you are still required to record an evening sample tonight right before you go to bed.\nSee you later!")
+                        scheduleCompletionMessage = localizedAppString("You've recorded all samples for the day, but you are still required to record an evening sample tonight right before you go to bed.\nPlease set a reminder below.\nSee you later!")
                     } else if alarmVM.isStudyFinished() {
+                        pendingBedtimeTabAfterEveningReminder = false
+                        selectedTab = 2
                         scheduleCompletionTitle = localizedAppString("Study Finished")
                         scheduleCompletionMessage = localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
                     } else {
+                        pendingBedtimeTabAfterEveningReminder = false
+                        selectedTab = 2
                         scheduleCompletionTitle = localizedAppString("Samples Recorded")
                         scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
                     }
@@ -188,12 +205,27 @@ struct OngoingStudyView: View {
             } message: {
                 Text(scheduleCompletionMessage)
             }
+            .alert(dueSampleAlertTitle, isPresented: $showDueSampleAlert) {
+                Button(localizedAppString("Open Scanner")) {
+                    isBarcodeScannerPresented = true
+                }
+                Button(localizedAppString("Dismiss"), role: .cancel) {
+                    currentAlarmId = nil
+                    scannerSource = nil
+                }
+            }
             .onChange(of: showScheduleCompletionAlert) { isPresented in
                 guard isPresented else {
                     return
                 }
 
                 postAccessibilityAnnouncement("\(scheduleCompletionTitle). \(scheduleCompletionMessage)")
+            }
+            .onChange(of: alarmVM.eveningReminderTime) { newValue in
+                if pendingBedtimeTabAfterEveningReminder, newValue != nil {
+                    pendingBedtimeTabAfterEveningReminder = false
+                    selectedTab = 2
+                }
             }
             .preferredColorScheme(preferredColorScheme)
         } else if permissionDataVM.permissionData.notificationPermissionGranted {
@@ -240,6 +272,91 @@ struct OngoingStudyView: View {
             postAccessibilityAnnouncement(message)
         }
     }
+
+    private func presentDueSampleAlert(for notification: Notification) {
+        guard let identifier = notification.userInfo?["identifier"] as? String else {
+            return
+        }
+
+        guard let alertContext = dueSampleAlertContext(for: identifier) else {
+            return
+        }
+
+        currentAlarmId = alertContext.alarmId
+        scannerSource = alertContext.scannerSource
+        selectedTab = alertContext.selectedTab
+        dueSampleAlertTitle = alertContext.title
+        showDueSampleAlert = true
+    }
+
+    private func dueSampleAlertContext(for identifier: String) -> (alarmId: Int, scannerSource: ScannerPresentationSource, selectedTab: Int, title: String)? {
+        guard let alarmId = Int(identifier.split(separator: "_").first ?? "") else {
+            return nil
+        }
+
+        if alarmId == AlarmConstants.initialAlarmId {
+            alarmVM.setUpcomingAlarmTriggered()
+            guard let triggeredAlarm = alarmVM.getCurrentlyTriggeredAlarm() else {
+                return nil
+            }
+
+            return (
+                alarmId: triggeredAlarm.id,
+                scannerSource: .wakeup,
+                selectedTab: 0,
+                title: String(
+                    format: localizedAppString("Sample #%@ is due."),
+                    sampleDisplayNumber(for: triggeredAlarm.id)
+                )
+            )
+        }
+
+        if alarmId == AlarmConstants.eveningAlarmId {
+            return (
+                alarmId: alarmId,
+                scannerSource: .notification,
+                selectedTab: 2,
+                title: String(
+                    format: localizedAppString("Sample #%@ is due."),
+                    sampleDisplayNumber(for: alarmId)
+                )
+            )
+        }
+
+        guard let alarm = alarmVM.getAlarmById(alarmId: alarmId) else {
+            return nil
+        }
+
+        if !alarm.isTriggered {
+            alarmVM.modifyAlarmById(alarm: alarm.setTriggered())
+        }
+
+        let source: ScannerPresentationSource = alarmVM.getInitialAlarm().isTriggered && alarmId == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
+        return (
+            alarmId: alarmId,
+            scannerSource: source,
+            selectedTab: 1,
+            title: String(
+                format: localizedAppString("Sample #%@ is due."),
+                sampleDisplayNumber(for: alarmId)
+            )
+        )
+    }
+
+    private func sampleDisplayNumber(for alarmId: Int) -> String {
+        if alarmId == AlarmConstants.eveningAlarmId {
+            if let startIndex = Int(studyDataVM.studyData.startSample.dropFirst()) {
+                return "\(studyDataVM.studyData.eveningSampleId + startIndex)"
+            }
+            return "\(studyDataVM.studyData.eveningSampleId)"
+        }
+
+        if let alarm = alarmVM.getAlarmById(alarmId: alarmId) {
+            return "\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
+        }
+
+        return "\(alarmId)"
+    }
     
     func checkScannerStatus() {
         isBarcodeScannerPresented = false
@@ -253,6 +370,11 @@ struct OngoingStudyView: View {
                         scannerSource = .wakeup
                         isBarcodeScannerPresented = true
                     }
+                } else if tappedAlarmId == AlarmConstants.eveningAlarmId {
+                    currentAlarmId = tappedAlarmId
+                    scannerSource = .notification
+                    selectedTab = 2
+                    isBarcodeScannerPresented = true
                 } else if let tappedAlarm = alarmVM.getAlarmById(alarmId: tappedAlarmId) {
                     currentAlarmId = tappedAlarmId
                     if !tappedAlarm.isTriggered {

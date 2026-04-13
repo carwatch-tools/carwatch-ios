@@ -22,6 +22,7 @@ struct AlarmView: View {
     @State private var activeAlert: ActiveAlert = .toggleActivityAlert
     @State private var pendingToggleValue: Bool = false
     @State private var pendingToggleIndex: Int = 0
+    @State private var eveningReminderSelection = Date()
 
     private var isWakeupTimeSelectionDisabled: Bool {
         alarmVM.isAlarmOngoing() || alarmVM.isStudyFinished()
@@ -152,6 +153,17 @@ struct AlarmView: View {
                             .padding(.vertical, usesExpandedLayout ? 4 : 0)
                             .accessibilityElement(children: .contain)
                         }
+
+                        if studyDataVM.studyData.hasEveningSample {
+                            VStack(spacing: 6) {
+                                Text("Evening sample reminder")
+                                    .font(.system(size: usesExpandedLayout ? explanationFontSize + 2 : explanationFontSize))
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                eveningReminderControls(isCompact: isCompact, edgePadding: edgePadding)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, usesExpandedLayout ? 20 : 12)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, usesExpandedLayout ? onboardingPadding + 8 : onboardingPadding)
@@ -203,6 +215,10 @@ struct AlarmView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         isScheduleHeaderFocused = true
                     }
+                    eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
+                    if alarmVM.shouldPromptForEveningReminderSetup && studyDataVM.studyData.hasEveningSample {
+                        alarmVM.shouldPromptForEveningReminderSetup = false
+                    }
                 }
                 .onChange(of: showAlert) { isPresented in
                     guard isPresented else {
@@ -219,6 +235,12 @@ struct AlarmView: View {
                 .onChange(of: showDisabledInfoAlert) { isPresented in
                     if isPresented {
                         postAccessibilityAnnouncement(disabledWakeupAnnouncement)
+                    }
+                }
+                .onChange(of: alarmVM.shouldPromptForEveningReminderSetup) { shouldPrompt in
+                    if shouldPrompt && studyDataVM.studyData.hasEveningSample {
+                        eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
+                        alarmVM.shouldPromptForEveningReminderSetup = false
                     }
                 }
                 Spacer()
@@ -387,6 +409,51 @@ struct AlarmView: View {
             .accessibilityIdentifier("schedule.disabledInfo")
             .accessibilityLabel("Why is wakeup time disabled?")
         }
+    }
+
+    private func eveningReminderControls(isCompact: Bool, edgePadding: CGFloat) -> some View {
+        HStack(spacing: 14) {
+            Toggle("", isOn: Binding<Bool>(
+                get: { alarmVM.eveningReminderTime != nil },
+                set: { isEnabled in
+                    if isEnabled {
+                        alarmVM.scheduleEveningReminder(
+                            time: eveningReminderSelection,
+                            eveningSampleId: studyDataVM.studyData.eveningSampleId
+                        )
+                    } else {
+                        alarmVM.cancelEveningReminder()
+                    }
+                }
+            ))
+            .labelsHidden()
+            .accessibilityIdentifier("schedule.eveningReminderToggle")
+            .accessibilityLabel(localizedAppString("Evening sample reminder"))
+            .accessibilityValue(alarmVM.eveningReminderTime == nil ? localizedAppString("Off") : localizedAppString("On"))
+            .accessibilityHint(localizedAppString("Turns the evening sample reminder on or off."))
+
+            DatePicker("", selection: $eveningReminderSelection, displayedComponents: .hourAndMinute)
+                .onChange(of: eveningReminderSelection) { newValue in
+                    guard alarmVM.eveningReminderTime != nil else {
+                        return
+                    }
+
+                    alarmVM.scheduleEveningReminder(
+                        time: newValue,
+                        eveningSampleId: studyDataVM.studyData.eveningSampleId
+                    )
+                }
+                .labelsHidden()
+                .scaleEffect(isCompact ? CGSize(width: 1.15, height: 1.15) : CGSize(width: 1.35, height: 1.35))
+                .accessibilityIdentifier("schedule.eveningReminderTime")
+                .accessibilityLabel(localizedAppString("Evening reminder time"))
+                .accessibilityHint(localizedAppString("Select when you want to be reminded to take your evening sample."))
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func defaultEveningReminderSelection() -> Date {
+        Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
     }
 }
 

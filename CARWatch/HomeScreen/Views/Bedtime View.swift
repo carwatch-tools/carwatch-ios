@@ -14,7 +14,6 @@ struct BedtimeView: View {
     @State var isBarcodeScannerPresented : Bool = false
     @State var alarmId : Int? = AlarmConstants.eveningAlarmId
     @State private var showStudyFinishedAlert: Bool = false
-
     private var isDarkModeEnabled: Bool {
         alarmVM.isDarkModeOn ?? (colorScheme == .dark)
     }
@@ -79,18 +78,19 @@ struct BedtimeView: View {
                                         bedtimeNoButton
                                     }
                                 }
-
-                                Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                                    Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                                    alarmVM.isDarkModeOn = !isDarkModeEnabled
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .tint(Color.orange)
-                                .accessibilityIdentifier("bedtime.lightsToggle")
-                                .accessibilityHint(localizedAppString("Toggles the bedtime screen between light and dark appearance."))
                             }
-                            .frame(maxWidth: 320, alignment: .leading)
+                            .frame(maxWidth: 320, alignment: .center)
+
+                            Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
+                                Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
+                                alarmVM.isDarkModeOn = !isDarkModeEnabled
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .tint(Color.orange)
+                            .accessibilityIdentifier("bedtime.lightsToggle")
+                            .accessibilityHint(localizedAppString("Toggles the bedtime screen between light and dark appearance."))
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
                         .frame(maxWidth: 760, alignment: .leading)
                         .padding(.top, 12)
@@ -117,10 +117,11 @@ struct BedtimeView: View {
                                         bedtimeNoButton
                                     }
                                 } else {
-                                    HStack {
+                                    HStack(spacing: 6) {
                                         bedtimeYesButton
                                         bedtimeNoButton
                                     }
+                                    .frame(maxWidth: 320, alignment: .center)
                                 }
                             }
                             .padding(.bottom)
