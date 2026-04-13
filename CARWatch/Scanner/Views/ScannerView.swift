@@ -64,6 +64,8 @@ struct ScannerView: View {
         .safeAreaInset(edge: .top) {
             HStack {
                 Button {
+                    appDelegate.openedFromNotification = false
+                    appDelegate.lastNotificationIdentifier = nil
                     isPresented = false
                 } label: {
                     Label("Back", systemImage: "chevron.backward")

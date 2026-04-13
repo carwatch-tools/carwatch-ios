@@ -258,9 +258,9 @@ class AlarmViewModel : ObservableObject {
         }
         
         if alarm != nil {
-            didCompleteLastScheduledSample = alarm?.id == timedAlarms.last?.id
             // set alarm as scanned and inactive
             modifyAlarmById(alarm: alarm!.setScanned())
+            didCompleteLastScheduledSample = !timedAlarms.contains(where: { $0.isActive && !$0.isScanned })
             // cancel all remaining alarms
             NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
             print("Alarm \(alarm!.id) set  as scanned")

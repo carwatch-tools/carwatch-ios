@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct TutorialView: View {
-    
     @EnvironmentObject var sessionVM: SessionViewModel
-    
+
+    let isPresentedFromOngoingStudy: Bool
+
     @State var pageIndex: Int = 0
     
     var imageNames: [String] = ["wakeup", "schedule", "sampleListSymbols", "bedtime", "scan", "export_logs", ""]
@@ -12,6 +13,21 @@ struct TutorialView: View {
 
     private var isLastPage: Bool {
         pageIndex == titleTexts.count - 1
+    }
+
+    private var actionButtonTitle: LocalizedStringKey {
+        if isPresentedFromOngoingStudy {
+            return isLastPage ? "Back to Ongoing Study" : "Skip"
+        }
+        return isLastPage ? "Get Started" : "Skip"
+    }
+
+    private func completeTutorial() {
+        if isPresentedFromOngoingStudy {
+            sessionVM.dismissInStudyTutorial()
+        } else {
+            sessionVM.startStudy()
+        }
     }
     
     var body: some View {
@@ -31,8 +47,8 @@ struct TutorialView: View {
                 .accessibilityLabel(localizedAppString("Tutorial pages"))
                 .accessibilityValue("\(pageIndex + 1) of \(titleTexts.count)")
 
-                Button(isLastPage ? "Get Started" : "Skip") {
-                    sessionVM.startStudy()
+                Button(actionButtonTitle) {
+                    completeTutorial()
                 }
                 .frame(maxWidth: StyleConstants.onboardingContentMaxWidth(for: size) ?? .infinity)
                 .frame(maxWidth: .infinity)
@@ -42,8 +58,8 @@ struct TutorialView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(isLastPage ? Color.accentColor : Color.clear)
                 .foregroundStyle(isLastPage ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.accentColor))
-                .accessibilityIdentifier(isLastPage ? "tutorial.getStarted" : "tutorial.skip")
-                .accessibilityHint(localizedAppString(isLastPage ? "Starts the study." : "Skips the tutorial and starts the study."))
+                .accessibilityIdentifier(isLastPage ? (isPresentedFromOngoingStudy ? "tutorial.backToStudy" : "tutorial.getStarted") : "tutorial.skip")
+                .accessibilityHint(localizedAppString(isPresentedFromOngoingStudy ? "Closes the tutorial and returns to the ongoing study." : (isLastPage ? "Starts the study." : "Skips the tutorial and starts the study.")))
             }
         }
     }
@@ -51,5 +67,5 @@ struct TutorialView: View {
 
 
 #Preview {
-    TutorialView().environmentObject(SessionViewModel())
+    TutorialView(isPresentedFromOngoingStudy: false).environmentObject(SessionViewModel())
 }

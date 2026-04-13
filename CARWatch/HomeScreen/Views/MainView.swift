@@ -44,7 +44,7 @@ struct MainView: View {
             if studyDataVM.isParticipantIdRequired() {
                 ParticipantIdView()
             } else {
-                TutorialView()
+                TutorialView(isPresentedFromOngoingStudy: false)
             }
         case .studyOngoing:
             ongoingStudyView()
@@ -68,20 +68,25 @@ struct MainView: View {
 #if DEBUG
 private func makeDemoOngoingStudyAlarmViewModel() -> AlarmViewModel {
     let alarmVM = AlarmViewModel()
+    let now = Date()
+    var wakeupComponents = Calendar.current.dateComponents([.year, .month, .day], from: now)
+    wakeupComponents.hour = 8
+    wakeupComponents.minute = 0
+    let initialAlarmTime = Calendar.current.date(from: wakeupComponents) ?? now
     alarmVM.initialAlarm = Alarm(
         id: AlarmConstants.initialAlarmId,
         isActive: true,
         isScanned: false,
         isTriggered: true,
-        time: getDateTomorrowMorning()
+        time: initialAlarmTime
     )
     alarmVM.timedAlarms = [
-        Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false),
-        Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true),
-        Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false),
-        Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false),
-        Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false),
-        Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false)
+        Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: -15, to: now) ?? now),
+        Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true, time: Calendar.current.date(byAdding: .minute, value: -10, to: now) ?? now),
+        Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: 5, to: now) ?? now),
+        Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: 20, to: now) ?? now),
+        Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .hour, value: 2, to: now) ?? now),
+        Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .hour, value: 4, to: now) ?? now)
     ]
     return alarmVM
 }

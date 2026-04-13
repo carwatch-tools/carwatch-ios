@@ -62,6 +62,15 @@ struct AlarmView: View {
             getHourMinFormattedString(time: alarm.time)
         )
     }
+
+    private func isAlarmMarkedMissed(_ alarm: Alarm) -> Bool {
+        guard alarm.isTriggered, !alarm.isScanned else {
+            return false
+        }
+
+        let gracePeriodEnd = Calendar.current.date(byAdding: .minute, value: 1, to: alarm.time) ?? alarm.time
+        return Date() >= gracePeriodEnd
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -272,43 +281,44 @@ struct AlarmView: View {
                         "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
                     )
                 )
-        } else if alarm.isTriggered {
-            Image(systemName: "exclamationmark.arrow.circlepath")
-                .font(.system(size: fontSize))
-                .foregroundStyle(.orange)
-                .accessibilityLabel(
-                    String(
-                        format: localizedAppString("Sample %@ is due"),
-                        "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
-                    )
-                )
         } else {
-            Button(action: {
-                currentAlarmId = alarm.id
-                if !alarm.isTriggered {
-                    // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
-                    activeAlert = .takeSampleEarlyAlert
-                    showAlert = true
+            sampleActionButton(for: alarm, fontSize: fontSize, isMissed: alarm.isTriggered && isAlarmMarkedMissed(alarm))
+        }
+    }
+
+    private func sampleActionButton(for alarm: Alarm, fontSize: CGFloat, isMissed: Bool) -> some View {
+        Button(action: {
+            currentAlarmId = alarm.id
+            if !alarm.isTriggered {
+                // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
+                activeAlert = .takeSampleEarlyAlert
+                showAlert = true
+            } else {
+                scannerSource = .schedule
+                isScannerPresented = true
+            }
+        }) {
+            HStack(spacing: 6) {
+                if isMissed {
+                    Image(systemName: "exclamationmark.arrow.circlepath")
+                        .foregroundStyle(.orange)
+                        .frame(width: 16, alignment: .center)
                 } else {
-                    // alarm is due alreadyon
-                    scannerSource = .schedule
-                    isScannerPresented = true
-                }
-            }) {
-                HStack(spacing: 6) {
                     Image(systemName: "barcode.viewfinder")
                         .frame(width: 16, alignment: .center)
-                    Text("Take sample")
-                        .font(.system(size: fontSize))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
                 }
+
+                Text("Take sample")
+                    .font(.system(size: fontSize))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .foregroundStyle(isMissed ? .orange : .primary)
             }
-            .buttonStyle(.borderless)
-            .accessibilityIdentifier("schedule.takeSample.\(alarm.id)")
-            .accessibilityLabel(sampleActionAccessibilityLabel(for: alarm))
-            .accessibilityHint(localizedAppString("Opens the barcode scanner for this sample."))
         }
+        .buttonStyle(.borderless)
+        .accessibilityIdentifier("schedule.takeSample.\(alarm.id)")
+        .accessibilityLabel(sampleActionAccessibilityLabel(for: alarm))
+        .accessibilityHint(localizedAppString(isMissed ? "Opens the barcode scanner for this late sample." : "Opens the barcode scanner for this sample."))
     }
 
     private func sampleTrailingReference(fontSize: CGFloat) -> some View {

@@ -13,6 +13,7 @@ struct MainViewToolbarMenu: View {
     @Binding var showToast: Bool
     @Binding var killButtonClickCount: Int
     @Binding var toastType: MenuConstants.ToastType
+    @Binding var selectedTab: Int
     
     @State var showShareSheet = false
     @State private var showStudyInfoSheet = false
@@ -35,7 +36,7 @@ struct MainViewToolbarMenu: View {
                 }
                 
                 Button {
-                    sessionVM.startTutorial()
+                    sessionVM.presentInStudyTutorial(returnTab: selectedTab)
                 } label: {
                     Label("Show Tutorial", systemImage: "questionmark.circle")
                 }
@@ -212,7 +213,8 @@ private struct StudyInformationSheet: View {
         appVersion: .constant("preview"),
         showToast: .constant(false),
         killButtonClickCount: .constant(0),
-        toastType: .constant(.clickToKill)
+        toastType: .constant(.clickToKill),
+        selectedTab: .constant(0)
     )
     .environmentObject(SessionViewModel())
     .environmentObject(StudyDataViewModel())

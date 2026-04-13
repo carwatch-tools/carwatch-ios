@@ -21,6 +21,8 @@ class SessionViewModel : ObservableObject {
             saveScannedBarcodes()
         }
     }
+    @Published var isInStudyTutorialPresented = false
+    @Published private(set) var tutorialReturnTab: Int?
     
     let currentStateDataKey = "currentState"
     let registrationStateDataKey = "isReregistration"
@@ -80,5 +82,20 @@ class SessionViewModel : ObservableObject {
     func startTutorial() {
         currentState = .tutorial
         isReregistration = false
+    }
+
+    func presentInStudyTutorial(returnTab: Int) {
+        tutorialReturnTab = returnTab
+        isInStudyTutorialPresented = true
+    }
+
+    func dismissInStudyTutorial() {
+        isInStudyTutorialPresented = false
+    }
+
+    func consumeTutorialReturnTab() -> Int? {
+        let returnTab = tutorialReturnTab
+        tutorialReturnTab = nil
+        return returnTab
     }
 }

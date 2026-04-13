@@ -12,6 +12,7 @@ struct OngoingStudyView: View {
     @StateObject var alarmVM: AlarmViewModel
     
     @EnvironmentObject var permissionDataVM: PermissionDataViewModel
+    @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var appDelegate: AppDelegate
     
@@ -101,7 +102,7 @@ struct OngoingStudyView: View {
                 .navigationBarTitle(tabTitle)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType)
+                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType, selectedTab: $selectedTab)
                             .environmentObject(alarmVM)
                     }
                 }
@@ -173,6 +174,14 @@ struct OngoingStudyView: View {
                 ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
+            }
+            .fullScreenCover(isPresented: $sessionVM.isInStudyTutorialPresented, onDismiss: {
+                if let returnTab = sessionVM.consumeTutorialReturnTab() {
+                    selectedTab = returnTab
+                }
+            }) {
+                TutorialView(isPresentedFromOngoingStudy: true)
+                    .environmentObject(sessionVM)
             }
             .alert(scheduleCompletionTitle, isPresented: $showScheduleCompletionAlert) {
                 Button(localizedAppString("OK")) { }
