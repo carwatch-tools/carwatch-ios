@@ -452,7 +452,15 @@ struct AlarmView: View {
     }
 
     private func defaultEveningReminderSelection() -> Date {
-        Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+        if let lastEveningReminderSelection = alarmVM.lastEveningReminderSelection {
+            return lastEveningReminderSelection
+        }
+
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 21
+        components.minute = 0
+
+        return Calendar.current.date(from: components) ?? Date()
     }
 }
 

@@ -43,6 +43,11 @@ class AlarmViewModel : ObservableObject {
             saveEveningReminderTime()
         }
     }
+    @Published var lastEveningReminderSelection: Date? = nil {
+        didSet {
+            saveLastEveningReminderSelection()
+        }
+    }
     @Published var shouldPromptForEveningReminderSetup = false
     
     // no didSet required because this info is retrieved from timedAlarms and automatically updated when timedAlarms is set
@@ -62,6 +67,7 @@ class AlarmViewModel : ObservableObject {
     let dateOfLastInitialAlarmKey = "dateOfLastInitialAlarm"
     let isDarkModeOnKey = "isDarkModeOn"
     let eveningReminderTimeKey = "eveningReminderTime"
+    let lastEveningReminderSelectionKey = "lastEveningReminderSelection"
     
     init() {
         getAlarmData()
@@ -99,6 +105,12 @@ class AlarmViewModel : ObservableObject {
             eveningReminderTime = savedEveningReminderTime
         } else {
             eveningReminderTime = nil
+        }
+        if let lastEveningReminderSelectionData = UserDefaults.standard.data(forKey: lastEveningReminderSelectionKey),
+           let savedLastEveningReminderSelection = try? JSONDecoder().decode(Date.self, from: lastEveningReminderSelectionData) {
+            lastEveningReminderSelection = savedLastEveningReminderSelection
+        } else {
+            lastEveningReminderSelection = nil
         }
 
         let savedInitialAlarm = UserDefaults.standard.data(forKey: initialAlarmDataKey)
@@ -306,7 +318,7 @@ class AlarmViewModel : ObservableObject {
     func resetAlarmData() {
         /// called after a day is finished
         isEveningScanned = false
-        cancelEveningReminder()
+        cancelEveningReminder(clearStoredSelection: false)
         // schedule alarms for the next day after all scans for one day were finished
         for alarm in timedAlarms {
             modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, time: alarm.time))
@@ -498,15 +510,19 @@ class AlarmViewModel : ObservableObject {
         let scheduledTime = getNextDateTimeOccurrs(time: time)
         let eveningAlarm = Alarm(id: AlarmConstants.eveningAlarmId, isActive: true, time: scheduledTime)
 
-        cancelEveningReminder()
+        cancelEveningReminder(clearStoredSelection: false)
         eveningReminderTime = scheduledTime
+        lastEveningReminderSelection = scheduledTime
         scheduleAlarmWithBackupNotifications(eveningAlarm, salivaId: "\(eveningSampleId)")
         logAlarmScheduled(eveningAlarm)
         shouldPromptForEveningReminderSetup = false
     }
 
-    func cancelEveningReminder() {
+    func cancelEveningReminder(clearStoredSelection: Bool = false) {
         eveningReminderTime = nil
+        if clearStoredSelection {
+            lastEveningReminderSelection = nil
+        }
         shouldPromptForEveningReminderSetup = false
         NotificationManager.instance.cancelNotificationsById(alarmId: AlarmConstants.eveningAlarmId)
     }
@@ -607,6 +623,7 @@ class AlarmViewModel : ObservableObject {
         studyDayCounter = 0
         isDarkModeOn = nil
         eveningReminderTime = nil
+        lastEveningReminderSelection = nil
         shouldPromptForEveningReminderSetup = false
         dateOfLastInitialAlarm = Date.distantPast
         timedAlarmActivity = []
@@ -619,6 +636,16 @@ class AlarmViewModel : ObservableObject {
             }
         } else {
             UserDefaults.standard.removeObject(forKey: eveningReminderTimeKey)
+        }
+    }
+
+    private func saveLastEveningReminderSelection() {
+        if let lastEveningReminderSelection {
+            if let encodedLastEveningReminderSelection = try? JSONEncoder().encode(lastEveningReminderSelection) {
+                UserDefaults.standard.set(encodedLastEveningReminderSelection, forKey: lastEveningReminderSelectionKey)
+            }
+        } else {
+            UserDefaults.standard.removeObject(forKey: lastEveningReminderSelectionKey)
         }
     }
 }
