@@ -148,6 +148,23 @@ class AlarmViewModel : ObservableObject {
         dateOfLastInitialAlarm = Date()
         studyDayCounter += 1
     }
+
+    func confirmWakeup(at wakeupTime: Date) {
+        setInitialAlarm(
+            alarm: Alarm(
+                id: AlarmConstants.initialAlarmId,
+                isActive: true,
+                isScanned: false,
+                isTriggered: false,
+                time: wakeupTime
+            )
+        )
+
+        updateTimedAlarms()
+        rebaseTimedAlarmsAfterWakeupConfirmation(referenceTime: wakeupTime)
+        scheduleAlarmNotificationsWithoutInitial()
+        setInitialAlarmTriggered()
+    }
     
     func getAlarmById(alarmId: Int) -> Alarm? {
         if let alarmIdx = timedAlarms.firstIndex(where: { $0.id == alarmId }) {
@@ -430,6 +447,22 @@ class AlarmViewModel : ObservableObject {
         // bring times in correct chronological order
         updatedAlarmTimes.sort()
         return updatedAlarmTimes
+    }
+
+    private func rebaseTimedAlarmsAfterWakeupConfirmation(referenceTime: Date) {
+        timedAlarms = timedAlarms.map { alarm in
+            guard !alarm.isScanned else {
+                return alarm
+            }
+
+            return Alarm(
+                id: alarm.id,
+                isActive: true,
+                isScanned: false,
+                isTriggered: alarm.time <= referenceTime,
+                time: alarm.time
+            )
+        }
     }
     
     func updateTimedAlarmActivity() {

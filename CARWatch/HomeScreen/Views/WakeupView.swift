@@ -171,13 +171,8 @@ struct WakeupView: View {
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
                 Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
-                alarmVM.setInitialAlarmActivity(isActive: true)
-                for (index, _) in alarmVM.timedAlarms.enumerated() {
-                    alarmVM.setTimedAlarmActivity(index: index, isActive: true)
-                }
                 initialAlarmTime = Date()
-                alarmVM.updateAlarmTime(time: initialAlarmTime, scheduleInitialNotification: false)
-                alarmVM.setInitialAlarmTriggered()
+                alarmVM.confirmWakeup(at: initialAlarmTime)
                 if alarmVM.triggerWakeupSampleIfNeeded() != nil {
                     scannerSource = .wakeup
                     isScannerPresented = true
