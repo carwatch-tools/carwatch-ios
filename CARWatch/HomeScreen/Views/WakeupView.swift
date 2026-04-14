@@ -173,13 +173,13 @@ struct WakeupView: View {
                 Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
                 initialAlarmTime = Date()
                 alarmVM.confirmWakeup(at: initialAlarmTime)
-                if alarmVM.triggerWakeupSampleIfNeeded() != nil {
+                if alarmVM.isScanRequired() {
                     scannerSource = .wakeup
                     isScannerPresented = true
-                } else if let firstTimedAlarm = alarmVM.timedAlarms.first {
+                } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
                     delayedSampleMinutes = max(
-                        1,
-                        Int(firstTimedAlarm.time.timeIntervalSince(initialAlarmTime).rounded() / 60)
+                        0,
+                        Int(ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60))
                     )
                     showDelayedSampleAlert = true
                 }

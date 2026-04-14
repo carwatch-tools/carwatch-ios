@@ -69,8 +69,7 @@ struct AlarmView: View {
             return false
         }
 
-        let gracePeriodEnd = Calendar.current.date(byAdding: .minute, value: 1, to: alarm.time) ?? alarm.time
-        return Date() >= gracePeriodEnd
+        return true
     }
     
     var body: some View {

@@ -5,6 +5,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
     @Published var lastNotificationIdentifier: String?
     static var orientationLock = UIInterfaceOrientationMask.portrait
 
+    func resetNotificationNavigationState() {
+        openedFromNotification = false
+        lastNotificationIdentifier = nil
+    }
+
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         return true

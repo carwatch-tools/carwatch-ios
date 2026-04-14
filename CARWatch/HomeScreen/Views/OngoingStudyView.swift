@@ -362,6 +362,10 @@ struct OngoingStudyView: View {
         isBarcodeScannerPresented = false
         if appDelegate.openedFromNotification {
             print("App opened from notification")
+            defer {
+                appDelegate.resetNotificationNavigationState()
+            }
+
             if let tappedAlarmId = tappedAlarmId() {
                 if tappedAlarmId == AlarmConstants.initialAlarmId {
                     alarmVM.setUpcomingAlarmTriggered()
@@ -392,8 +396,6 @@ struct OngoingStudyView: View {
                     isBarcodeScannerPresented = true
                 }
             }
-
-            appDelegate.lastNotificationIdentifier = nil
         }
         /*
          TODO: should the scanner be displayed if app was closed on barcode screen?

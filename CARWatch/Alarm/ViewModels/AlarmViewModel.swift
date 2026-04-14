@@ -72,6 +72,20 @@ class AlarmViewModel : ObservableObject {
     private func defaultInitialAlarm() -> Alarm {
         Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false)
     }
+
+    private func migratedInitialAlarm(from legacyTimedAlarms: [Alarm]) -> Alarm {
+        guard let firstSampleAlarm = legacyTimedAlarms.min(by: { $0.id < $1.id }) else {
+            return defaultInitialAlarm()
+        }
+
+        return Alarm(
+            id: AlarmConstants.initialAlarmId,
+            isActive: false,
+            isScanned: false,
+            isTriggered: false,
+            time: firstSampleAlarm.time
+        )
+    }
     
     func getAlarmData() {
         isEveningScanned = UserDefaults.standard.bool(forKey: isEveningScannedKey)
@@ -87,35 +101,22 @@ class AlarmViewModel : ObservableObject {
             eveningReminderTime = nil
         }
 
-        if let initialAlarmData = UserDefaults.standard.data(forKey: initialAlarmDataKey),
-           let savedInitialAlarm = try? JSONDecoder().decode(Alarm.self, from: initialAlarmData) {
+        let savedInitialAlarm = UserDefaults.standard.data(forKey: initialAlarmDataKey)
+            .flatMap { try? JSONDecoder().decode(Alarm.self, from: $0) }
+
+        if let savedInitialAlarm {
             initialAlarm = savedInitialAlarm
         }
 
         if let timedAlarmData = UserDefaults.standard.data(forKey: timedAlarmDataKey),
            let savedTimedAlarms = try? JSONDecoder().decode([Alarm].self, from: timedAlarmData) {
-            if let legacyInitialAlarm = savedTimedAlarms.first(where: { $0.id == 0 }) {
-                initialAlarm = Alarm(
-                    id: AlarmConstants.initialAlarmId,
-                    isActive: legacyInitialAlarm.isActive,
-                    isScanned: false,
-                    isTriggered: legacyInitialAlarm.isTriggered,
-                    time: legacyInitialAlarm.time
-                )
-                timedAlarms = savedTimedAlarms
-                    .filter { $0.id != 0 }
-                    .map { alarm in
-                        Alarm(
-                            id: alarm.id - 1,
-                            isActive: alarm.isActive,
-                            isScanned: alarm.isScanned,
-                            isTriggered: alarm.isTriggered,
-                            time: alarm.time
-                        )
-                    }
-            } else {
-                timedAlarms = savedTimedAlarms
+            if savedInitialAlarm == nil {
+                // Legacy builds stored only scheduled sample alarms. Preserve their IDs and
+                // migrate the dedicated wakeup alarm separately to avoid reassigning sample state.
+                initialAlarm = migratedInitialAlarm(from: savedTimedAlarms)
             }
+
+            timedAlarms = savedTimedAlarms
         }
 
         updateAlarmTime(time: getInitialAlarm().time)

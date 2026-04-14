@@ -47,6 +47,9 @@ struct ScannerView: View {
                 postAccessibilityAnnouncement(scannerScreenAnnouncement)
             }
         }
+        .onDisappear {
+            appDelegate.resetNotificationNavigationState()
+        }
         .onChange(of: showAlert) { isPresented in
             guard isPresented else {
                 return
@@ -64,9 +67,7 @@ struct ScannerView: View {
         .safeAreaInset(edge: .top) {
             HStack {
                 Button {
-                    appDelegate.openedFromNotification = false
-                    appDelegate.lastNotificationIdentifier = nil
-                    isPresented = false
+                    dismissScanner()
                 } label: {
                     Label("Back", systemImage: "chevron.backward")
                         .font(.headline)
@@ -91,7 +92,7 @@ struct ScannerView: View {
                                 Text("OK"), action: {
                                     // go back to main view
                                     showAlert = false
-                                    isPresented = false
+                                    dismissScanner()
                                 }
                              )
                 )
@@ -199,8 +200,12 @@ struct ScannerView: View {
     private func handleSuccessfulEanScan(){
         logEanScanData()
         alarmVM.setCurrentAlarmScanned(alarmId: alarmId)
-        // reset app delegate status
-        appDelegate.openedFromNotification = false
+        appDelegate.resetNotificationNavigationState()
+    }
+
+    private func dismissScanner() {
+        appDelegate.resetNotificationNavigationState()
+        isPresented = false
     }
     
     private func logEanScanData(){
