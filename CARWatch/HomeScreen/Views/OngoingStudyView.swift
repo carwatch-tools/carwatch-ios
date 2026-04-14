@@ -158,9 +158,23 @@ struct OngoingStudyView: View {
                     return
                 }
 
-                if scannerSource == .wakeup && alarmVM.timedAlarms.first?.isScanned == true {
-                    selectedTab = 1
-                } else if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
+                let scannedNonEveningSample: Bool = {
+                    guard let currentAlarmId else {
+                        return false
+                    }
+
+                    guard currentAlarmId != AlarmConstants.eveningAlarmId else {
+                        return false
+                    }
+
+                    guard let scannedAlarm = alarmVM.getAlarmById(alarmId: currentAlarmId) else {
+                        return false
+                    }
+
+                    return scannedAlarm.isScanned
+                }()
+
+                if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
                     if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
                         if alarmVM.eveningReminderTime == nil {
                             pendingBedtimeTabAfterEveningReminder = true
@@ -183,9 +197,12 @@ struct OngoingStudyView: View {
                         scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
                     }
                     showScheduleCompletionAlert = true
+                } else if scannedNonEveningSample {
+                    selectedTab = 1
                 }
 
                 alarmVM.didCompleteLastScheduledSample = false
+                currentAlarmId = nil
                 scannerSource = nil
             }
             .sheet(isPresented: $isBarcodeScannerPresented) {
@@ -360,7 +377,9 @@ struct OngoingStudyView: View {
     }
     
     func checkScannerStatus() {
-        isBarcodeScannerPresented = false
+        if isBarcodeScannerPresented {
+            return
+        }
         if appDelegate.openedFromNotification {
             print("App opened from notification")
             defer {
