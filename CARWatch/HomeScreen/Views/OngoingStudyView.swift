@@ -144,6 +144,7 @@ struct OngoingStudyView: View {
                 configureTabBarAppearance()
                 initializeStudyData()
                 updateTimedAlarms()
+                checkScannerStatus()
                 if !hasAppeared {
                     hasAppeared = true
                     announceCurrentTab()
