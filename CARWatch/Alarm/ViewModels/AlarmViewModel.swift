@@ -242,6 +242,14 @@ class AlarmViewModel : ObservableObject {
         Logger.instance.log(tag: LoggerConstants.loggerActionDayFinished, message: msg)
         return true
     }
+
+    func hasRemainingSamplesForCurrentDay() -> Bool {
+        if hasEveningSample && !isEveningScanned {
+            return true
+        }
+
+        return timedAlarms.contains { !$0.isScanned }
+    }
     
     func getTimeUntilNextInitialAlarm() -> (Int, Int) {
         let timeInterval = NSInteger(getInitialAlarm().time.timeIntervalSinceNow)
@@ -324,6 +332,39 @@ class AlarmViewModel : ObservableObject {
             modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, time: alarm.time))
         }
         updateAlarmTime(time: getInitialAlarm().time)
+    }
+
+    @discardableResult
+    func finishCurrentStudyDay() -> Bool {
+        guard studyDayCounter > 0, hasRemainingSamplesForCurrentDay() else {
+            return false
+        }
+
+        NotificationManager.instance.cancelAllNotifications()
+        isEveningScanned = true
+        cancelEveningReminder(clearStoredSelection: false)
+
+        timedAlarms = timedAlarms.map { alarm in
+            guard !alarm.isScanned else {
+                return alarm
+            }
+
+            return Alarm(
+                id: alarm.id,
+                isActive: false,
+                isScanned: true,
+                isTriggered: alarm.isTriggered,
+                time: alarm.time
+            )
+        }
+
+        didCompleteLastScheduledSample = true
+
+        if !isStudyFinished() {
+            resetAlarmData()
+        }
+
+        return true
     }
     
     func isScanRequired() -> Bool {

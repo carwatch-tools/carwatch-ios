@@ -19,10 +19,18 @@ struct MainViewToolbarMenu: View {
     @State private var showStudyInfoSheet = false
     @State private var showPrivacyPolicySheet = false
     @State private var showReregisterConfirmation = false
+    @State private var showFinishStudyDayConfirmation = false
     
     var body: some View {
         Menu {
             Section("User Actions") {
+                Button(role: .destructive) {
+                    showFinishStudyDayConfirmation = true
+                } label: {
+                    Label("Finish Study Day", systemImage: "checkmark.circle")
+                }
+                .disabled(!alarmVM.hasRemainingSamplesForCurrentDay() || alarmVM.studyDayCounter == 0)
+
                 Button {
                     if Logger.instance.zipCurrentLogDirectoryContent() != nil {
                         showShareSheet = true
@@ -109,6 +117,14 @@ struct MainViewToolbarMenu: View {
         } message: {
             Text("Your study is still ongoing. Are you sure you want to reregister with a new QR code?")
         }
+        .alert("Finish study day?", isPresented: $showFinishStudyDayConfirmation) {
+            Button("Keep Samples", role: .cancel) { }
+            Button("Finish Day", role: .destructive) {
+                performFinishStudyDay()
+            }
+        } message: {
+            Text("All remaining samples for today will be canceled and the study day will be marked as finished.")
+        }
         .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
                 let subject = zipFileURL.lastPathComponent
@@ -143,6 +159,16 @@ struct MainViewToolbarMenu: View {
 #endif
         alarmVM.resetAlarmDataForNewUser()
         sessionVM.reregister()
+    }
+
+    private func performFinishStudyDay() {
+        let didFinishDay = alarmVM.finishCurrentStudyDay()
+
+        guard didFinishDay else {
+            return
+        }
+
+        selectedTab = 2
     }
 }
 
