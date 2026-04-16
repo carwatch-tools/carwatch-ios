@@ -20,14 +20,17 @@ class NotificationManager {
 
     private func notificationTitle(for salivaId: String?) -> String {
         guard let salivaId else {
-            return "Wake up! Please confirm that you are awake in CARWatch."
+            return localizedAppString("Wake up! Please confirm that you are awake in CARWatch.")
         }
 
         if salivaId == "0" {
-            return "Please take the first saliva sample (sample #0)!"
+            return localizedAppString("Please take the first saliva sample (sample #0)!")
         }
 
-        return "Please take saliva sample #\(salivaId)!"
+        return String(
+            format: localizedAppString("Please take saliva sample #%@!"),
+            salivaId
+        )
     }
     
     func cancelNotificationsById(alarmId: Int) {
