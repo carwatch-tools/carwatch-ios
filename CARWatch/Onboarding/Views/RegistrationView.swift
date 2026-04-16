@@ -20,6 +20,14 @@ struct RegistrationView: View {
         permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
     }
 
+    private var hasRequiredPermissionToProceed: Bool {
+        permissionDataVM.permissionData.cameraPermissionGranted
+    }
+
+    private var shouldShowNotificationWarning: Bool {
+        permissionDataVM.permissionData.notificationPermissionDialogHandled && !permissionDataVM.permissionData.notificationPermissionGranted
+    }
+
     private var alternateLanguageCode: String {
         selectedLanguageCode == "en" ? "de" : "en"
     }
@@ -33,7 +41,7 @@ struct RegistrationView: View {
     }
 
     private var permissionButtonTitle: LocalizedStringKey {
-        hasRequiredPermissions ? "Permissions granted" : "Grant Permissions"
+        hasRequiredPermissions ? "Permissions granted" : "Next"
     }
 
     private var consentPageIndex: Int { 1 }
@@ -413,7 +421,7 @@ struct RegistrationView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityAddTraits(.isHeader)
                             .accessibilityFocused($isCurrentHeaderFocused)
-                        Text("To enable all of the features, CARWatch requires the following permissions:")
+                        Text("CARWatch requires camera access to scan sample barcodes. Notifications are optional, but recommended for reminder alarms.")
                             .font(.system(size: adaptiveExplanationFontSize))
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -457,9 +465,15 @@ struct RegistrationView: View {
                         .disabled(hasRequiredPermissions)
                         .opacity(hasRequiredPermissions ? 0.5 : 1)
                         .accessibilityIdentifier("registration.requestPermissions")
-                        .accessibilityHint(localizedAppString("Requests camera and notification permissions."))
-                        if !hasRequiredPermissions {
-                            Text("Please grant camera and notification access to continue.")
+                        .accessibilityHint(localizedAppString("Requests camera access and optional notification permissions."))
+                        if shouldShowNotificationWarning {
+                            Text("Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times.")
+                                .font(.system(size: adaptiveExplanationFontSize))
+                                .foregroundStyle(.orange)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 8)
+                        } else if !hasRequiredPermissionToProceed {
+                            Text("Please allow camera access to continue. Notifications are optional.")
                                 .font(.system(size: adaptiveExplanationFontSize))
                                 .foregroundStyle(.red)
                                 .multilineTextAlignment(.center)
@@ -469,11 +483,11 @@ struct RegistrationView: View {
                             pageIndex = qrConfigurationPageIndex
                         }
                         .buttonStyle(.bordered)
-                        .disabled(!hasRequiredPermissions)
-                        .opacity(hasRequiredPermissions ? 1 : 0.5)
+                        .disabled(!hasRequiredPermissionToProceed)
+                        .opacity(hasRequiredPermissionToProceed ? 1 : 0.5)
                         .padding(.top, 8)
                         .accessibilityIdentifier("registration.permissionsContinue")
-                        .accessibilityHint(localizedAppString("Continues after all required permissions are granted."))
+                        .accessibilityHint(localizedAppString("Continues after camera access is granted."))
                     }
                 }
             }

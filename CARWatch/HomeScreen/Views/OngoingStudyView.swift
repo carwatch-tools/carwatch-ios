@@ -70,7 +70,7 @@ struct OngoingStudyView: View {
     }
     
     var body: some View {
-        if permissionDataVM.permissionData.notificationPermissionGranted && permissionDataVM.permissionData.cameraPermissionGranted {
+        if permissionDataVM.permissionData.cameraPermissionGranted {
             NavigationStack{
                 TabView(selection: $selectedTab){
                     WakeupView(
@@ -246,10 +246,8 @@ struct OngoingStudyView: View {
                 }
             }
             .preferredColorScheme(preferredColorScheme)
-        } else if permissionDataVM.permissionData.notificationPermissionGranted {
-            MissingPermissionView(type: PermissionConstants.PermissionType.camera)
         } else {
-            MissingPermissionView(type: PermissionConstants.PermissionType.notifications)
+            MissingPermissionView(type: PermissionConstants.PermissionType.camera)
         }
     }
     
