@@ -28,6 +28,24 @@ struct RegistrationView: View {
         permissionDataVM.permissionData.notificationPermissionDialogHandled && !permissionDataVM.permissionData.notificationPermissionGranted
     }
 
+    private var shouldShowPermissionWarning: Bool {
+        shouldShowNotificationWarning || shouldShowCameraSettingsButton
+    }
+
+    private var permissionWarningText: LocalizedStringKey {
+        shouldShowNotificationWarning
+        ? "Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times."
+        : "Some permissions are disabled. You can update them in Settings."
+    }
+
+    private var shouldShowCameraSettingsButton: Bool {
+        permissionDataVM.permissionData.cameraPermissionDialogHandled && !permissionDataVM.permissionData.cameraPermissionGranted
+    }
+
+    private var shouldShowPermissionContinueButton: Bool {
+        permissionDataVM.permissionData.cameraPermissionDialogHandled || hasRequiredPermissionToProceed
+    }
+
     private var alternateLanguageCode: String {
         selectedLanguageCode == "en" ? "de" : "en"
     }
@@ -38,10 +56,6 @@ struct RegistrationView: View {
 
     private var alternateLanguageAccessibilityLabel: String {
         selectedLanguageCode == "en" ? localizedAppString("Switch language to German") : localizedAppString("Switch language to English")
-    }
-
-    private var permissionButtonTitle: LocalizedStringKey {
-        hasRequiredPermissions ? "Permissions granted" : "Next"
     }
 
     private var consentPageIndex: Int { 1 }
@@ -62,7 +76,7 @@ struct RegistrationView: View {
     }
 
     private func usesSplitWelcomeLayout(for size: CGSize) -> Bool {
-        StyleConstants.isExpandedPadLayout(for: size) && size.width >= 900
+        StyleConstants.isExpandedPadLayout(for: size) && size.width >= 900 && size.height >= 800
     }
 
     private var screenSize: CGSize {
@@ -187,14 +201,27 @@ struct RegistrationView: View {
         .accessibilityHint(localizedAppString("Shows study and developer information."))
     }
 
+    private func welcomeTitleFont(for size: CGSize) -> Font {
+        if usesSplitWelcomeLayout(for: size) {
+            return StyleConstants.isCompactScreen(for: size) ? .title.weight(.bold) : .largeTitle.weight(.bold)
+        }
+
+        return StyleConstants.isCompactScreen(for: size) ? .title2.weight(.bold) : .title.weight(.bold)
+    }
+
+    private func welcomeDescriptionFontSize(for size: CGSize) -> CGFloat {
+        let baseSize = StyleConstants.explanationFontSize(for: size)
+        return usesSplitWelcomeLayout(for: size) ? baseSize + 1 : baseSize
+    }
+
     @ViewBuilder
-    private func featureRow(icon: String, text: LocalizedStringKey) -> some View {
+    private func featureRow(icon: String, text: LocalizedStringKey, size: CGSize) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 22)
                 .foregroundStyle(.blue)
             Text(text)
-                .font(.system(size: adaptiveExplanationFontSize))
+                .font(.system(size: StyleConstants.explanationFontSize(for: size)))
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .layoutPriority(1)
@@ -223,24 +250,25 @@ struct RegistrationView: View {
 
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("Welcome to CARWatch!")
-                                            .font(.largeTitle.weight(.bold))
+                                            .font(welcomeTitleFont(for: size))
                                             .multilineTextAlignment(.leading)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .accessibilityAddTraits(.isHeader)
                                             .accessibilityFocused($isCurrentHeaderFocused)
 
                                         Text("CARWatch is intended for study participants. It helps you follow your study schedule by sending reminders, and confirming samples by barcode scans.")
-                                            .font(.system(size: adaptiveExplanationFontSize + 2))
+                                            .font(.system(size: welcomeDescriptionFontSize(for: size)))
                                             .multilineTextAlignment(.leading)
                                             .frame(maxWidth: .infinity, alignment: .leading)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 }
 
                                 VStack(alignment: .leading, spacing: 16) {
-                                    featureRow(icon: "person.badge.shield.checkmark", text: "Use this app only if you were invited to take part in a study.")
-                                    featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.")
-                                    featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.")
+                                    featureRow(icon: "person.badge.shield.checkmark", text: "Use this app only if you were invited to take part in a study.", size: size)
+                                    featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.", size: size)
+                                    featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.", size: size)
                                 }
                                 .padding(24)
                                 .background(.blue.opacity(StyleConstants.cardBackgroundOpacity(for: colorSchemeContrast)), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
@@ -263,22 +291,23 @@ struct RegistrationView: View {
 
                                 VStack(spacing: 8) {
                                     Text("Welcome to CARWatch!")
-                                        .font(.title.weight(.bold))
+                                        .font(welcomeTitleFont(for: size))
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
                                         .accessibilityAddTraits(.isHeader)
                                         .accessibilityFocused($isCurrentHeaderFocused)
 
                                     Text("CARWatch is intended for study participants. It helps you follow your study schedule by sending reminders, and confirming samples by barcode scans.")
-                                        .font(.system(size: adaptiveExplanationFontSize))
+                                        .font(.system(size: welcomeDescriptionFontSize(for: size)))
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
 
                                 VStack(alignment: .leading, spacing: 12) {
-                                    featureRow(icon: "person.badge.shield.checkmark", text: "Use this app only if you were invited to take part in a study.")
-                                    featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.")
-                                    featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.")
+                                    featureRow(icon: "person.badge.shield.checkmark", text: "Use this app only if you were invited to take part in a study.", size: size)
+                                    featureRow(icon: "alarm", text: "You will receive reminders for scheduled saliva samples.", size: size)
+                                    featureRow(icon: "qrcode.viewfinder", text: "You need a study QR code to set up the app.", size: size)
                                 }
                                 .padding(.vertical, 12)
                                 .padding(.horizontal)
@@ -454,40 +483,45 @@ struct RegistrationView: View {
                             }
                             .accessibilityElement(children: .combine)
                         }
-                        Button(permissionButtonTitle) {
-                            permissionDataVM.checkNotificationPermission()
-                            permissionDataVM.checkCameraPermission()
-                            permissionButtonTapped = true
+                        if !hasRequiredPermissionToProceed {
+                            Button("Next") {
+                                permissionButtonTapped = true
+                                permissionDataVM.checkCameraPermission {
+                                    permissionDataVM.checkNotificationPermission()
+                                }
+                            }
+                            .padding()
+                            .frame(alignment: .center)
+                            .buttonStyle(.borderedProminent)
+                            .accessibilityIdentifier("registration.requestPermissions")
+                            .accessibilityHint(localizedAppString("Requests camera access and optional notification permissions."))
                         }
-                        .padding()
-                        .frame(alignment: .center)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(hasRequiredPermissions)
-                        .opacity(hasRequiredPermissions ? 0.5 : 1)
-                        .accessibilityIdentifier("registration.requestPermissions")
-                        .accessibilityHint(localizedAppString("Requests camera access and optional notification permissions."))
-                        if shouldShowNotificationWarning {
-                            Text("Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times.")
+                        if shouldShowPermissionWarning {
+                            Text(permissionWarningText)
                                 .font(.system(size: adaptiveExplanationFontSize))
                                 .foregroundStyle(.orange)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 8)
-                        } else if !hasRequiredPermissionToProceed {
-                            Text("Please allow camera access to continue. Notifications are optional.")
-                                .font(.system(size: adaptiveExplanationFontSize))
-                                .foregroundStyle(.red)
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 8)
                         }
-                        Button("Continue") {
-                            pageIndex = qrConfigurationPageIndex
+                        if shouldShowCameraSettingsButton {
+                            Button("Open Settings") {
+                                openAppSettings()
+                            }
+                            .buttonStyle(.bordered)
+                            .accessibilityIdentifier("registration.openSettings")
+                            .accessibilityHint(localizedAppString("Opens the iPhone settings for this app."))
                         }
-                        .buttonStyle(.bordered)
-                        .disabled(!hasRequiredPermissionToProceed)
-                        .opacity(hasRequiredPermissionToProceed ? 1 : 0.5)
-                        .padding(.top, 8)
-                        .accessibilityIdentifier("registration.permissionsContinue")
-                        .accessibilityHint(localizedAppString("Continues after camera access is granted."))
+                        if shouldShowPermissionContinueButton {
+                            Button("Continue") {
+                                pageIndex = qrConfigurationPageIndex
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(!hasRequiredPermissionToProceed)
+                            .opacity(hasRequiredPermissionToProceed ? 1 : 0.5)
+                            .padding(.top, 8)
+                            .accessibilityIdentifier("registration.permissionsContinue")
+                            .accessibilityHint(localizedAppString("Continues after camera access is granted."))
+                        }
                     }
                 }
             }
@@ -507,6 +541,14 @@ struct RegistrationView: View {
         .padding()
         .background(.blue.opacity(StyleConstants.cardBackgroundOpacity(for: colorSchemeContrast)), in: RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
         .accessibilityElement(children: .combine)
+    }
+
+    private func openAppSettings() {
+        guard let settings = PermissionConstants.appSettingsUrl else {
+            return
+        }
+
+        UIApplication.shared.open(settings)
     }
 
     private var qrConfigurationView: some View {

@@ -45,7 +45,7 @@ class PermissionDataViewModel : ObservableObject {
         }
     }
     
-    func checkNotificationPermission() {
+    func checkNotificationPermission(completion: (() -> Void)? = nil) {
         // prompt is only displayed on first launch, function is executed every time
         NotificationManager.instance.requestAuthorization { isDone in
             self.setNotificationPermissionDialogHandled()
@@ -59,11 +59,12 @@ class PermissionDataViewModel : ObservableObject {
                     self.setNotificationPermission(isGranted: false)
                     break
                 }
+                completion?()
             }
         }
     }
     
-    func checkCameraPermission() {
+    func checkCameraPermission(completion: (() -> Void)? = nil) {
         // reload status every time
         CameraManager.instance.reloadCameraPermission()
         self.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
@@ -72,6 +73,7 @@ class PermissionDataViewModel : ObservableObject {
             self.setCameraPermissionDialogHandled()
             CameraManager.instance.reloadCameraPermission()
             self.setCameraPermission(isGranted: CameraManager.instance.permissionGranted)
+            completion?()
         }
     }
 }
