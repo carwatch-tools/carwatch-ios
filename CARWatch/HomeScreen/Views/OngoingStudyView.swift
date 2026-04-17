@@ -33,6 +33,7 @@ struct OngoingStudyView: View {
     @State private var scheduleCompletionMessage: String = ""
     @State private var showDueSampleAlert: Bool = false
     @State private var dueSampleAlertTitle: String = ""
+    @State private var pendingForegroundNotificationIdentifier: String? = nil
     @State private var hasAppeared = false
     @State private var pendingBedtimeTabAfterEveningReminder = false
 
@@ -134,7 +135,7 @@ struct OngoingStudyView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .foregroundNotificationReceived)) { notification in
                 updateAlarmStatus()
-                presentDueSampleAlert(for: notification)
+                handleForegroundNotification(notification)
             }
             .onForeground {
                 updateAlarmStatus()
@@ -204,6 +205,7 @@ struct OngoingStudyView: View {
                 alarmVM.didCompleteLastScheduledSample = false
                 currentAlarmId = nil
                 scannerSource = nil
+                presentPendingDueSampleAlertIfNeeded()
             }
             .sheet(isPresented: $isBarcodeScannerPresented) {
                 ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
@@ -289,11 +291,29 @@ struct OngoingStudyView: View {
         }
     }
 
-    private func presentDueSampleAlert(for notification: Notification) {
+    private func handleForegroundNotification(_ notification: Notification) {
         guard let identifier = notification.userInfo?["identifier"] as? String else {
             return
         }
 
+        if isBarcodeScannerPresented {
+            pendingForegroundNotificationIdentifier = identifier
+            return
+        }
+
+        presentDueSampleAlert(for: identifier)
+    }
+
+    private func presentPendingDueSampleAlertIfNeeded() {
+        guard !isBarcodeScannerPresented, let identifier = pendingForegroundNotificationIdentifier else {
+            return
+        }
+
+        pendingForegroundNotificationIdentifier = nil
+        presentDueSampleAlert(for: identifier)
+    }
+
+    private func presentDueSampleAlert(for identifier: String) {
         guard let alertContext = dueSampleAlertContext(for: identifier) else {
             return
         }
