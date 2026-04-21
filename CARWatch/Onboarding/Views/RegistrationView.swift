@@ -104,7 +104,7 @@ struct RegistrationView: View {
         case 0:
             return localizedAppString("Welcome to CARWatch")
         case consentPageIndex:
-            return localizedAppString("Research Consent")
+            return localizedAppString("Study Participation Notice")
         case permissionPageIndex:
             return sessionVM.isReregistration ? localizedAppString("Configure the App") : localizedAppString("Unlock Features")
         case qrConfigurationPageIndex:
@@ -279,7 +279,7 @@ struct RegistrationView: View {
                                 .frame(maxWidth: .infinity)
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("registration.continue")
-                                .accessibilityHint(localizedAppString("Opens the research consent information."))
+                                .accessibilityHint(localizedAppString("Opens the study participation information."))
                             }
                         } else {
                                 Image("CarwatchLogo")
@@ -318,7 +318,7 @@ struct RegistrationView: View {
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .accessibilityIdentifier("registration.continue")
-                                .accessibilityHint(localizedAppString("Opens the research consent information."))
+                                .accessibilityHint(localizedAppString("Opens the study participation information."))
                             }
                         }
                     }
@@ -345,34 +345,34 @@ struct RegistrationView: View {
             ScrollView {
                 onboardingPageContainer(for: size) {
                     VStack(alignment: .leading, spacing: 20) {
-                        Text("Research Consent")
+                        Text("Study Participation Notice")
                             .font(.title.weight(.bold))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityAddTraits(.isHeader)
                             .accessibilityFocused($isCurrentHeaderFocused)
 
-                        Text("Please review the following information before continuing as a study participant.")
+                        Text("This app is only for participants who have already been enrolled by a study team. Please review how CARWatch is used before continuing.")
                             .font(.system(size: adaptiveExplanationFontSize))
                             .frame(maxWidth: .infinity, alignment: .leading)
 
                         consentSection(
                             title: "Purpose",
-                            body: "CARWatch supports human-subject research by guiding study participants through scheduled saliva sample collection and barcode confirmation."
+                            body: "CARWatch is a tool used by study teams to support scheduled saliva sample collection and barcode confirmation. The app itself does not enroll participants or define the study protocol."
                         )
 
                         consentSection(
                             title: "What Participation Involves",
-                            body: "If you continue, the app will use notifications for alarms and reminders, the camera for QR and barcode scanning, and on-device storage for study progress and log files."
+                            body: "If your study team has invited you to use CARWatch, the app will use notifications for alarms and reminders, the camera for QR and barcode scanning, and on-device storage for study progress and log files."
                         )
 
                         consentSection(
                             title: "Data Handling",
-                            body: "The app may store your participant ID, study configuration, barcode scan events, and app/device metadata on this device. Log files are only shared when you explicitly export them."
+                            body: "The app may store your participant ID, study configuration, barcode scan events, and app/device metadata on this device. Study-specific consent, legal basis, and data sharing are determined by the institution running your study. Log files are only shared when you explicitly export them."
                         )
 
                         consentSection(
                             title: "Questions Or Withdrawal",
-                            body: "If you have questions about the study, privacy, or want to withdraw, contact the study team using the contact details provided by your study organizer."
+                            body: "If you have questions about study participation, consent, privacy, or want to withdraw from a study, contact the study team using the contact details provided by your study organizer."
                         )
 
                         Button {
@@ -391,7 +391,7 @@ struct RegistrationView: View {
                                 Image(systemName: hasAcceptedResearchConsent ? "checkmark.circle.fill" : "circle")
                                     .foregroundStyle(hasAcceptedResearchConsent ? .blue : .secondary)
                                     .font(.title3)
-                                Text("I have read this information and consent to continue as a study participant.")
+                                Text("I confirm that I am authorized by my study team to use this app and have received the study information provided by that team.")
                                     .foregroundStyle(.primary)
                                 Spacer(minLength: 0)
                             }
@@ -401,9 +401,9 @@ struct RegistrationView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("registration.consentToggle")
-                        .accessibilityLabel(localizedAppString("Research consent agreement"))
+                        .accessibilityLabel(localizedAppString("Study participation confirmation"))
                         .accessibilityValue(localizedAppString(hasAcceptedResearchConsent ? "Selected" : "Not selected"))
-                        .accessibilityHint(localizedAppString("Double tap to confirm that you have read the consent information."))
+                        .accessibilityHint(localizedAppString("Double tap to confirm that you have read the study participation information."))
 
                         Group {
                             if shouldUseVerticalActionLayout {
@@ -415,7 +415,7 @@ struct RegistrationView: View {
                                     .disabled(!hasAcceptedResearchConsent)
                                     .opacity(hasAcceptedResearchConsent ? 1 : 0.5)
                                     .accessibilityIdentifier("registration.consentContinue")
-                                    .accessibilityHint(localizedAppString("Continues to the next registration step after consent is accepted."))
+                                    .accessibilityHint(localizedAppString("Continues to the next registration step after confirmation is accepted."))
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                             } else {
@@ -428,7 +428,7 @@ struct RegistrationView: View {
                                     .disabled(!hasAcceptedResearchConsent)
                                     .opacity(hasAcceptedResearchConsent ? 1 : 0.5)
                                     .accessibilityIdentifier("registration.consentContinue")
-                                    .accessibilityHint(localizedAppString("Continues to the next registration step after consent is accepted."))
+                                    .accessibilityHint(localizedAppString("Continues to the next registration step after confirmation is accepted."))
                                 }
                             }
                         }
