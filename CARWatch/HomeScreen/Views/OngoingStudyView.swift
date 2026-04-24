@@ -19,6 +19,7 @@ struct OngoingStudyView: View {
     @State var isBarcodeScannerPresented = false
     @State var currentAlarmId: Int? = nil
     @State var initialAlarmTime: Date = getDateTomorrowMorning()
+    @State private var pendingWakeupConfirmationTime: Date? = nil
     
     @State private var selectedTab = 0
     @State private var scannerSource: ScannerPresentationSource? = nil
@@ -78,6 +79,7 @@ struct OngoingStudyView: View {
                         initialAlarmTime: $initialAlarmTime,
                         isScannerPresented: $isBarcodeScannerPresented,
                         scannerSource: $scannerSource,
+                        pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime,
                         onDelayedSampleAcknowledged: {
                             selectedTab = 1
                         }
@@ -205,10 +207,16 @@ struct OngoingStudyView: View {
                 alarmVM.didCompleteLastScheduledSample = false
                 currentAlarmId = nil
                 scannerSource = nil
+                pendingWakeupConfirmationTime = nil
                 presentPendingDueSampleAlertIfNeeded()
             }
             .sheet(isPresented: $isBarcodeScannerPresented) {
-                ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $currentAlarmId, codeType: ScannerConstants.CodeType.ean8)
+                ScannerView(
+                    isPresented: $isBarcodeScannerPresented,
+                    alarmId: $currentAlarmId,
+                    pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime,
+                    codeType: ScannerConstants.CodeType.ean8
+                )
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
             }
@@ -232,6 +240,7 @@ struct OngoingStudyView: View {
                 Button(localizedAppString("Dismiss"), role: .cancel) {
                     currentAlarmId = nil
                     scannerSource = nil
+                    pendingWakeupConfirmationTime = nil
                 }
             }
             .onChange(of: showScheduleCompletionAlert) { isPresented in

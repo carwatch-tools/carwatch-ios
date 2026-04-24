@@ -30,7 +30,12 @@ struct MainView: View {
                     .environmentObject(permissionDataVM)
                     .interactiveDismissDisabled()
                     .sheet(isPresented: $isQrCodeScannerPresented) {
-                        ScannerView(isPresented: $isQrCodeScannerPresented, alarmId: $currentAlarmId, codeType: .qr)
+                        ScannerView(
+                            isPresented: $isQrCodeScannerPresented,
+                            alarmId: $currentAlarmId,
+                            pendingWakeupConfirmationTime: .constant(nil),
+                            codeType: .qr
+                        )
                             .interactiveDismissDisabled()
                     }
             }

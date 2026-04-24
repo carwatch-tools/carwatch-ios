@@ -16,6 +16,7 @@ struct WakeupView: View {
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
     @Binding var scannerSource: ScannerPresentationSource?
+    @Binding var pendingWakeupConfirmationTime: Date?
     var onDelayedSampleAcknowledged: () -> Void = {}
 
     private var shouldUseVerticalActionLayout: Bool {
@@ -164,7 +165,14 @@ struct WakeupView: View {
                 showStudyFinishedAlert = true
                 return
             }
-            if Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()) {
+
+            let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+            let canResumeWakeupSampleScan = wakeupAlreadyReportedToday
+                && alarmVM.getInitialAlarm().isTriggered
+                && alarmVM.getCurrentlyTriggeredAlarm() != nil
+                && alarmVM.isScanRequired()
+
+            if wakeupAlreadyReportedToday && !canResumeWakeupSampleScan {
                 toastType = .wakeupReportedToast
                 showToast = true
             } else {
@@ -172,16 +180,19 @@ struct WakeupView: View {
                 msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
                 Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
                 initialAlarmTime = Date()
-                alarmVM.confirmWakeup(at: initialAlarmTime)
                 if alarmVM.isScanRequired() {
+                    pendingWakeupConfirmationTime = initialAlarmTime
                     scannerSource = .wakeup
                     isScannerPresented = true
-                } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
-                    delayedSampleMinutes = max(
-                        0,
-                        Int(ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60))
-                    )
-                    showDelayedSampleAlert = true
+                } else {
+                    alarmVM.confirmWakeup(at: initialAlarmTime)
+                    if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
+                        delayedSampleMinutes = max(
+                            0,
+                            Int(ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60))
+                        )
+                        showDelayedSampleAlert = true
+                    }
                 }
             }
         }
@@ -220,6 +231,7 @@ struct WakeupView: View {
         initialAlarmTime: .constant(Date()),
         isScannerPresented: .constant(false),
         scannerSource: .constant(nil),
+        pendingWakeupConfirmationTime: .constant(nil),
         onDelayedSampleAcknowledged: {}
     )
     .environmentObject(alarmVM)

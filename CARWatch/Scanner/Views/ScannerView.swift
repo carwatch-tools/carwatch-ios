@@ -10,6 +10,7 @@ struct ScannerView: View {
     
     @Binding var isPresented: Bool
     @Binding var alarmId: Int?
+    @Binding var pendingWakeupConfirmationTime: Date?
     @State var showAlert: Bool = false
     @State var alertType: ScannerConstants.AlertType = .invalid
     @State var scanResult: String = ""
@@ -176,6 +177,10 @@ struct ScannerView: View {
                 // remove check digit
                 scanResult = String(result.dropLast(1))
                 sessionVM.scannedBarcodes.append(scanResult)
+                if let pendingWakeupConfirmationTime {
+                    alarmVM.confirmWakeup(at: pendingWakeupConfirmationTime)
+                    self.pendingWakeupConfirmationTime = nil
+                }
                 handleSuccessfulEanScan()
             case .qr:
                 scanResult = result
@@ -205,6 +210,7 @@ struct ScannerView: View {
 
     private func dismissScanner() {
         appDelegate.resetNotificationNavigationState()
+        pendingWakeupConfirmationTime = nil
         isPresented = false
     }
     
@@ -255,6 +261,7 @@ struct ScannerView: View {
                 ScannerView(
                     isPresented: $isPresented,
                     alarmId: $currentAlarmId,
+                    pendingWakeupConfirmationTime: .constant(nil),
                     codeType: ScannerConstants.CodeType.ean8
                 )
                 .environmentObject(alarmViewModel)

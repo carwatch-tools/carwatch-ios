@@ -144,7 +144,12 @@ struct BedtimeView: View {
             .background(bedtimeBackgroundColor.ignoresSafeArea())
         }
         .sheet(isPresented: $isBarcodeScannerPresented) {
-            ScannerView(isPresented: $isBarcodeScannerPresented, alarmId: $alarmId, codeType: .ean8)
+            ScannerView(
+                isPresented: $isBarcodeScannerPresented,
+                alarmId: $alarmId,
+                pendingWakeupConfirmationTime: .constant(nil),
+                codeType: .ean8
+            )
                 .interactiveDismissDisabled()
                 .environmentObject(alarmVM)
         }
