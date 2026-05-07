@@ -177,7 +177,7 @@ struct OngoingStudyView: View {
                     return scannedAlarm.isScanned
                 }()
 
-                if (scannerSource == .schedule || scannerSource == .wakeup) && alarmVM.didCompleteLastScheduledSample {
+                if scannerSource != nil && alarmVM.didCompleteLastScheduledSample {
                     if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
                         if alarmVM.eveningReminderTime == nil {
                             pendingBedtimeTabAfterEveningReminder = true
