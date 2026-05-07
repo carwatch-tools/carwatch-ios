@@ -1,6 +1,11 @@
 import SwiftUI
 import AlertToast
 
+private enum PostWakeupAlertType {
+    case delayedSample
+    case overdueSample
+}
+
 struct WakeupView: View {
     @AccessibilityFocusState private var isWakeupHeaderFocused: Bool
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -10,7 +15,8 @@ struct WakeupView: View {
     @State var showToast: Bool = false
     @State var toastType: NotificationConstants.WakeupToastType = .feedbackToast
     @State private var delayedSampleMinutes: Int = 0
-    @State private var showDelayedSampleAlert: Bool = false
+    @State private var showPostWakeupAlert: Bool = false
+    @State private var postWakeupAlertType: PostWakeupAlertType = .delayedSample
     @State private var showStudyFinishedAlert: Bool = false
     
     @Binding var initialAlarmTime: Date
@@ -120,17 +126,12 @@ struct WakeupView: View {
                 return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
             }
         }
-        .alert(localizedAppString("Delayed sample planned"), isPresented: $showDelayedSampleAlert) {
+        .alert(postWakeupAlertTitle, isPresented: $showPostWakeupAlert) {
             Button("OK", role: .cancel) {
                 onDelayedSampleAcknowledged()
             }
         } message: {
-            Text(
-                String(
-                    format: localizedAppString("A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
-                    Int64(delayedSampleMinutes)
-                )
-            )
+            Text(postWakeupAlertMessage)
         }
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
@@ -142,14 +143,9 @@ struct WakeupView: View {
                 isWakeupHeaderFocused = true
             }
         }
-        .onChange(of: showDelayedSampleAlert) { isPresented in
+        .onChange(of: showPostWakeupAlert) { isPresented in
             if isPresented {
-                postAccessibilityAnnouncement(
-                    String(
-                        format: localizedAppString("A delayed sample is planned. You will receive a reminder in %lld minutes."),
-                        Int64(delayedSampleMinutes)
-                    )
-                )
+                postAccessibilityAnnouncement(postWakeupAccessibilityAnnouncement)
             }
         }
         .onChange(of: showStudyFinishedAlert) { isPresented in
@@ -187,11 +183,18 @@ struct WakeupView: View {
                 } else {
                     alarmVM.confirmWakeup(at: initialAlarmTime)
                     if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
-                        delayedSampleMinutes = max(
-                            0,
-                            Int(ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60))
+                        let minutesUntilNextSample = Int(
+                            ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
                         )
-                        showDelayedSampleAlert = true
+
+                        if minutesUntilNextSample <= 0 {
+                            postWakeupAlertType = .overdueSample
+                        } else {
+                            delayedSampleMinutes = minutesUntilNextSample
+                            postWakeupAlertType = .delayedSample
+                        }
+
+                        showPostWakeupAlert = true
                     }
                 }
             }
@@ -221,6 +224,39 @@ struct WakeupView: View {
         .accessibilityIdentifier("wakeup.no")
         .accessibilityLabel(localizedAppString("No, I did not just wake up"))
         .accessibilityHint(localizedAppString("Keeps the wakeup report unchanged and shows a reminder if needed."))
+    }
+
+    private var postWakeupAlertTitle: String {
+        switch postWakeupAlertType {
+        case .delayedSample:
+            return localizedAppString("Delayed sample planned")
+        case .overdueSample:
+            return localizedAppString("Overdue sample pending")
+        }
+    }
+
+    private var postWakeupAlertMessage: String {
+        switch postWakeupAlertType {
+        case .delayedSample:
+            return String(
+                format: localizedAppString("A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
+                Int64(delayedSampleMinutes)
+            )
+        case .overdueSample:
+            return localizedAppString("You still have at least one overdue sample from earlier today. Next, you will be taken to the Schedule screen, where you can choose which sample you want to take now.")
+        }
+    }
+
+    private var postWakeupAccessibilityAnnouncement: String {
+        switch postWakeupAlertType {
+        case .delayedSample:
+            return String(
+                format: localizedAppString("A delayed sample is planned. You will receive a reminder in %lld minutes."),
+                Int64(delayedSampleMinutes)
+            )
+        case .overdueSample:
+            return localizedAppString("You still have at least one overdue sample from earlier today. You will now be taken to the Schedule screen, where you can choose which sample you want to take now.")
+        }
     }
 }
 
