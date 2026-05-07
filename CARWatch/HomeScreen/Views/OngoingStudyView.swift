@@ -192,7 +192,7 @@ struct OngoingStudyView: View {
                         pendingBedtimeTabAfterEveningReminder = false
                         selectedTab = 2
                         scheduleCompletionTitle = localizedAppString("Study Finished")
-                        scheduleCompletionMessage = localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
+                        scheduleCompletionMessage = localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email.")
                     } else {
                         pendingBedtimeTabAfterEveningReminder = false
                         selectedTab = scannerSource == .wakeup ? 1 : 2
