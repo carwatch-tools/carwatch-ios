@@ -210,6 +210,7 @@ private struct StudyInformationSheet: View {
                 Section("Study") {
                     LabeledContent("Study Name", value: studyData.studyName)
                     LabeledContent("Participant ID", value: participantIdDescription)
+                    LabeledContent("Study Days", value: "\(studyData.studyDays)")
                     LabeledContent("Contact Email", value: contactEmailDescription)
                 }
 
