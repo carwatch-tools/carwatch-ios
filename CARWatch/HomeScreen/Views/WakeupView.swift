@@ -7,6 +7,8 @@ private enum PostWakeupAlertType {
 }
 
 struct WakeupView: View {
+    private let overdueSampleGracePeriod: TimeInterval = 2 * 60
+
     @AccessibilityFocusState private var isWakeupHeaderFocused: Bool
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject var alarmVM: AlarmViewModel
@@ -182,18 +184,17 @@ struct WakeupView: View {
                     isScannerPresented = true
                 } else {
                     alarmVM.confirmWakeup(at: initialAlarmTime)
-                    if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
-                        let minutesUntilNextSample = Int(
+                    if hasOverdueSample(before: initialAlarmTime) {
+                        postWakeupAlertType = .overdueSample
+                        showPostWakeupAlert = true
+                    } else if alarmVM.isScanRequired() {
+                        scannerSource = .wakeup
+                        isScannerPresented = true
+                    } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
+                        delayedSampleMinutes = Int(
                             ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
                         )
-
-                        if minutesUntilNextSample <= 0 {
-                            postWakeupAlertType = .overdueSample
-                        } else {
-                            delayedSampleMinutes = minutesUntilNextSample
-                            postWakeupAlertType = .delayedSample
-                        }
-
+                        postWakeupAlertType = .delayedSample
                         showPostWakeupAlert = true
                     }
                 }
@@ -256,6 +257,16 @@ struct WakeupView: View {
             )
         case .overdueSample:
             return localizedAppString("You still have at least one overdue sample from earlier today. You will now be taken to the Schedule screen, where you can choose which sample you want to take now.")
+        }
+    }
+
+    private func hasOverdueSample(before wakeupTime: Date) -> Bool {
+        alarmVM.timedAlarms.contains { alarm in
+            guard alarm.isActive, alarm.isTriggered, !alarm.isScanned else {
+                return false
+            }
+
+            return wakeupTime.timeIntervalSince(alarm.time) > overdueSampleGracePeriod
         }
     }
 }
