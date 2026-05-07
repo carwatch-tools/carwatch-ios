@@ -319,7 +319,13 @@ class AlarmViewModel : ObservableObject {
             NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
             print("Alarm \(alarm!.id) set  as scanned")
         }
-        if isDayFinished() && !isStudyFinished(){
+
+        let dayFinished = isDayFinished()
+        if dayFinished {
+            didCompleteLastScheduledSample = true
+        }
+
+        if dayFinished && !isStudyFinished(){
             print("All alarms are scanned, day is finished")
             hasPendingDayReset = true
         }

@@ -2215,13 +2215,13 @@
         }
       }
     },
-    "This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email." : {
+    "This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email." : {
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dies war Ihre letzte Probe. Vielen Dank für Ihre Teilnahme an der Studie! Bitte exportieren Sie Ihre Logs und senden Sie sie an die Kontakt-E-Mail Ihrer Studie."
+            "value" : "Dies war Ihre letzte Probe.\nVielen Dank für Ihre Teilnahme an der Studie!\nBitte exportieren Sie Ihre Logs und senden Sie sie\nan die Kontakt-E-Mail Ihrer Studie."
           }
         }
       }
@@ -2572,13 +2572,13 @@
         }
       }
     },
-    "You have already finished the study. Thanks for participating! Please export your logs and send them to your study contact email." : {
+    "You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email." : {
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sie haben die Studie bereits abgeschlossen. Vielen Dank für Ihre Teilnahme! Bitte exportieren Sie Ihre Logs und senden Sie diese an die Kontakt-E-Mail Ihrer Studie."
+            "value" : "Sie haben die Studie bereits abgeschlossen.\nVielen Dank für Ihre Teilnahme!\nBitte exportieren Sie Ihre Logs und senden Sie diese an die Kontakt-E-Mail Ihrer Studie."
           }
         }
       }

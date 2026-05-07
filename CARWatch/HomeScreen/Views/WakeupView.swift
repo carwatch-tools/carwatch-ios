@@ -138,7 +138,7 @@ struct WakeupView: View {
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(localizedAppString("You have already finished the study. Thanks for participating! Please export your logs and send them to your study contact email."))
+            Text(localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."))
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
