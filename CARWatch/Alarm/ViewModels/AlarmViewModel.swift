@@ -38,6 +38,7 @@ class AlarmViewModel : ObservableObject {
         }
     }
     @Published var didCompleteLastScheduledSample: Bool = false
+    @Published var hasPendingDayReset: Bool = false
     @Published var eveningReminderTime: Date? = nil {
         didSet {
             saveEveningReminderTime()
@@ -298,6 +299,7 @@ class AlarmViewModel : ObservableObject {
     func setCurrentAlarmScanned(alarmId: Int? = nil) {
         var alarm: Alarm?
         didCompleteLastScheduledSample = false
+        hasPendingDayReset = false
         switch alarmId {
         case nil:
             alarm = getCurrentlyTriggeredAlarm()
@@ -319,12 +321,13 @@ class AlarmViewModel : ObservableObject {
         }
         if isDayFinished() && !isStudyFinished(){
             print("All alarms are scanned, day is finished")
-            resetAlarmData()
+            hasPendingDayReset = true
         }
     }
     
     func resetAlarmData() {
         /// called after a day is finished
+        hasPendingDayReset = false
         isEveningScanned = false
         cancelEveningReminder(clearStoredSelection: false)
         // schedule alarms for the next day after all scans for one day were finished
@@ -361,7 +364,7 @@ class AlarmViewModel : ObservableObject {
         didCompleteLastScheduledSample = true
 
         if !isStudyFinished() {
-            resetAlarmData()
+            hasPendingDayReset = true
         }
 
         return true

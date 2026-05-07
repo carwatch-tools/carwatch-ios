@@ -177,7 +177,7 @@ struct OngoingStudyView: View {
                     return scannedAlarm.isScanned
                 }()
 
-                if scannerSource == .schedule && alarmVM.didCompleteLastScheduledSample {
+                if (scannerSource == .schedule || scannerSource == .wakeup) && alarmVM.didCompleteLastScheduledSample {
                     if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
                         if alarmVM.eveningReminderTime == nil {
                             pendingBedtimeTabAfterEveningReminder = true
@@ -195,7 +195,7 @@ struct OngoingStudyView: View {
                         scheduleCompletionMessage = localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email.")
                     } else {
                         pendingBedtimeTabAfterEveningReminder = false
-                        selectedTab = 2
+                        selectedTab = scannerSource == .wakeup ? 1 : 2
                         scheduleCompletionTitle = localizedAppString("Samples Recorded")
                         scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
                     }
@@ -229,7 +229,11 @@ struct OngoingStudyView: View {
                     .environmentObject(sessionVM)
             }
             .alert(scheduleCompletionTitle, isPresented: $showScheduleCompletionAlert) {
-                Button(localizedAppString("OK")) { }
+                Button(localizedAppString("OK")) {
+                    if alarmVM.hasPendingDayReset {
+                        alarmVM.resetAlarmData()
+                    }
+                }
             } message: {
                 Text(scheduleCompletionMessage)
             }
