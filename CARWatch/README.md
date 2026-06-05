@@ -11,7 +11,7 @@ Or when using SSH:
 ```bash
 git clone git@github.com:mad-lab-fau/carwatch-ios.git
 ```
-Next, make sure to reorder the directory structure as described in the [App Configuration](#app-configuration) section.
+Next, open `CARWatchApp.xcodeproj` in Xcode.
 To deploy the app to a device, you need to sign-in to your apple account in XCode (Click on top-level project folder -> Signing & Capabilities -> Team -> Add account. In the accounts tab that is opening, you can add your apple id and also sign in to your github account for version control.
 You can then run the app, either on an emulator, or a connected phone. The target device can be selected in the dropdown menu at the top middle of the editor. If you select to run the app on a physical device, a fresh deployment will likely cause an 'Untrusted Developer' alert on the device. To prevent this, search for 'VPN & Device Management' in the phone's settings and select your apple ID in the 'Developer App' section. Then select the 'Trust' button, confirm, and rerun the deployment.
 
@@ -21,28 +21,25 @@ For development, Xcode Version 15.4 was used.
 
 ### App Configuration
 In older versions of Xcode, the configuration was stored in a file called `Info.plist`. Since Xcode 13, this file only contains custom properties, which are not needed for CARWatch (so far).
-Standard properties are stored in the `CARWatch.xcodeproj` folder. They can be accessed in human-readable format when opening this folder (equal to opening the project) in Xcode, clicking on the top-level project folder, and then accessing the 'Info' tab. The most important property in our case is the 'Privacy - Camera Usage Description' field, which contains a detailed explanation why CARWatch needs the camera permission and is mandatory for the app to be accepted for the app store. 
-After pulling the Code from Github, the file structure will look like the following:
+Standard properties are stored in `CARWatchApp.xcodeproj`. They can be accessed in human-readable format when opening this project in Xcode, clicking on the top-level project folder, and then accessing the 'Info' tab. The most important property in our case is the 'Privacy - Camera Usage Description' field, which contains a detailed explanation why CARWatch needs the camera permission and is mandatory for the app to be accepted for the app store.
+After pulling the code from GitHub, the repository structure should look like the following:
 
 ```bash
-└── CARWatch
-    ├── .git
-    ├── CARWatch.xcodeproj
-    ├── CarWatchApp.swift
-    ├── Assets.xcassets
-    └── Different feature folders
- ```
-
- However, to be accepted by Xcode, the `CARWatch.xcodeproj` might need to be moved to the parent directory (arbitrary name, e.g., CARWatchApp), yielding the following structure:
-
-```bash
-└── CARWatchApp
-    ├── CARWatch.xcodeproj
-    └── CARWatch
-        ├── .git
-        ├── CarWatchApp.swift
-        ├── Assets.xcassets
-        └── Different feature folders
+carwatch-ios
+|-- .git
+|-- CARWatchApp.xcodeproj
+|-- CARWatch
+|   |-- CARWatchApp.swift
+|   |-- Assets.xcassets
+|   |-- Resources
+|   |-- Onboarding
+|   |-- HomeScreen
+|   |-- Alarm
+|   |-- Notifications
+|   |-- Permissions
+|   |-- Scanner
+|   `-- Utilities
+`-- ZIPFoundation
 ```
 
 ### Framework
@@ -59,23 +56,83 @@ The implemented view models conform to the `ObservableObject` protocol. This all
 
 For further structuring, the code is separated by the distinct functions of the app:
 - Onboarding: Study configuration and tutorial
-- HomeScreen: Main screen slides & Menu bar
-- Alarm: Scheduling sample reminders
+- HomeScreen: Main screen tabs, toolbar menu, and log sharing UI wrappers
+- Alarm: Alarm model, alarm view, and alarm scheduling view model
+- Notifications: Local notification scheduling and delivery handling
 - Permissions: Notification & Camera permission handling
 - Scanner: Barcode & QR code scanning
 - Utilities: Frequently reused functions, constants, event logger
 
-Further files and directories of interest: 
+Current source layout:
+
+```bash
+CARWatch
+|-- CARWatchApp.swift
+|-- Assets.xcassets
+|-- PrivacyInfo.xcprivacy
+|-- Info.plist
+|-- Resources
+|   |-- Localizable.xcstrings
+|   `-- Sounds/dummy_ringtone.caf
+|-- Onboarding
+|   |-- Models/StudyData.swift
+|   |-- ViewModels/SessionViewModel.swift
+|   |-- ViewModels/StudyDataViewModel.swift
+|   `-- Views
+|       |-- ParticipantIdView.swift
+|       |-- RegistrationView.swift
+|       |-- StudyConfirmationView.swift
+|       |-- TutorialSlide.swift
+|       `-- TutorialView.swift
+|-- HomeScreen
+|   |-- Components
+|   |   |-- ActivityViewController.swift
+|   |   |-- MailViewController.swift
+|   |   `-- MainViewToolbarMenu.swift
+|   `-- Views
+|       |-- Bedtime View.swift
+|       |-- MainView.swift
+|       |-- OngoingStudyView.swift
+|       `-- WakeupView.swift
+|-- Alarm
+|   |-- Models/Alarm.swift
+|   |-- ViewModels/AlarmViewModel.swift
+|   `-- Views/AlarmView.swift
+|-- Notifications
+|   `-- NotificationManager.swift
+|-- Permissions
+|   |-- CameraManager.swift
+|   |-- NotificationManagerExtension.swift
+|   |-- Models/PermissionData.swift
+|   |-- ViewModels/PermissionDataViewModel.swift
+|   `-- Views/MissingPermissionView.swift
+|-- Scanner
+|   |-- CodeScanner.swift
+|   |-- CodeScannerViewController.swift
+|   `-- Views
+|       |-- ScanOverlayView.swift
+|       `-- ScannerView.swift
+`-- Utilities
+    |-- AppDelegate.swift
+    |-- Constants.swift
+    |-- DateHandling.swift
+    |-- Logger.swift
+    |-- MetadataLogger.swift
+    `-- PrivacyPolicyView.swift
+```
+
+Further files and directories of interest:
 - `CARWatchApp.swift`: entry point of the app where all view models are initialized
 - `Assets.xcassets`: contains app logo and custom images, note: built-in icons can be searched and selected using the 'SF Symbols' app
-- Resources: contains ringtone for incoming notifications and string translations (`Localizable.xcstrings`)
+- `Resources`: contains ringtone for incoming notifications and string translations (`Localizable.xcstrings`)
+- `ZIPFoundation`: local package dependency used for creating log archives
 
 ### Data Storage
 Data that needs to be persisted in the CARWatch app consists of:
-- session data (current state of the user, e.g., registration, tutorial slides, or ongoing study) -> `SessionDataViewModel`
+- session data (current state of the user, e.g., registration, tutorial slides, or ongoing study) -> `SessionViewModel`
 - permission data -> `PermissionDataViewModel`
 - study data (data retrieved from the study QR code) -> `StudyDataViewModel`
-- alarm data (when each sample is due and whether they were already taken) -> `AlarmDataViewModel`
+- alarm data (when each sample is due and whether they were already taken) -> `AlarmViewModel`
 
 As the amounts of stored data are rather small for all view models, they are not stored in a database, but as `UserDefaults` (equivalent to shared preferences in Android)
 
