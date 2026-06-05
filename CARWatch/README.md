@@ -24,7 +24,7 @@ In older versions of Xcode, the configuration was stored in a file called `Info.
 Standard properties are stored in `CARWatchApp.xcodeproj`. They can be accessed in human-readable format when opening this project in Xcode, clicking on the top-level project folder, and then accessing the 'Info' tab. The most important property in our case is the 'Privacy - Camera Usage Description' field, which contains a detailed explanation why CARWatch needs the camera permission and is mandatory for the app to be accepted for the app store.
 After pulling the code from GitHub, the repository structure should look like the following:
 
-```bash
+```text
 carwatch-ios
 |-- .git
 |-- CARWatchApp.xcodeproj
@@ -65,7 +65,7 @@ For further structuring, the code is separated by the distinct functions of the 
 
 Current source layout:
 
-```bash
+```text
 CARWatch
 |-- CARWatchApp.swift
 |-- Assets.xcassets
