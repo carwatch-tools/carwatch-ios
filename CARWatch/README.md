@@ -16,7 +16,7 @@ To deploy the app to a device, you need to sign-in to your apple account in XCod
 You can then run the app, either on an emulator, or a connected phone. The target device can be selected in the dropdown menu at the top middle of the editor. If you select to run the app on a physical device, a fresh deployment will likely cause an 'Untrusted Developer' alert on the device. To prevent this, search for 'VPN & Device Management' in the phone's settings and select your apple ID in the 'Developer App' section. Then select the 'Trust' button, confirm, and rerun the deployment.
 
 ### Compatibility
-All used components are available for iOS 15 (iPhone 7, iPhone SE (gen 1), iPhone 6s) and upward. As of Oct. 2024, this covers [95.1%](https://iosref.com/ios-usage) of all iPhones in use. 
+The app targets iOS 16.2 and upward.
 For development, Xcode Version 15.4 was used.
 
 ### App Configuration
@@ -125,7 +125,8 @@ Further files and directories of interest:
 - `CARWatchApp.swift`: entry point of the app where all view models are initialized
 - `Assets.xcassets`: contains app logo and custom images, note: built-in icons can be searched and selected using the 'SF Symbols' app
 - `Resources`: contains ringtone for incoming notifications and string translations (`Localizable.xcstrings`)
-- `ZIPFoundation`: local package dependency used for creating log archives
+- `ZIPFoundation`: Swift package dependency used for creating log archives
+- `AlertToast`: Swift package dependency used for toast-style status messages
 
 ### Data Storage
 Data that needs to be persisted in the CARWatch app consists of:
@@ -169,11 +170,11 @@ Important events are written to `.csv` log files analogously to the android app.
 
 To share the logs, the share button in the main toolbar menu needs to be pressed. This triggers the creation of a zip file from all logs present in the log directory. To simplify the zipping, the external library [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) is used. 
 
-As UI, a sheet is displayed on top of the current view. SwiftUI has a build-in solution for share dialogs (`ShareLink`), however it was only introduced in iOS 16. To support older devices, a `MFMailComposeViewController` from UIKit was used and bound to a SwiftUI view using the `UIViewControllerRepresentable` protocol. This directly opens the apple mail app and setting a recipient and attachment. However, it will only open if the user is actively using the apple mail app and has at least one account added there. Therefore, a `UIActivityViewController` i used as fallback providing a wide range of sharing options. Unfortunately, when a mail app is selected, the recipient can not be set programmatically here.
+As UI, a sheet is displayed on top of the current view. A `MFMailComposeViewController` from UIKit is bound to a SwiftUI view using the `UIViewControllerRepresentable` protocol. This directly opens the apple mail app and sets a recipient and attachment. However, it will only open if the user is actively using the apple mail app and has at least one account added there. Therefore, a `UIActivityViewController` is used as fallback providing a wide range of sharing options. Unfortunately, when a mail app is selected, the recipient can not be set programmatically here.
 
 #### BarcodeScanner
 
-SwiftUI does not have a built-in code scanner component (yet), thats why a custom `CodeScanner` was implemented. This scanner is a simplified version of [this project](https://github.com/twostraws/CodeScanner) supporting EAN8 and QR codes. Additionally, a `rectOfInterest` was added to the scanner aligning with the `ScannerOverlay` UI component.
+SwiftUI does not have a built-in code scanner component (yet), thats why a custom `CodeScanner` was implemented. This scanner is a simplified version of [this project](https://github.com/twostraws/CodeScanner) supporting EAN8 and QR codes. Additionally, a `rectOfInterest` was added to the scanner aligning with the `ScanOverlayView` UI component.
 If debugging is required, the scanner's area of interest can be visualized in the `addRectOfInterest` function.
 
 ### Short comparison CARWATCH Android vs. iOS
