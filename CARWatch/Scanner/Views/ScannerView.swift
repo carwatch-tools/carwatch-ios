@@ -126,7 +126,7 @@ struct ScannerView: View {
                              )
                 )
             case .wrongSample:
-                return Alert(title: Text("Wrong sample!"), message: Text("This barcode does not match the currently requested sample. Expected barcode ID (DDSS): \(expectedBarcodeId())."),
+                return Alert(title: Text("Invalid Barcode"), message: Text("This barcode belongs to another sample. Please scan the barcode with ID \(expectedHumanReadableBarcodeId())."),
                              dismissButton: Alert.Button.default(
                                 Text("OK"), action: {
                                     showAlert = false
@@ -295,10 +295,28 @@ struct ScannerView: View {
         return alarmVM.getNextUpcomingAlarm()?.id ?? 0
     }
 
-    private func expectedBarcodeId() -> String {
-        let expectedDayId = alarmVM.studyDayCounter
-        let expectedSampleId = expectedSalivaId() + startSampleIndex()
-        return String(format: "%02d%02d", expectedDayId, expectedSampleId)
+    private func expectedHumanReadableBarcodeId() -> String {
+        let samplePrefix = String(studyDataVM.studyData.startSample.prefix(1))
+        let sampleId: String
+
+        if alarmId == AlarmConstants.eveningAlarmId {
+            sampleId = "\(samplePrefix)\(AlarmConstants.eveningAlarmLoggerPrefix)"
+        } else if isManualScan {
+            sampleId = "\(samplePrefix)M"
+        } else {
+            sampleId = "\(samplePrefix)\(expectedSalivaId() + startSampleIndex())"
+        }
+
+        let participantId = studyDataVM.studyData.participantId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if participantId.isEmpty {
+            return sampleId
+        }
+
+        if studyDataVM.studyData.studyDays > 1 {
+            return "\(participantId)_D\(alarmVM.studyDayCounter)_\(sampleId)"
+        }
+
+        return "\(participantId)_\(sampleId)"
     }
 
     private func logRejectedBarcode(_ barcode: String) {

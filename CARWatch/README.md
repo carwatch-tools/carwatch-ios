@@ -218,7 +218,9 @@ barcode.salivaId == expectedSampleId
 
 Manual scans still use the strict duplicate, numeric, and range checks, but they do not enforce the expected day/sample match.
 
-When strict mode rejects a barcode because it belongs to the wrong sample, the error message displays the expected barcode ID as `DDSS`, with both values zero-padded. This ID intentionally does not include a participant number. For example, study day `2` and expected sample `3` is displayed as `0203`.
+When strict mode rejects a barcode because it belongs to the wrong sample, the app shows an "Invalid Barcode" dialog with the expected human-readable sample ID. The sample ID is built from the first character of the QR `SS` value plus the expected sample number. For example, `SS:S0` and saliva/sample `3` becomes `S3`, while `SS:S10` and saliva/sample `1` becomes `S11`. Evening samples use `SA`, and manual samples use `SM`.
+
+If a participant ID is configured, it is prepended to the expected sample ID. For multi-day studies the study day is included as `{participantId}_D{dayCounter}_{sampleId}`, for example `P001_D2_S3`. For single-day studies it is `{participantId}_{sampleId}`, for example `P001_S3`. If no participant ID is configured, only the sample ID is shown, for example `S3`.
 
 ### Short comparison CARWATCH Android vs. iOS
 > [!NOTE]
