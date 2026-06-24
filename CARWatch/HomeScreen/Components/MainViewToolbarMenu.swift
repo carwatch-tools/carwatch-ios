@@ -20,77 +20,75 @@ struct MainViewToolbarMenu: View {
     @State private var showPrivacyPolicySheet = false
     @State private var showReregisterConfirmation = false
     @State private var showFinishStudyDayConfirmation = false
+    @State private var showDeleteLogsConfirmation = false
+    @State private var showKillNotificationsConfirmation = false
     
     var body: some View {
         Menu {
-            Section("User Actions") {
-                Button(role: .destructive) {
-                    showFinishStudyDayConfirmation = true
-                } label: {
-                    Label("Finish Study Day", systemImage: "checkmark.circle")
-                }
-                .disabled(!alarmVM.hasRemainingSamplesForCurrentDay() || alarmVM.studyDayCounter == 0)
-
-                Button {
-                    if Logger.instance.zipCurrentLogDirectoryContent() != nil {
-                        showShareSheet = true
-                    }
-                    else {
-                        toastType = .zipLogsFailed
-                        showToast = true
-                    }
-                } label: {
-                    Label("Share Logs", systemImage: "square.and.arrow.up")
-                }
-                
-                Button {
-                    sessionVM.presentInStudyTutorial(returnTab: selectedTab)
-                } label: {
-                    Label("Show Tutorial", systemImage: "questionmark.circle")
-                }
-
-                Button {
-                    showStudyInfoSheet = true
-                } label: {
-                    Label("Study Information", systemImage: "doc.text.magnifyingglass")
-                }
-
-                Button {
-                    showPrivacyPolicySheet = true
-                } label: {
-                    Label("Privacy Policy", systemImage: "hand.raised")
-                }
+            Button {
+                showStudyInfoSheet = true
+            } label: {
+                Label("Study Information", systemImage: "doc.text.magnifyingglass")
             }
-            
-            Section("Expert Actions"){
-                Button("Delete Logs"){ 
-                    Logger.instance.deleteAllLogFiles()
-                }
-                Button("Kill all Notifications") {
-                    toastType = .clickToKill
-                    killButtonClickCount += 1
-                    if killButtonClickCount >= MenuConstants.killButtonClickCountAlert {
-                        showToast = true
-                        toastType = .clickToKill
-                    }
-                    if killButtonClickCount == MenuConstants.killButtonClickCountActivate {
-                        toastType = .killSuccess
-                        NotificationManager.instance.cancelAllNotifications()
-                        killButtonClickCount = 0
-                    }
-                }
-                Button("Reregister"){
-                    if alarmVM.isStudyFinished() {
-                        performReregister()
-                    } else {
-                        showReregisterConfirmation = true
-                    }
-                }
+
+            Button {
+                sessionVM.presentInStudyTutorial(returnTab: selectedTab)
+            } label: {
+                Label("Tutorial", systemImage: "questionmark.circle")
             }
-            
-            Button("Info") {
+
+            Button {
+                if Logger.instance.zipCurrentLogDirectoryContent() != nil {
+                    showShareSheet = true
+                }
+                else {
+                    toastType = .zipLogsFailed
+                    showToast = true
+                }
+            } label: {
+                Label("Share Logs", systemImage: "square.and.arrow.up")
+            }
+
+            Button(role: .destructive) {
+                showKillNotificationsConfirmation = true
+            } label: {
+                Label("Kill Alarms", systemImage: "bell.slash")
+            }
+
+            Button {
+                if alarmVM.isStudyFinished() {
+                    performReregister()
+                } else {
+                    showReregisterConfirmation = true
+                }
+            } label: {
+                Label("Reregister", systemImage: "qrcode.viewfinder")
+            }
+
+            Button(role: .destructive) {
+                showDeleteLogsConfirmation = true
+            } label: {
+                Label("Delete Logs", systemImage: "trash")
+            }
+
+            Button(role: .destructive) {
+                showFinishStudyDayConfirmation = true
+            } label: {
+                Label("Finish Study Day", systemImage: "checkmark.circle")
+            }
+            .disabled(!alarmVM.hasRemainingSamplesForCurrentDay() || alarmVM.studyDayCounter == 0)
+
+            Button {
+                showPrivacyPolicySheet = true
+            } label: {
+                Label("Privacy Policy", systemImage: "hand.raised")
+            }
+
+            Button {
                 showAppInfoDialog = true
                 appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+            } label: {
+                Label("App Info", systemImage: "info.circle")
             }
         } label: {
             Label("Menu", systemImage: "ellipsis.circle")
@@ -124,6 +122,22 @@ struct MainViewToolbarMenu: View {
             }
         } message: {
             Text("All remaining samples for today will be canceled and the study day will be marked as finished.")
+        }
+        .alert("Delete logs?", isPresented: $showDeleteLogsConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete Logs", role: .destructive) {
+                performDeleteLogs()
+            }
+        } message: {
+            Text("All log files on this device will be permanently deleted.")
+        }
+        .alert("Kill alarms?", isPresented: $showKillNotificationsConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Kill Alarms", role: .destructive) {
+                performKillNotifications()
+            }
+        } message: {
+            Text("All scheduled reminders will be deactivated.")
         }
         .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
@@ -169,6 +183,15 @@ struct MainViewToolbarMenu: View {
         }
 
         selectedTab = 2
+    }
+
+    private func performDeleteLogs() {
+        Logger.instance.deleteAllLogFiles()
+    }
+
+    private func performKillNotifications() {
+        NotificationManager.instance.cancelAllNotifications()
+        killButtonClickCount = 0
     }
 }
 
