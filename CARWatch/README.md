@@ -177,6 +177,49 @@ As UI, a sheet is displayed on top of the current view. A `MFMailComposeViewCont
 SwiftUI does not have a built-in code scanner component (yet), thats why a custom `CodeScanner` was implemented. This scanner is a simplified version of [this project](https://github.com/twostraws/CodeScanner) supporting EAN8 and QR codes. Additionally, a `rectOfInterest` was added to the scanner aligning with the `ScanOverlayView` UI component.
 If debugging is required, the scanner's area of interest can be visualized in the `addRectOfInterest` function.
 
+#### Barcode checking
+
+Barcode validation is controlled by the `FD` value from the study QR code (`QrParserConstants.duplicatesProperty`). The value is stored in `StudyData.isCheckDuplicatesEnabled`. Despite the old "duplicates" name, `FD` now controls strict barcode checking:
+
+- `FD:0`: strict barcode checking is disabled. The app accepts any barcode string, including duplicates. It skips barcode parsing and expected-sample matching, but still stores and logs the scanned barcode, marks the currently requested sample as taken, and cancels the related alarm/timer.
+- `FD:1`: strict barcode checking is enabled. The app rejects duplicates, requires a numeric barcode, validates the participant/day/sample ranges, and checks the expected day and sample for non-manual scans.
+
+Strict mode expects the barcode payload without the EAN-8 check digit to use this numeric shape:
+
+```text
+PPPDDSS
+```
+
+Where:
+
+- `PPP`: participant number
+- `DD`: study day
+- `SS`: saliva/sample ID
+
+For example, `0050203` means participant `5`, day `2`, sample `3`.
+
+Participant validation only checks that the barcode participant number is within the configured participant count (`participantId <= numParticipants`). It does not compare the barcode participant number with the configured participant ID (`PID`).
+
+For non-manual scans in strict mode, expected-sample matching uses the current study day and the expected sample ID:
+
+```text
+expectedDayId = alarmVM.studyDayCounter
+expectedSampleId = expectedSalivaId + startSampleIndex
+```
+
+`expectedSalivaId` comes from the current alarm/sample context. `startSampleIndex` is parsed from the QR code `SS` field, for example `SS:S0` means `0` and `SS:S1` means `1`.
+
+The scan is accepted only when both values match:
+
+```text
+barcode.dayId == expectedDayId
+barcode.salivaId == expectedSampleId
+```
+
+Manual scans still use the strict duplicate, numeric, and range checks, but they do not enforce the expected day/sample match.
+
+When strict mode rejects a barcode because it belongs to the wrong sample, the error message displays the expected barcode ID as `DDSS`, with both values zero-padded. This ID intentionally does not include a participant number. For example, study day `2` and expected sample `3` is displayed as `0203`.
+
 ### Short comparison CARWATCH Android vs. iOS
 > [!NOTE]
 > No guarantee for completeness!

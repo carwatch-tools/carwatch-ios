@@ -215,7 +215,8 @@ struct OngoingStudyView: View {
                     isPresented: $isBarcodeScannerPresented,
                     alarmId: $currentAlarmId,
                     pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime,
-                    codeType: ScannerConstants.CodeType.ean8
+                    codeType: ScannerConstants.CodeType.ean8,
+                    isManualScan: scannerSource == .schedule
                 )
                     .interactiveDismissDisabled()
                     .environmentObject(alarmVM)
