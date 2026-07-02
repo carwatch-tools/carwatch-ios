@@ -4,6 +4,7 @@ import UIKit
 struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
     static let demoOngoingStudyModeKey = "demo_ongoing_study_mode"
+    static let pendingAlarmKitOpenIdentifierKey = "pending_alarmkit_open_identifier"
 }
 
 struct PermissionConstants {
@@ -153,6 +154,7 @@ struct MenuConstants {
 extension Notification.Name {
     static let notificationTapped = Notification.Name("NotificationTapped")
     static let foregroundNotificationReceived = Notification.Name("ForegroundNotificationReceived")
+    static let alarmKitOpenActionTapped = Notification.Name("AlarmKitOpenActionTapped")
 }
 
 struct QrParserConstants {

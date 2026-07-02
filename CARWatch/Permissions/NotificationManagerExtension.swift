@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(AlarmKit)
+import AlarmKit
+#endif
 
 extension NotificationManager {
     
@@ -25,4 +28,31 @@ extension NotificationManager {
             }
         }
     }
+
+#if canImport(AlarmKit)
+    func requestAlarmAuthorization(completion: @escaping (_ isHandled: Bool, _ isGranted: Bool) -> ()) {
+        if #available(iOS 26.0, *) {
+            Task {
+                let isGranted: Bool
+                do {
+                    let state = try await AlarmManager.shared.requestAuthorization()
+                    isGranted = state == .authorized
+                } catch {
+                    print("Error during AlarmKit permission request: \(error)")
+                    isGranted = false
+                }
+
+                await MainActor.run {
+                    completion(true, isGranted)
+                }
+            }
+        } else {
+            completion(false, false)
+        }
+    }
+#else
+    func requestAlarmAuthorization(completion: @escaping (_ isHandled: Bool, _ isGranted: Bool) -> ()) {
+        completion(false, false)
+    }
+#endif
 }

@@ -17,7 +17,7 @@ struct RegistrationView: View {
     @State private var isPrivacyPolicyPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
-        permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
+        permissionDataVM.permissionData.cameraPermissionGranted
     }
 
     private var hasRequiredPermissionToProceed: Bool {
@@ -28,18 +28,47 @@ struct RegistrationView: View {
         permissionDataVM.permissionData.notificationPermissionDialogHandled && !permissionDataVM.permissionData.notificationPermissionGranted
     }
 
+    private var shouldShowAlarmWarning: Bool {
+        permissionDataVM.permissionData.alarmPermissionDialogHandled && !permissionDataVM.permissionData.alarmPermissionGranted
+    }
+
     private var shouldShowPermissionWarning: Bool {
-        shouldShowNotificationWarning || shouldShowCameraSettingsButton
+        shouldShowNotificationWarning || shouldShowAlarmWarning || shouldShowCameraSettingsButton
     }
 
     private var permissionWarningText: LocalizedStringKey {
-        shouldShowNotificationWarning
-        ? "Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times."
-        : "Some permissions are disabled. You can update them in Settings."
+        if shouldShowNotificationWarning && shouldShowAlarmWarning {
+            return "Reminders and alarm access are turned off. You will need to set alarms yourself and collect samples at the specified times."
+        }
+
+        if shouldShowAlarmWarning {
+            return "Alarm access is turned off. Sample reminders may not ring when the phone is set to silent."
+        }
+
+        if shouldShowNotificationWarning {
+            return "Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times."
+        }
+
+        return "Some permissions are disabled. You can update them in Settings."
     }
 
     private var shouldShowCameraSettingsButton: Bool {
         permissionDataVM.permissionData.cameraPermissionDialogHandled && !permissionDataVM.permissionData.cameraPermissionGranted
+    }
+
+    private var canRequestAlarmPermission: Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            return true
+        }
+#endif
+        return false
+    }
+
+    private var shouldRequestPermissions: Bool {
+        !hasRequiredPermissionToProceed
+            || !permissionDataVM.permissionData.notificationPermissionDialogHandled
+            || (canRequestAlarmPermission && !permissionDataVM.permissionData.alarmPermissionDialogHandled)
     }
 
     private var shouldShowPermissionContinueButton: Bool {
@@ -450,7 +479,7 @@ struct RegistrationView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityAddTraits(.isHeader)
                             .accessibilityFocused($isCurrentHeaderFocused)
-                        Text("CARWatch requires camera access to scan sample barcodes. Notifications are optional, but recommended for reminder alarms.")
+                        Text("CARWatch requires camera access to scan sample barcodes. Notifications and alarm access are optional, but recommended for sample reminders.")
                             .font(.system(size: adaptiveExplanationFontSize))
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -482,19 +511,37 @@ struct RegistrationView: View {
                                     .font(.system(size: adaptiveExplanationFontSize))
                             }
                             .accessibilityElement(children: .combine)
+                            if canRequestAlarmPermission {
+                                HStack {
+                                    Image(systemName: "alarm.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .font(.system(size: adaptiveIconSize))
+                                        .foregroundStyle(.blue)
+                                        .opacity(StyleConstants.mainScreenIconOpacity)
+                                        .padding()
+                                        .frame(width: StyleConstants.isCompactScreen(for: screenSize) ? 64 : 80, alignment: .center)
+                                        .accessibilityHidden(true)
+                                    Text("Alarm access to ring for due samples, including when the phone is set to silent")
+                                        .font(.system(size: adaptiveExplanationFontSize))
+                                }
+                                .accessibilityElement(children: .combine)
+                            }
                         }
-                        if !hasRequiredPermissionToProceed {
+                        if shouldRequestPermissions {
                             Button("Next") {
                                 permissionButtonTapped = true
                                 permissionDataVM.checkCameraPermission {
-                                    permissionDataVM.checkNotificationPermission()
+                                    permissionDataVM.checkNotificationPermission {
+                                        permissionDataVM.checkAlarmPermission()
+                                    }
                                 }
                             }
                             .padding()
                             .frame(alignment: .center)
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("registration.requestPermissions")
-                            .accessibilityHint(localizedAppString("Requests camera access and optional notification permissions."))
+                            .accessibilityHint(localizedAppString("Requests camera access, then optional notification and alarm permissions."))
                         }
                         if shouldShowPermissionWarning {
                             Text(permissionWarningText)
@@ -628,6 +675,8 @@ struct RegistrationView: View {
         permissionDataVM.permissionData = PermissionData(
             notificationPermissionGranted: true,
             notificationPermissionDialogHandled: true,
+            alarmPermissionGranted: true,
+            alarmPermissionDialogHandled: true,
             cameraPermissionGranted: true,
             cameraPermissionDialogHandled: true
         )

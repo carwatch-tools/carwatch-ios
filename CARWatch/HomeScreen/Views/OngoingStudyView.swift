@@ -135,6 +135,11 @@ struct OngoingStudyView: View {
                 updateAlarmStatus()
                 checkScannerStatus()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .alarmKitOpenActionTapped)) { _ in
+                print("App opened from AlarmKit action")
+                updateAlarmStatus()
+                checkScannerStatus()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .foregroundNotificationReceived)) { notification in
                 updateAlarmStatus()
                 handleForegroundNotification(notification)
@@ -412,6 +417,12 @@ struct OngoingStudyView: View {
         if isBarcodeScannerPresented {
             return
         }
+
+        if let alarmKitIdentifier = consumePendingAlarmKitOpenIdentifier() {
+            appDelegate.openedFromNotification = true
+            appDelegate.lastNotificationIdentifier = alarmKitIdentifier
+        }
+
         if appDelegate.openedFromNotification {
             print("App opened from notification")
             defer {
@@ -465,6 +476,15 @@ struct OngoingStudyView: View {
         }
 
         return Int(identifier.split(separator: "_").first ?? "")
+    }
+
+    private func consumePendingAlarmKitOpenIdentifier() -> String? {
+        guard let identifier = UserDefaults.standard.string(forKey: AppConstants.pendingAlarmKitOpenIdentifierKey) else {
+            return nil
+        }
+
+        UserDefaults.standard.removeObject(forKey: AppConstants.pendingAlarmKitOpenIdentifierKey)
+        return identifier
     }
     
     func initializeStudyData() {
