@@ -32,6 +32,7 @@ class PermissionDataViewModel : ObservableObject {
     }
 
     func setAlarmPermission(isGranted: Bool) {
+        UserDefaults.standard.set(isGranted, forKey: AppConstants.alarmKitPermissionGrantedKey)
         permissionData = permissionData.setAlarmPermission(isGranted: isGranted)
     }
 

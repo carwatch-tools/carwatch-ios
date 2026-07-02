@@ -25,6 +25,7 @@ struct CARWatchApp: App {
                 .environment(\.locale, appLocale)
                 .onAppear(){
                    initializeLanguageIfNeeded()
+                   prewarmWelcomeLocalizations()
                    checkPermissionsDuringOngoingStudy()
                 }
                 .onForeground {

@@ -107,6 +107,10 @@ class NotificationManager {
             return false
         }
 
+        guard shouldUseAlarmKit() else {
+            return false
+        }
+
         guard let date = nextDate(matching: dateComponents) else {
             return false
         }
@@ -159,6 +163,23 @@ class NotificationManager {
         return false
 #endif
     }
+
+#if canImport(AlarmKit)
+    @available(iOS 26.0, *)
+    private func shouldUseAlarmKit() -> Bool {
+        switch AlarmManager.shared.authorizationState {
+        case .authorized:
+            return true
+        case .denied:
+            UserDefaults.standard.set(false, forKey: AppConstants.alarmKitPermissionGrantedKey)
+            return false
+        case .notDetermined:
+            return UserDefaults.standard.bool(forKey: AppConstants.alarmKitPermissionGrantedKey)
+        @unknown default:
+            return false
+        }
+    }
+#endif
 
     private func scheduleFallbackNotification(id: String, title: String, dateComponents: DateComponents) {
         let content = UNMutableNotificationContent()

@@ -75,16 +75,46 @@ struct RegistrationView: View {
         permissionDataVM.permissionData.cameraPermissionDialogHandled || hasRequiredPermissionToProceed
     }
 
-    private var alternateLanguageCode: String {
-        selectedLanguageCode == "en" ? "de" : "en"
+    private func requestPermissionsAndProceedWhenReady() {
+        permissionButtonTapped = true
+        permissionDataVM.checkCameraPermission {
+            permissionDataVM.checkNotificationPermission {
+                permissionDataVM.checkAlarmPermission {
+                    if hasRequiredPermissionToProceed {
+                        pageIndex = qrConfigurationPageIndex
+                    }
+                }
+            }
+        }
     }
 
-    private var alternateLanguageLabel: String {
-        selectedLanguageCode == "en" ? "DE" : "EN"
+    private var currentLanguageDisplayCode: String {
+        languageDisplayCode(for: selectedLanguageCode)
     }
 
-    private var alternateLanguageAccessibilityLabel: String {
-        selectedLanguageCode == "en" ? localizedAppString("Switch language to German") : localizedAppString("Switch language to English")
+    private func languageDisplayCode(for languageCode: String) -> String {
+        languageCode.uppercased()
+    }
+
+    private func languageAccessibilityLabel(for languageCode: String) -> String {
+        switch languageCode {
+        case "de":
+            return localizedAppString("Switch language to German")
+        case "fr":
+            return localizedAppString("Switch language to French")
+        default:
+            return localizedAppString("Switch language to English")
+        }
+    }
+
+    private func selectLanguage(_ languageCode: String) {
+        guard selectedLanguageCode != languageCode else {
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            selectedLanguageCode = languageCode
+        }
     }
 
     private var consentPageIndex: Int { 1 }
@@ -198,20 +228,34 @@ struct RegistrationView: View {
 
     @ViewBuilder
     private func languageToggleButton() -> some View {
-        Button {
-            selectedLanguageCode = alternateLanguageCode
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "globe")
-                Text(alternateLanguageLabel)
-                    .fontWeight(.semibold)
+        Menu {
+            ForEach(LocalizationConstants.supportedLanguageCodes, id: \.self) { languageCode in
+                Button {
+                    selectLanguage(languageCode)
+                } label: {
+                    if selectedLanguageCode == languageCode {
+                        Label(languageDisplayCode(for: languageCode), systemImage: "checkmark")
+                    } else {
+                        Text(languageDisplayCode(for: languageCode))
+                    }
+                }
+                .accessibilityLabel(languageAccessibilityLabel(for: languageCode))
             }
-            .padding(.horizontal, 12)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                Text(currentLanguageDisplayCode)
+                    .fontWeight(.semibold)
+                    .frame(width: 28)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .padding(.horizontal, 8)
             .padding(.vertical, 8)
         }
         .buttonStyle(.bordered)
         .tint(.blue)
-        .accessibilityLabel(alternateLanguageAccessibilityLabel)
+        .accessibilityLabel(localizedAppString("Language"))
         .accessibilityHint(localizedAppString("Changes the app language for onboarding."))
     }
 
@@ -530,12 +574,7 @@ struct RegistrationView: View {
                         }
                         if shouldRequestPermissions {
                             Button("Next") {
-                                permissionButtonTapped = true
-                                permissionDataVM.checkCameraPermission {
-                                    permissionDataVM.checkNotificationPermission {
-                                        permissionDataVM.checkAlarmPermission()
-                                    }
-                                }
+                                requestPermissionsAndProceedWhenReady()
                             }
                             .padding()
                             .frame(alignment: .center)

@@ -5,6 +5,7 @@ struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
     static let demoOngoingStudyModeKey = "demo_ongoing_study_mode"
     static let pendingAlarmKitOpenIdentifierKey = "pending_alarmkit_open_identifier"
+    static let alarmKitPermissionGrantedKey = "alarmkit_permission_granted"
 }
 
 struct PermissionConstants {
@@ -133,13 +134,18 @@ func postAccessibilityScreenChanged(_ argument: Any? = nil) {
 
 struct LocalizationConstants {
     static let languageStorageKey = "selectedLanguageCode"
+    static let supportedLanguageCodes = ["en", "de", "fr"]
 
     static var defaultLanguageCode: String {
         let preferredCode = Locale.preferredLanguages
             .compactMap { Locale(identifier: $0).language.languageCode?.identifier }
             .first
 
-        return preferredCode == "de" ? "de" : "en"
+        guard let preferredCode, supportedLanguageCodes.contains(preferredCode) else {
+            return "en"
+        }
+
+        return preferredCode
     }
 }
 

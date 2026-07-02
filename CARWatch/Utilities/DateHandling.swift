@@ -7,13 +7,24 @@ func currentAppLocale() -> Locale {
 }
 
 func currentAppLocale(languageCode: String) -> Locale {
-    Locale(identifier: languageCode == "de" ? "de_DE" : "en_US")
+    switch languageCode {
+    case "de":
+        return Locale(identifier: "de_DE")
+    case "fr":
+        return Locale(identifier: "fr_FR")
+    default:
+        return Locale(identifier: "en_US")
+    }
 }
 
 func localizedAppString(_ key: String) -> String {
     let languageCode = UserDefaults.standard.string(forKey: LocalizationConstants.languageStorageKey)
         ?? LocalizationConstants.defaultLanguageCode
 
+    return localizedAppString(key, languageCode: languageCode)
+}
+
+func localizedAppString(_ key: String, languageCode: String) -> String {
     guard
         let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
         let bundle = Bundle(path: path)
@@ -22,6 +33,34 @@ func localizedAppString(_ key: String) -> String {
     }
 
     return NSLocalizedString(key, bundle: bundle, comment: "")
+}
+
+func prewarmWelcomeLocalizations() {
+    let welcomeKeys = [
+        "Language",
+        "Changes the app language for onboarding.",
+        "Switch language to English",
+        "Switch language to German",
+        "Switch language to French",
+        "Welcome to CARWatch!",
+        "CARWatch is intended for study participants. It helps you follow your study schedule by sending reminders, and confirming samples by barcode scans.",
+        "Use this app only if you were invited to take part in a study.",
+        "You will receive reminders for scheduled saliva samples.",
+        "You need a study QR code to set up the app.",
+        "Continue",
+        "Opens the study participation information.",
+        "Open app information",
+        "Shows study and developer information."
+    ]
+
+    DispatchQueue.global(qos: .utility).async {
+        for languageCode in LocalizationConstants.supportedLanguageCodes {
+            _ = currentAppLocale(languageCode: languageCode)
+            for key in welcomeKeys {
+                _ = localizedAppString(key, languageCode: languageCode)
+            }
+        }
+    }
 }
 
 func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
