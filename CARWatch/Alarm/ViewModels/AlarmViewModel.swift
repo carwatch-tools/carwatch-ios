@@ -537,7 +537,9 @@ class AlarmViewModel : ObservableObject {
     }
     
     func updateAlarmStatus() {
-        if initialAlarm.isActive && !initialAlarm.isTriggered && initialAlarm.time < Date() {
+        let now = Date()
+
+        if initialAlarm.isActive && !initialAlarm.isTriggered && initialAlarm.time <= now {
             setInitialAlarmTriggered()
             _ = triggerWakeupSampleIfNeeded()
             var msg = [String: Any]()
@@ -547,7 +549,7 @@ class AlarmViewModel : ObservableObject {
 
         // check if any unscanned alarms are in the past
         for alarm in timedAlarms {
-            if alarm.isActive && !alarm.isScanned && !alarm.isTriggered && alarm.time < Date(){
+            if alarm.isActive && !alarm.isScanned && !alarm.isTriggered && alarm.time <= now {
                 modifyAlarmById(alarm: alarm.setTriggered())
                 var msg = [String: Any]()
                 msg[LoggerConstants.loggerExtraAlarmId] = alarm.id
@@ -625,9 +627,9 @@ class AlarmViewModel : ObservableObject {
             guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 return
             }
-            let (day, hour, minute) = getDayHourMinuteFromTime(time: notificationTime)
+            let (day, hour, minute, second) = getDayHourMinuteSecondFromTime(time: notificationTime)
             // set notification for next day at the given alarm time
-            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", salivaId: salivaId, day: day, hour: hour, minute: minute)
+            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", salivaId: salivaId, day: day, hour: hour, minute: minute, second: second)
         }
     }
 

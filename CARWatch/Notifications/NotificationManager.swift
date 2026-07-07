@@ -46,8 +46,8 @@ class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
     
-    func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int) {
-        let dateComponents = DateComponents(day: day, hour: hour, minute: minute)
+    func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int, second: Int) {
+        let dateComponents = DateComponents(day: day, hour: hour, minute: minute, second: second)
         if let salivaId, scheduleSampleAlarm(id: id, salivaId: salivaId, dateComponents: dateComponents) {
             return
         }

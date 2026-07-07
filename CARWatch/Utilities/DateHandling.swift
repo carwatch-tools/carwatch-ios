@@ -63,12 +63,13 @@ func prewarmWelcomeLocalizations() {
     }
 }
 
-func getDayHourMinuteFromTime(time: Date) -> (Int, Int, Int) {
+func getDayHourMinuteSecondFromTime(time: Date) -> (Int, Int, Int, Int) {
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: time)
     let minute = calendar.component(.minute, from: time)
+    let second = calendar.component(.second, from: time)
     let day = calendar.component(.day, from: time)
-    return (day, hour, minute)
+    return (day, hour, minute, second)
 }
 
 func getHourMinFormattedString(time: Date) -> String {
