@@ -17,13 +17,8 @@ extension NotificationManager {
     func requestAuthorization(completion: @escaping (Bool) -> ()) {
         let options: UNAuthorizationOptions = [.alert, .sound]
         
-        UNUserNotificationCenter.current().requestAuthorization(options: options) { success, error in
+        UNUserNotificationCenter.current().requestAuthorization(options: options) { _, _ in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("Error during notification permission request: \(error)")
-                } else {
-                    print("Sucess granting notification permission")
-                }
                 completion(true)
             }
         }
@@ -38,7 +33,6 @@ extension NotificationManager {
                     let state = try await AlarmManager.shared.requestAuthorization()
                     isGranted = state == .authorized
                 } catch {
-                    print("Error during AlarmKit permission request: \(error)")
                     isGranted = false
                 }
 

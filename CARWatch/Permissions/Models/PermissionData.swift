@@ -57,12 +57,10 @@ struct PermissionData : Codable {
     }
     
     func setCameraPermission(isGranted: Bool) -> PermissionData {
-        print("Camera permission granted: \(isGranted)")
         return PermissionData(notificationPermissionGranted: notificationPermissionGranted, notificationPermissionDialogHandled: notificationPermissionDialogHandled, alarmPermissionGranted: alarmPermissionGranted, alarmPermissionDialogHandled: alarmPermissionDialogHandled, cameraPermissionGranted: isGranted, cameraPermissionDialogHandled:  cameraPermissionDialogHandled)
     }
     
     func setCameraPermissionDialogHandled() -> PermissionData {
-        print("Camera permission dialog was handled")
         return PermissionData(notificationPermissionGranted: notificationPermissionGranted, notificationPermissionDialogHandled: notificationPermissionDialogHandled, alarmPermissionGranted: alarmPermissionGranted, alarmPermissionDialogHandled: alarmPermissionDialogHandled, cameraPermissionGranted: cameraPermissionGranted, cameraPermissionDialogHandled:  true)
     }
 }

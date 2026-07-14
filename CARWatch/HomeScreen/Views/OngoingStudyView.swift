@@ -34,6 +34,7 @@ struct OngoingStudyView: View {
     @State private var scheduleCompletionMessage: String = ""
     @State private var showDueSampleAlert: Bool = false
     @State private var dueSampleAlertTitle: String = ""
+    @State private var showWakeupRequiredBeforeSampleAlert: Bool = false
     @State private var pendingForegroundNotificationIdentifier: String? = nil
     @State private var hasAppeared = false
     @State private var pendingBedtimeTabAfterEveningReminder = false
@@ -131,12 +132,10 @@ struct OngoingStudyView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .notificationTapped)) { _ in
-                print("App opened from notification")
                 updateAlarmStatus()
                 checkScannerStatus()
             }
             .onReceive(NotificationCenter.default.publisher(for: .alarmKitOpenActionTapped)) { _ in
-                print("App opened from AlarmKit action")
                 updateAlarmStatus()
                 checkScannerStatus()
             }
@@ -245,13 +244,30 @@ struct OngoingStudyView: View {
             }
             .alert(dueSampleAlertTitle, isPresented: $showDueSampleAlert) {
                 Button(localizedAppString("Open Scanner")) {
-                    isBarcodeScannerPresented = true
+                    if shouldRequireWakeupBeforeSampleScan() {
+                        showWakeupRequiredBeforeSampleAlert = true
+                    } else {
+                        isBarcodeScannerPresented = true
+                    }
                 }
                 Button(localizedAppString("Dismiss"), role: .cancel) {
                     currentAlarmId = nil
                     scannerSource = nil
                     pendingWakeupConfirmationTime = nil
                 }
+            }
+            .alert(localizedAppString("Wakeup not recorded"), isPresented: $showWakeupRequiredBeforeSampleAlert) {
+                Button(localizedAppString("Record Wakeup Now")) {
+                    alarmVM.confirmWakeup(at: Date())
+                    isBarcodeScannerPresented = true
+                }
+                Button(localizedAppString("Cancel"), role: .cancel) {
+                    currentAlarmId = nil
+                    scannerSource = nil
+                    pendingWakeupConfirmationTime = nil
+                }
+            } message: {
+                Text(localizedAppString("You have not recorded your wakeup yet. Please record wakeup before scanning this sample."))
             }
             .onChange(of: showScheduleCompletionAlert) { isPresented in
                 guard isPresented else {
@@ -351,6 +367,10 @@ struct OngoingStudyView: View {
 
         if alarmId == AlarmConstants.initialAlarmId {
             alarmVM.setUpcomingAlarmTriggered()
+            if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                return nil
+            }
+
             guard let triggeredAlarm = alarmVM.getCurrentlyTriggeredAlarm() else {
                 return nil
             }
@@ -424,7 +444,6 @@ struct OngoingStudyView: View {
         }
 
         if appDelegate.openedFromNotification {
-            print("App opened from notification")
             defer {
                 appDelegate.resetNotificationNavigationState()
             }
@@ -432,6 +451,11 @@ struct OngoingStudyView: View {
             if let tappedAlarmId = tappedAlarmId() {
                 if tappedAlarmId == AlarmConstants.initialAlarmId {
                     alarmVM.setUpcomingAlarmTriggered()
+                    if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                        selectedTab = 0
+                        return
+                    }
+
                     if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
                         currentAlarmId = alarm.id
                         scannerSource = .wakeup
@@ -448,26 +472,33 @@ struct OngoingStudyView: View {
                         alarmVM.modifyAlarmById(alarm: tappedAlarm.setTriggered())
                     }
                     scannerSource = alarmVM.getInitialAlarm().isTriggered && tappedAlarmId == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
-                    isBarcodeScannerPresented = true
+                    if shouldRequireWakeupBeforeSampleScan() {
+                        selectedTab = 1
+                        showWakeupRequiredBeforeSampleAlert = true
+                    } else {
+                        isBarcodeScannerPresented = true
+                    }
                 }
             } else {
                 // fallback when no specific notification identifier is available
                 alarmVM.setUpcomingAlarmTriggered()
+                if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                    selectedTab = 0
+                    return
+                }
+
                 if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
                     currentAlarmId = alarm.id
                     scannerSource = alarmVM.getInitialAlarm().isTriggered && alarm.id == alarmVM.timedAlarms.first?.id ? .wakeup : .notification
-                    isBarcodeScannerPresented = true
+                    if shouldRequireWakeupBeforeSampleScan() {
+                        selectedTab = 1
+                        showWakeupRequiredBeforeSampleAlert = true
+                    } else {
+                        isBarcodeScannerPresented = true
+                    }
                 }
             }
         }
-        /*
-         TODO: should the scanner be displayed if app was closed on barcode screen?
-         if alarmVM.isScanRequired() {
-         // no successful scan yet
-         currentAlarmId = nil
-         isScannerPresented = true
-         }
-         */
     }
 
     private func tappedAlarmId() -> Int? {
@@ -476,6 +507,17 @@ struct OngoingStudyView: View {
         }
 
         return Int(identifier.split(separator: "_").first ?? "")
+    }
+
+    private func shouldRequireWakeupBeforeSampleScan() -> Bool {
+        guard let currentAlarmId,
+              scannerSource != .wakeup,
+              currentAlarmId != AlarmConstants.eveningAlarmId,
+              currentAlarmId != AlarmConstants.initialAlarmId else {
+            return false
+        }
+
+        return !alarmVM.isWakeupConfirmedToday()
     }
 
     private func consumePendingAlarmKitOpenIdentifier() -> String? {

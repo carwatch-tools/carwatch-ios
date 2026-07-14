@@ -87,7 +87,6 @@ class NotificationManager {
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
         
-        print("Canceling notifications: \(notificationIds)")
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarmId
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmCancel, message: msg)
@@ -153,7 +152,6 @@ class NotificationManager {
             do {
                 _ = try await AlarmManager.shared.schedule(id: alarmId, configuration: configuration)
             } catch {
-                print("Error scheduling AlarmKit alarm \(id): \(error)")
                 self.forgetAlarmKitIdentifier(id)
                 self.scheduleFallbackNotification(id: id, title: title, dateComponents: dateComponents)
             }
@@ -226,7 +224,6 @@ class NotificationManager {
                 try AlarmManager.shared.cancel(id: alarmKitId(for: identifier))
                 forgetAlarmKitIdentifier(identifier)
             } catch {
-                print("Error canceling AlarmKit alarm \(identifier): \(error)")
             }
         }
 #endif
@@ -243,7 +240,6 @@ class NotificationManager {
             do {
                 try AlarmManager.shared.cancel(id: alarmKitId(for: identifier))
             } catch {
-                print("Error canceling AlarmKit alarm \(identifier): \(error)")
             }
         }
         UserDefaults.standard.removeObject(forKey: alarmKitIdentifierStorageKey)
@@ -277,7 +273,6 @@ class NotificationManager {
 extension AppDelegate: UNUserNotificationCenterDelegate {
     // handle notification when app is in the foreground (as they are ignored per default)
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("Notification received with identifier \(notification.request.identifier)")
         NotificationCenter.default.post(
             name: .foregroundNotificationReceived,
             object: nil,

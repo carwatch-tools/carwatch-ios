@@ -2,7 +2,7 @@ import SwiftUI
 import AlertToast
 
 enum ActiveAlert {
-    case toggleActivityAlert, takeSampleEarlyAlert
+    case toggleActivityAlert, takeSampleEarlyAlert, recordWakeupBeforeSampleAlert
 }
 
 struct AlarmView: View {
@@ -25,19 +25,19 @@ struct AlarmView: View {
     @State private var eveningReminderSelection = Date()
 
     private var isWakeupTimeSelectionDisabled: Bool {
-        alarmVM.isAlarmOngoing() || alarmVM.isStudyFinished()
+        alarmVM.isStudyFinished()
     }
 
     private var disabledWakeupMessage: LocalizedStringKey {
         alarmVM.isStudyFinished()
             ? "The study is already finished, so the wakeup time can no longer be changed."
-            : "The wakeup time can only be changed after all samples for the current day have been recorded."
+            : "The wakeup time can be changed after reporting wakeup."
     }
 
     private var disabledWakeupAnnouncement: String {
         alarmVM.isStudyFinished()
             ? localizedAppString("The study is already finished, so the wakeup time can no longer be changed.")
-            : localizedAppString("The wakeup time can only be changed after all samples for the current day have been recorded.")
+            : localizedAppString("The wakeup time can be changed after reporting wakeup.")
     }
 
     private var shouldUseVerticalWakeupControls: Bool {
@@ -193,6 +193,21 @@ struct AlarmView: View {
                             showAlert = false
                         }
                         )
+                    case .recordWakeupBeforeSampleAlert:
+                        return Alert(
+                            title: Text("Wakeup not recorded"),
+                            message: Text("You have not recorded your wakeup yet. Please record wakeup before scanning this sample."),
+                            primaryButton: .default(Text("Record Wakeup Now")) {
+                                alarmVM.confirmWakeup(at: Date())
+                                scannerSource = .schedule
+                                isScannerPresented = true
+                                showAlert = false
+                            },
+                            secondaryButton: .cancel(Text("Cancel")) {
+                                currentAlarmId = nil
+                                showAlert = false
+                            }
+                        )
                     case .toggleActivityAlert:
                         return Alert(title: Text("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"),
                                      primaryButton: .destructive(Text("Yes")) {
@@ -214,6 +229,7 @@ struct AlarmView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         isScheduleHeaderFocused = true
                     }
+                    initialAlarmTime = alarmVM.wakeupAlarmSelectionTime()
                     eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                     if alarmVM.shouldPromptForEveningReminderSetup && studyDataVM.studyData.hasEveningSample {
                         alarmVM.shouldPromptForEveningReminderSetup = false
@@ -227,6 +243,8 @@ struct AlarmView: View {
                     switch activeAlert {
                     case .takeSampleEarlyAlert:
                         postAccessibilityAnnouncement(localizedAppString("This sample is scheduled for later. Are you sure you want to scan the sample now?"))
+                    case .recordWakeupBeforeSampleAlert:
+                        postAccessibilityAnnouncement(localizedAppString("You have not recorded your wakeup yet. Please record wakeup before scanning this sample."))
                     case .toggleActivityAlert:
                         postAccessibilityAnnouncement(localizedAppString("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"))
                     }
@@ -310,7 +328,10 @@ struct AlarmView: View {
     private func sampleActionButton(for alarm: Alarm, fontSize: CGFloat, isMissed: Bool) -> some View {
         Button(action: {
             currentAlarmId = alarm.id
-            if !alarm.isTriggered {
+            if !alarmVM.isWakeupConfirmedToday() {
+                activeAlert = .recordWakeupBeforeSampleAlert
+                showAlert = true
+            } else if !alarm.isTriggered {
                 // alarm has not been triggered yet, which means the dedicated sampling time was not yet reached
                 activeAlert = .takeSampleEarlyAlert
                 showAlert = true
@@ -380,10 +401,12 @@ struct AlarmView: View {
             DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                 .onChange(of: initialAlarmTime, perform: { _ in
                     let backupTime = alarmVM.getInitialAlarm().time
-                    alarmVM.updateAlarmTime(time: initialAlarmTime)
-                    if let firstTimedAlarm = alarmVM.timedAlarms.first, initialAlarmTime > firstTimedAlarm.time {
+                    alarmVM.updateWakeupAlarmSelection(time: initialAlarmTime)
+                    if !Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()),
+                       let firstTimedAlarm = alarmVM.timedAlarms.first,
+                       initialAlarmTime > firstTimedAlarm.time {
                         initialAlarmTime = backupTime
-                        alarmVM.updateAlarmTime(time: initialAlarmTime)
+                        alarmVM.updateWakeupAlarmSelection(time: initialAlarmTime)
                     }
                     if alarmVM.getInitialAlarm().isActive {
                         showToast = true

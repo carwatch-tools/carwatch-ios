@@ -93,7 +93,6 @@ func getDateTomorrowMorning() -> Date {
             return tomorrowMorning
         }
     }
-    print("getDateTomorrowMorning failed")
     return Date()
 }
 

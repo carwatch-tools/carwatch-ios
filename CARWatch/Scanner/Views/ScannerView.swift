@@ -158,7 +158,6 @@ struct ScannerView: View {
 
             switch validationResult {
             case .valid:
-                print("Barcode \(barcodeData) is valid")
                 return true
             case .duplicate:
                 alertType = .duplicate
@@ -172,13 +171,11 @@ struct ScannerView: View {
                 alertType = .wrongSample
                 showAlert = true
                 logRejectedBarcode(barcodeData)
-                print("Barcode \(barcodeData) does not match the expected sample")
                 return false
             case .invalid:
                 alertType = .invalid
                 showAlert = true
                 logRejectedBarcode(barcodeData)
-                print("Barcode \(barcodeData) is invalid")
                 return false
             }
             
@@ -190,7 +187,6 @@ struct ScannerView: View {
                 msg[LoggerConstants.loggerExtraBarcodeValue] = result
                 Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
             }
-            print("QR code valid: \(isValid)")
             return isValid
         }
     }
@@ -246,7 +242,6 @@ struct ScannerView: View {
     func handleScanResult(result: Result<String, ScanError>){
         switch result {
         case .success(let result):
-            print("Scan successful with result: \(result)")
             alertType = .success
             showAlert = true
             switch codeType {
@@ -264,8 +259,8 @@ struct ScannerView: View {
                 sessionVM.startStudyConfirmation()
                 postAccessibilityAnnouncement(localizedAppString("Study QR code accepted. Opening study details."))
             }
-        case .failure(let error):
-            print("Scan failed: \(error.localizedDescription)")
+        case .failure:
+            break
         }
     }
     

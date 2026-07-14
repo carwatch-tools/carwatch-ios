@@ -20,6 +20,7 @@ struct WakeupView: View {
     @State private var showPostWakeupAlert: Bool = false
     @State private var postWakeupAlertType: PostWakeupAlertType = .delayedSample
     @State private var showStudyFinishedAlert: Bool = false
+    @State private var showPreviousDayUnfinishedAlert: Bool = false
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
@@ -135,6 +136,13 @@ struct WakeupView: View {
         } message: {
             Text(postWakeupAlertMessage)
         }
+        .alert(localizedAppString("Previous day unfinished"), isPresented: $showPreviousDayUnfinishedAlert) {
+            Button(localizedAppString("Continue")) {
+                performWakeupConfirmation()
+            }
+        } message: {
+            Text(localizedAppString("This is a new study day. We noticed that you did not finish all samples yesterday. The previous day will be marked as finished, remaining samples will be treated as missing, and you can continue with today's study day."))
+        }
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -165,12 +173,13 @@ struct WakeupView: View {
             }
 
             let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+            let shouldFinishPreviousDay = alarmVM.shouldFinishPreviousDayOnWakeupConfirmation()
             let canResumeWakeupSampleScan = wakeupAlreadyReportedToday
                 && alarmVM.getInitialAlarm().isTriggered
                 && alarmVM.getCurrentlyTriggeredAlarm() != nil
                 && alarmVM.isScanRequired()
 
-            if wakeupAlreadyReportedToday && !canResumeWakeupSampleScan {
+            if wakeupAlreadyReportedToday && !canResumeWakeupSampleScan && !shouldFinishPreviousDay {
                 toastType = .wakeupReportedToast
                 showToast = true
             } else {
@@ -178,25 +187,17 @@ struct WakeupView: View {
                 msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
                 Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
                 initialAlarmTime = Date()
-                if alarmVM.isScanRequired() {
+                if shouldFinishPreviousDay {
+                    showPreviousDayUnfinishedAlert = true
+                    return
+                }
+
+                if alarmVM.isScanRequired() && !shouldFinishPreviousDay {
                     pendingWakeupConfirmationTime = initialAlarmTime
                     scannerSource = .wakeup
                     isScannerPresented = true
                 } else {
-                    alarmVM.confirmWakeup(at: initialAlarmTime)
-                    if hasOverdueSample(before: initialAlarmTime) {
-                        postWakeupAlertType = .overdueSample
-                        showPostWakeupAlert = true
-                    } else if alarmVM.isScanRequired() {
-                        scannerSource = .wakeup
-                        isScannerPresented = true
-                    } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
-                        delayedSampleMinutes = Int(
-                            ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
-                        )
-                        postWakeupAlertType = .delayedSample
-                        showPostWakeupAlert = true
-                    }
+                    performWakeupConfirmation()
                 }
             }
         }
@@ -225,6 +226,23 @@ struct WakeupView: View {
         .accessibilityIdentifier("wakeup.no")
         .accessibilityLabel(localizedAppString("No, I did not just wake up"))
         .accessibilityHint(localizedAppString("Keeps the wakeup report unchanged and shows a reminder if needed."))
+    }
+
+    private func performWakeupConfirmation() {
+        alarmVM.confirmWakeup(at: initialAlarmTime)
+        if hasOverdueSample(before: initialAlarmTime) {
+            postWakeupAlertType = .overdueSample
+            showPostWakeupAlert = true
+        } else if alarmVM.isScanRequired() {
+            scannerSource = .wakeup
+            isScannerPresented = true
+        } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
+            delayedSampleMinutes = Int(
+                ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
+            )
+            postWakeupAlertType = .delayedSample
+            showPostWakeupAlert = true
+        }
     }
 
     private var postWakeupAlertTitle: String {
