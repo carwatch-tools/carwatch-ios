@@ -292,14 +292,6 @@ class AlarmViewModel : ObservableObject {
         return timedAlarms.contains { !$0.isScanned }
     }
     
-    func getTimeUntilNextInitialAlarm() -> (Int, Int) {
-        let alarmTime = pendingWakeupNotificationTime ?? getInitialAlarm().time
-        let timeInterval = NSInteger(alarmTime.timeIntervalSinceNow)
-        let minutes = (timeInterval / 60) % 60
-        let hours = (timeInterval / 3600)
-        return (hours, minutes)
-    }
-
     func wakeupAlarmSelectionTime() -> Date {
         pendingWakeupNotificationTime ?? getInitialAlarm().time
     }

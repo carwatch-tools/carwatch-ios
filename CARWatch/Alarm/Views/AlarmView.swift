@@ -170,12 +170,7 @@ struct AlarmView: View {
                 .frame(maxWidth: .infinity)
                 .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
                     let color = Color(UIColor.secondarySystemBackground)
-                    let (diffHours, diffMinutes) = alarmVM.getTimeUntilNextInitialAlarm()
-                    let toastMsg = String(
-                        format: localizedAppString("Notification scheduled for\n%lld hours %lld minutes from now.\nPlease remember to set\nyour alarm clock accordingly!"),
-                        Int64(diffHours),
-                        Int64(diffMinutes)
-                    )
+                    let toastMsg = localizedAppString("Wakeup alarm set for tomorrow.\nAdjust the time if needed.")
                     return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
                     
                 }

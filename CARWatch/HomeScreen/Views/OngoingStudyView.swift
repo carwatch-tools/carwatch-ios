@@ -201,7 +201,7 @@ struct OngoingStudyView: View {
                         pendingBedtimeTabAfterEveningReminder = false
                         selectedTab = scannerSource == .wakeup ? 1 : 2
                         scheduleCompletionTitle = localizedAppString("Samples Recorded")
-                        scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nSee you tomorrow, and don't forget to set a wakeup alarm for tomorrow.")
+                        scheduleCompletionMessage = localizedAppString("You've recorded the last sample for today.\nPlease record bedtime before going to sleep, and check your wakeup alarm for tomorrow.")
                     }
                     showScheduleCompletionAlert = true
                 } else if scannedNonEveningSample {

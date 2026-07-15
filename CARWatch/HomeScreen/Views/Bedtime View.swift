@@ -176,7 +176,7 @@ struct BedtimeView: View {
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(localizedAppString("This was your last sample.\nThank you for participating in the study!\nPlease export your logs and send them\nto your study contact email."))
+            Text(localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email."))
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
