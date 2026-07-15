@@ -22,7 +22,6 @@ struct ScannerView: View {
     @State var alertType: ScannerConstants.AlertType = .invalid
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
-    var isManualScan: Bool = false
     
     private let rotationChangePublisher = NotificationCenter.default
         .publisher(for: UIDevice.orientationDidChangeNotification)
@@ -152,8 +151,7 @@ struct ScannerView: View {
                 totalNumSamples: studyDataVM.studyData.numSamples,
                 currentDay: alarmVM.studyDayCounter,
                 expectedSalivaId: expectedSalivaId(),
-                startSampleIndex: startSampleIndex(),
-                isManualScan: isManualScan
+                startSampleIndex: startSampleIndex()
             )
 
             switch validationResult {
@@ -200,8 +198,7 @@ struct ScannerView: View {
         totalNumSamples: Int,
         currentDay: Int,
         expectedSalivaId: Int,
-        startSampleIndex: Int,
-        isManualScan: Bool
+        startSampleIndex: Int
     ) -> BarcodeResult {
         if !fdEnabled {
             return .valid
@@ -223,10 +220,6 @@ struct ScannerView: View {
               dayId <= numDays,
               salivaId <= totalNumSamples else {
             return .invalid
-        }
-
-        if isManualScan {
-            return .valid
         }
 
         let expectedSampleId = expectedSalivaId + startSampleIndex
@@ -296,8 +289,6 @@ struct ScannerView: View {
 
         if alarmId == AlarmConstants.eveningAlarmId {
             sampleId = "\(samplePrefix)\(AlarmConstants.eveningAlarmLoggerPrefix)"
-        } else if isManualScan {
-            sampleId = "\(samplePrefix)M"
         } else {
             sampleId = "\(samplePrefix)\(expectedSalivaId() + startSampleIndex())"
         }
