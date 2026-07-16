@@ -172,6 +172,7 @@ struct MainViewToolbarMenu: View {
         UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
 #endif
         alarmVM.resetAlarmDataForNewUser()
+        studyDataVM.resetStudyData()
         sessionVM.reregister()
     }
 

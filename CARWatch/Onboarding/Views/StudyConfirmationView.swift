@@ -52,6 +52,7 @@ struct StudyConfirmationView: View {
                             .accessibilityHint(localizedAppString("Confirms these study details and opens the tutorial."))
 
                             Button("Reregister") {
+                                studyDataVM.resetStudyData()
                                 sessionVM.reregister()
                             }
                             .frame(maxWidth: .infinity)
