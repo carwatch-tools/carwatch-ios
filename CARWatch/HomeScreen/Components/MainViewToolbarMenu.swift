@@ -7,6 +7,7 @@ struct MainViewToolbarMenu: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var alarmVM: AlarmViewModel
+    @EnvironmentObject var permissionDataVM: PermissionDataViewModel
 
     @Binding var showAppInfoDialog : Bool
     @Binding var appVersion: String?
@@ -173,6 +174,7 @@ struct MainViewToolbarMenu: View {
 #endif
         alarmVM.resetAlarmDataForNewUser()
         studyDataVM.resetStudyData()
+        permissionDataVM.resetPermissionChecksForReregistration()
         sessionVM.reregister()
     }
 

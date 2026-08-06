@@ -53,6 +53,18 @@ class PermissionDataViewModel : ObservableObject {
             UserDefaults.standard.set(encodedPermissionData, forKey: permissionDataKey)
         }
     }
+
+    func resetPermissionChecksForReregistration() {
+        UserDefaults.standard.set(false, forKey: AppConstants.alarmKitPermissionGrantedKey)
+        permissionData = PermissionData(
+            notificationPermissionGranted: false,
+            notificationPermissionDialogHandled: false,
+            alarmPermissionGranted: false,
+            alarmPermissionDialogHandled: false,
+            cameraPermissionGranted: false,
+            cameraPermissionDialogHandled: false
+        )
+    }
     
     func checkNotificationPermission(completion: (() -> Void)? = nil) {
         // prompt is only displayed on first launch, function is executed every time

@@ -122,7 +122,7 @@ struct RegistrationView: View {
     private var permissionPageIndex: Int { 2 }
 
     private var qrConfigurationPageIndex: Int {
-        sessionVM.isReregistration ? 2 : 3
+        3
     }
 
     private func welcomeLogoMaxHeight(for size: CGSize) -> CGFloat {
@@ -165,7 +165,7 @@ struct RegistrationView: View {
         case consentPageIndex:
             return localizedAppString("Study Participation Notice")
         case permissionPageIndex:
-            return sessionVM.isReregistration ? localizedAppString("Configure the App") : localizedAppString("Unlock Features")
+            return localizedAppString("Unlock Features")
         case qrConfigurationPageIndex:
             return localizedAppString("Configure the App")
         default:
@@ -214,11 +214,7 @@ struct RegistrationView: View {
         case consentPageIndex:
             consentView
         case permissionPageIndex:
-            if sessionVM.isReregistration {
-                qrConfigurationView
-            } else {
-                permissionView
-            }
+            permissionView
         case qrConfigurationPageIndex:
             qrConfigurationView
         default:
@@ -482,7 +478,7 @@ struct RegistrationView: View {
                             if shouldUseVerticalActionLayout {
                                 VStack(alignment: .trailing, spacing: 12) {
                                     Button("Continue") {
-                                        pageIndex = sessionVM.isReregistration ? qrConfigurationPageIndex : permissionPageIndex
+                                        pageIndex = permissionPageIndex
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .disabled(!hasAcceptedResearchConsent)
@@ -495,7 +491,7 @@ struct RegistrationView: View {
                                 HStack {
                                     Spacer()
                                     Button("Continue") {
-                                        pageIndex = sessionVM.isReregistration ? qrConfigurationPageIndex : permissionPageIndex
+                                        pageIndex = permissionPageIndex
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .disabled(!hasAcceptedResearchConsent)
