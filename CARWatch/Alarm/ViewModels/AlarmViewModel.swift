@@ -1,5 +1,13 @@
 import Foundation
 
+enum DayFinishReason: String {
+    case completedAllSamples = "completed_all_samples"
+    case userFinishedDay = "user_finished_day"
+    case selectedCurrentDateForScan = "selected_current_date_for_scan"
+    case completedPreviousDayAfterLateScan = "completed_previous_day_after_late_scan"
+    case recoveredOnWakeup = "recovered_on_wakeup"
+}
+
 class AlarmViewModel : ObservableObject {
     
     @Published var initialAlarm: Alarm = Alarm(id: AlarmConstants.initialAlarmId, isActive: false, isScanned: false, isTriggered: false) {
@@ -21,6 +29,11 @@ class AlarmViewModel : ObservableObject {
     @Published var studyDayCounter: Int = 0 {
         didSet {
             UserDefaults.standard.set(studyDayCounter, forKey: studyDayCounterKey)
+        }
+    }
+    @Published private var lastFinishedStudyDayCounter: Int = 0 {
+        didSet {
+            UserDefaults.standard.set(lastFinishedStudyDayCounter, forKey: lastFinishedStudyDayCounterKey)
         }
     }
     @Published var dateOfLastInitialAlarm: Date = Date.distantPast {
@@ -70,16 +83,25 @@ class AlarmViewModel : ObservableObject {
     let timedAlarmDataKey = "alarmsList"
     let isEveningScannedKey = "isEveningScanned"
     let studyDayCounterKey = "studyDayCounter"
+    let lastFinishedStudyDayCounterKey = "lastFinishedStudyDayCounter"
     let dateOfLastInitialAlarmKey = "dateOfLastInitialAlarm"
     let dateOfLastConfirmedWakeupKey = "dateOfLastConfirmedWakeup"
     let isDarkModeOnKey = "isDarkModeOn"
     let eveningReminderTimeKey = "eveningReminderTime"
     let lastEveningReminderSelectionKey = "lastEveningReminderSelection"
     private let pendingWakeupNotificationTimeKey = "pendingWakeupNotificationTime"
+    private let pendingWakeupNotificationTimesKey = "pendingWakeupNotificationTimes"
     private let shouldFinishPreviousDayOnWakeupKey = "shouldFinishPreviousDayOnWakeup"
-    private var pendingWakeupNotificationTime: Date? = nil {
+    private let studyDaysToFinishOnWakeupKey = "studyDaysToFinishOnWakeup"
+    private var pendingWakeupNotificationTimes: [Date] = [] {
         didSet {
-            savePendingWakeupNotificationTime()
+            savePendingWakeupNotificationTimes()
+        }
+    }
+    private var studyDaysToFinishOnWakeup: [Int] = [] {
+        didSet {
+            UserDefaults.standard.set(studyDaysToFinishOnWakeup, forKey: studyDaysToFinishOnWakeupKey)
+            shouldFinishPreviousDayOnWakeup = !studyDaysToFinishOnWakeup.isEmpty
         }
     }
     private var shouldFinishPreviousDayOnWakeup = false {
@@ -91,6 +113,7 @@ class AlarmViewModel : ObservableObject {
     init() {
         getAlarmData()
         getStudyDayCounterData()
+        getLastFinishedStudyDayCounterData()
         getLastInitialAlarmData()
         getLastConfirmedWakeupData()
     }
@@ -132,13 +155,17 @@ class AlarmViewModel : ObservableObject {
         } else {
             lastEveningReminderSelection = nil
         }
-        if let pendingWakeupNotificationTimeData = UserDefaults.standard.data(forKey: pendingWakeupNotificationTimeKey),
-           let savedPendingWakeupNotificationTime = try? JSONDecoder().decode(Date.self, from: pendingWakeupNotificationTimeData) {
-            pendingWakeupNotificationTime = savedPendingWakeupNotificationTime
+        if let pendingWakeupNotificationTimesData = UserDefaults.standard.data(forKey: pendingWakeupNotificationTimesKey),
+           let savedPendingWakeupNotificationTimes = try? JSONDecoder().decode([Date].self, from: pendingWakeupNotificationTimesData) {
+            pendingWakeupNotificationTimes = savedPendingWakeupNotificationTimes
+        } else if let pendingWakeupNotificationTimeData = UserDefaults.standard.data(forKey: pendingWakeupNotificationTimeKey),
+                  let savedPendingWakeupNotificationTime = try? JSONDecoder().decode(Date.self, from: pendingWakeupNotificationTimeData) {
+            pendingWakeupNotificationTimes = [savedPendingWakeupNotificationTime]
         } else {
-            pendingWakeupNotificationTime = nil
+            pendingWakeupNotificationTimes = []
         }
         shouldFinishPreviousDayOnWakeup = UserDefaults.standard.bool(forKey: shouldFinishPreviousDayOnWakeupKey)
+        studyDaysToFinishOnWakeup = UserDefaults.standard.array(forKey: studyDaysToFinishOnWakeupKey) as? [Int] ?? []
 
         let savedInitialAlarm = UserDefaults.standard.data(forKey: initialAlarmDataKey)
             .flatMap { try? JSONDecoder().decode(Alarm.self, from: $0) }
@@ -163,6 +190,10 @@ class AlarmViewModel : ObservableObject {
     
     func getStudyDayCounterData() {
         studyDayCounter = UserDefaults.standard.integer(forKey: studyDayCounterKey)
+    }
+
+    func getLastFinishedStudyDayCounterData() {
+        lastFinishedStudyDayCounter = UserDefaults.standard.integer(forKey: lastFinishedStudyDayCounterKey)
     }
     
     func getLastInitialAlarmData() {
@@ -215,8 +246,7 @@ class AlarmViewModel : ObservableObject {
         )
 
         updateTimedAlarms()
-        rebaseTimedAlarmsAfterWakeupConfirmation(referenceTime: wakeupTime)
-        scheduleAlarmNotificationsWithoutInitial()
+        rebaseTimedAlarmsAfterWakeupConfirmation(now: Date())
         if wasWakeupAlreadyTriggeredToday {
             initialAlarm = initialAlarm.setTriggered()
         } else {
@@ -225,7 +255,7 @@ class AlarmViewModel : ObservableObject {
         if didFinishPreviousDay {
             isEveningScanned = false
         }
-        scheduleNextWakeupNotificationIfNeeded(referenceTime: wakeupTime)
+        scheduleAlarmNotificationsWithoutInitial()
     }
     
     func getAlarmById(alarmId: Int) -> Alarm? {
@@ -277,11 +307,17 @@ class AlarmViewModel : ObservableObject {
                 return false
             }
         }
-        
-        var msg = [String: Any]()
-        msg[LoggerConstants.loggerExtraDayCounter] = studyDayCounter
-        Logger.instance.log(tag: LoggerConstants.loggerActionDayFinished, message: msg)
+
         return true
+    }
+
+    func markDayFinished(reason: DayFinishReason, studyDay: Int? = nil) {
+        let finishedStudyDay = studyDay ?? studyDayCounter
+        var msg = [String: Any]()
+        msg[LoggerConstants.loggerExtraDayCounter] = finishedStudyDay
+        msg[LoggerConstants.loggerExtraDayFinishReason] = reason.rawValue
+        Logger.instance.log(tag: LoggerConstants.loggerActionDayFinished, message: msg)
+        lastFinishedStudyDayCounter = max(lastFinishedStudyDayCounter, finishedStudyDay)
     }
 
     func hasRemainingSamplesForCurrentDay() -> Bool {
@@ -293,12 +329,12 @@ class AlarmViewModel : ObservableObject {
     }
     
     func wakeupAlarmSelectionTime() -> Date {
-        pendingWakeupNotificationTime ?? getInitialAlarm().time
+        pendingWakeupNotificationTimes.first ?? getInitialAlarm().time
     }
 
     func updateWakeupAlarmSelection(time: Date) {
         if Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: Date()) {
-            scheduleNextWakeupNotificationIfNeeded(referenceTime: dateOfLastInitialAlarm, selectedTime: time)
+            scheduleAlarmNotificationsWithoutInitial(selectedFutureWakeupTime: time)
         } else {
             updateAlarmTime(time: time)
         }
@@ -373,6 +409,7 @@ class AlarmViewModel : ObservableObject {
         let dayFinished = isDayFinished()
         if dayFinished {
             didCompleteLastScheduledSample = true
+            markDayFinished(reason: .completedAllSamples)
         }
 
         if dayFinished && !isStudyFinished(){
@@ -385,8 +422,9 @@ class AlarmViewModel : ObservableObject {
         hasPendingDayReset = false
         isEveningScanned = false
         cancelEveningReminder(clearStoredSelection: false)
-        pendingWakeupNotificationTime = nil
+        pendingWakeupNotificationTimes = []
         shouldFinishPreviousDayOnWakeup = false
+        studyDaysToFinishOnWakeup = []
         setInitialAlarm(
             alarm: Alarm(
                 id: AlarmConstants.initialAlarmId,
@@ -428,11 +466,118 @@ class AlarmViewModel : ObservableObject {
         }
 
         didCompleteLastScheduledSample = true
+        markDayFinished(reason: .userFinishedDay)
 
-        if !isStudyFinished() {
-            hasPendingDayReset = true
+        if studyDayCounter < numStudyDays {
+            resetAlarmData()
         }
 
+        return true
+    }
+
+    func shouldResolvePreviousStudyDayBeforeScanning() -> Bool {
+        studyDayCounter > 0
+            && hasReachedStudyDayCutoff()
+            && hasRemainingSamplesForCurrentDay()
+    }
+
+    func hasReachedStudyDayCutoff(referenceTime: Date = Date()) -> Bool {
+        guard studyDayCounter > 0, dateOfLastInitialAlarm != Date.distantPast else {
+            return false
+        }
+
+        let cutoffInterval = TimeInterval(AlarmConstants.studyDayCutoffHours * 60 * 60)
+        return referenceTime.timeIntervalSince(dateOfLastInitialAlarm) >= cutoffInterval
+    }
+
+    func lastMissingSampleIdForCurrentStudyDay() -> Int? {
+        if hasEveningSample && !isEveningScanned {
+            return AlarmConstants.eveningAlarmId
+        }
+
+        return timedAlarms
+            .filter { !$0.isScanned }
+            .max { $0.time < $1.time }?
+            .id
+    }
+
+    @discardableResult
+    func finishPreviousStudyDayAfterLateScan(scannedSampleId: Int? = nil) -> Bool {
+        guard studyDayCounter > 0 else {
+            return false
+        }
+
+        let shouldClosePreviousStudyDay = scannedSampleId == AlarmConstants.eveningAlarmId
+            || !hasRemainingSamplesForCurrentDay()
+            || hasReachedStudyDayCutoff()
+
+        guard shouldClosePreviousStudyDay else {
+            return false
+        }
+
+        if hasRemainingSamplesForCurrentDay() {
+            NotificationManager.instance.cancelAllNotifications()
+            isEveningScanned = true
+            cancelEveningReminder(clearStoredSelection: false)
+
+            timedAlarms = timedAlarms.map { alarm in
+                guard !alarm.isScanned else {
+                    return alarm
+                }
+
+                return Alarm(
+                    id: alarm.id,
+                    isActive: false,
+                    isScanned: true,
+                    isTriggered: alarm.isTriggered,
+                    time: alarm.time
+                )
+            }
+
+            markDayFinished(reason: .completedPreviousDayAfterLateScan)
+        }
+
+        didCompleteLastScheduledSample = true
+
+        if studyDayCounter < numStudyDays {
+            resetAlarmData()
+        } else {
+            hasPendingDayReset = false
+        }
+
+        return true
+    }
+
+    @discardableResult
+    func finishPreviousStudyDayAndStartTodayForScan(at wakeupTime: Date = Date()) -> Bool {
+        guard shouldResolvePreviousStudyDayBeforeScanning() else {
+            return false
+        }
+
+        NotificationManager.instance.cancelAllNotifications()
+        isEveningScanned = true
+        cancelEveningReminder(clearStoredSelection: false)
+
+        timedAlarms = timedAlarms.map { alarm in
+            Alarm(
+                id: alarm.id,
+                isActive: false,
+                isScanned: true,
+                isTriggered: alarm.isTriggered,
+                time: alarm.time
+            )
+        }
+
+        markDayFinished(reason: .selectedCurrentDateForScan)
+
+        guard studyDayCounter < numStudyDays else {
+            didCompleteLastScheduledSample = true
+            hasPendingDayReset = false
+            return true
+        }
+
+        resetAlarmData()
+        confirmWakeup(at: wakeupTime)
         return true
     }
     
@@ -575,67 +720,37 @@ class AlarmViewModel : ObservableObject {
     }
 
     func shouldFinishPreviousDayOnWakeupConfirmation() -> Bool {
-        shouldFinishPreviousDayOnWakeup && hasRemainingSamplesForCurrentDay()
-    }
-
-    private func nextWakeupDate(after referenceTime: Date, selectedTime: Date? = nil) -> Date? {
-        guard initialAlarm.isActive, studyDayCounter < numStudyDays else {
-            return nil
-        }
-
-        let calendar = Calendar.current
-        let configuredWakeupTime = selectedTime ?? pendingWakeupNotificationTime ?? initialAlarm.time
-        let wakeupTimeComponents = calendar.dateComponents([.hour, .minute, .second], from: configuredWakeupTime)
-        let nextDay = calendar.date(byAdding: .day, value: 1, to: referenceTime) ?? referenceTime
-        var nextWakeupComponents = calendar.dateComponents([.year, .month, .day], from: nextDay)
-        nextWakeupComponents.hour = wakeupTimeComponents.hour
-        nextWakeupComponents.minute = wakeupTimeComponents.minute
-        nextWakeupComponents.second = wakeupTimeComponents.second
-
-        return calendar.date(from: nextWakeupComponents)
-    }
-
-    private func scheduleNextWakeupNotificationIfNeeded(referenceTime: Date, selectedTime: Date? = nil) {
-        guard let nextWakeup = nextWakeupDate(after: referenceTime, selectedTime: selectedTime) else {
-            return
-        }
-
-        if let pendingWakeupNotificationTime,
-           Calendar.current.compare(pendingWakeupNotificationTime, to: nextWakeup, toGranularity: .minute) == .orderedSame {
-            return
-        }
-
-        let nextInitialAlarm = Alarm(
-            id: AlarmConstants.initialAlarmId,
-            isActive: true,
-            isScanned: false,
-            isTriggered: false,
-            time: nextWakeup
-        )
-        NotificationManager.instance.cancelNotificationsById(alarmId: nextInitialAlarm.id)
-        scheduleAlarmWithBackupNotifications(nextInitialAlarm, salivaId: nil)
-        pendingWakeupNotificationTime = nextWakeup
+        !studyDaysToFinishOnWakeup.isEmpty || (shouldFinishPreviousDayOnWakeup && hasRemainingSamplesForCurrentDay())
     }
 
     private func processPendingWakeupNotificationIfNeeded(now: Date) -> Bool {
-        guard let pendingWakeupNotificationTime,
-              pendingWakeupNotificationTime <= now,
-              !Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: pendingWakeupNotificationTime) else {
+        let dueWakeups = pendingWakeupNotificationTimes
+            .filter { $0 <= now && !Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: $0) }
+            .sorted()
+
+        guard let latestDueWakeup = dueWakeups.last else {
             return false
         }
 
-        shouldFinishPreviousDayOnWakeup = hasRemainingSamplesForCurrentDay()
-        self.pendingWakeupNotificationTime = nil
+        let targetStudyDay = min(studyDayCounter + dueWakeups.count, numStudyDays)
+        if lastFinishedStudyDayCounter < targetStudyDay - 1 {
+            studyDaysToFinishOnWakeup = Array((lastFinishedStudyDayCounter + 1)..<targetStudyDay)
+        } else {
+            studyDaysToFinishOnWakeup = []
+        }
+        pendingWakeupNotificationTimes.removeAll { $0 <= latestDueWakeup }
         setInitialAlarm(
             alarm: Alarm(
                 id: AlarmConstants.initialAlarmId,
                 isActive: true,
                 isScanned: false,
                 isTriggered: false,
-                time: pendingWakeupNotificationTime
+                time: latestDueWakeup
             )
         )
-        setInitialAlarmTriggered()
+        initialAlarm = initialAlarm.setTriggered()
+        dateOfLastInitialAlarm = latestDueWakeup
+        studyDayCounter = targetStudyDay
         return true
     }
 
@@ -644,8 +759,8 @@ class AlarmViewModel : ObservableObject {
             return false
         }
 
+        let daysToFinish = studyDaysToFinishOnWakeup.isEmpty ? [max(studyDayCounter - 1, 0)] : studyDaysToFinishOnWakeup
         NotificationManager.instance.cancelNotificationsById(alarmId: AlarmConstants.eveningAlarmId)
-        shouldFinishPreviousDayOnWakeup = false
         isEveningScanned = true
         cancelEveningReminder(clearStoredSelection: false)
 
@@ -658,10 +773,14 @@ class AlarmViewModel : ObservableObject {
                 time: alarm.time
             )
         }
-        _ = isDayFinished()
+        for studyDay in daysToFinish where studyDay > 0 {
+            markDayFinished(reason: .recoveredOnWakeup, studyDay: studyDay)
+        }
 
         hasPendingDayReset = false
         didCompleteLastScheduledSample = false
+        studyDaysToFinishOnWakeup = []
+        shouldFinishPreviousDayOnWakeup = false
         for alarm in timedAlarms {
             modifyAlarmById(
                 alarm: Alarm(
@@ -676,7 +795,7 @@ class AlarmViewModel : ObservableObject {
         return true
     }
 
-    private func rebaseTimedAlarmsAfterWakeupConfirmation(referenceTime: Date) {
+    private func rebaseTimedAlarmsAfterWakeupConfirmation(now: Date) {
         timedAlarms = timedAlarms.map { alarm in
             guard !alarm.isScanned else {
                 return alarm
@@ -686,7 +805,7 @@ class AlarmViewModel : ObservableObject {
                 id: alarm.id,
                 isActive: true,
                 isScanned: false,
-                isTriggered: alarm.time <= referenceTime,
+                isTriggered: alarm.time <= now,
                 time: alarm.time
             )
         }
@@ -779,32 +898,91 @@ class AlarmViewModel : ObservableObject {
         if !getInitialAlarm().isActive {
             return
         }
-        scheduleAlarmWithBackupNotifications(getInitialAlarm(), salivaId: nil)
+        scheduleAlarmWithBackupNotifications(getInitialAlarm(), salivaId: nil, studyDay: studyDayCounter == 0 ? 1 : studyDayCounter)
         for alarm in timedAlarms {
-            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)")
+            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)", studyDay: studyDayCounter == 0 ? 1 : studyDayCounter)
         }
+        scheduleFutureStudyDayNotifications(referenceTime: getInitialAlarm().time)
     }
     
-    func scheduleAlarmNotificationsWithoutInitial() {
+    func scheduleAlarmNotificationsWithoutInitial(selectedFutureWakeupTime: Date? = nil) {
         // cancel all previous alarms
         NotificationManager.instance.cancelAllNotifications()
         // schedule notifications for all sample reminders, but not the wakeup alarm
         for alarm in timedAlarms {
-            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)")
+            scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)", studyDay: studyDayCounter)
             logAlarmScheduled(alarm)
         }
+        scheduleFutureStudyDayNotifications(referenceTime: getInitialAlarm().time, selectedTime: selectedFutureWakeupTime)
     }
     
-    func scheduleAlarmWithBackupNotifications(_ alarm: Alarm, salivaId: String?){
+    func scheduleAlarmWithBackupNotifications(_ alarm: Alarm, salivaId: String?, studyDay: Int? = nil) {
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
             // calculate notification time
             guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {
                 return
             }
-            let (day, hour, minute, second) = getDayHourMinuteSecondFromTime(time: notificationTime)
-            // set notification for next day at the given alarm time
-            NotificationManager.instance.scheduleCalendarBasedNotification(id: "\(alarm.id)_\(i)", salivaId: salivaId, day: day, hour: hour, minute: minute, second: second)
+            NotificationManager.instance.scheduleCalendarBasedNotification(
+                id: notificationIdentifier(alarmId: alarm.id, backupIndex: i, studyDay: studyDay),
+                salivaId: salivaId,
+                date: notificationTime
+            )
         }
+    }
+
+    private func scheduleFutureStudyDayNotifications(referenceTime: Date, selectedTime: Date? = nil) {
+        guard initialAlarm.isActive, studyDayCounter < numStudyDays else {
+            pendingWakeupNotificationTimes = []
+            return
+        }
+
+        let calendar = Calendar.current
+        let configuredWakeupTime = selectedTime ?? initialAlarm.time
+        let wakeupComponents = calendar.dateComponents([.hour, .minute, .second], from: configuredWakeupTime)
+        var scheduledWakeups: [Date] = []
+        let currentStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
+
+        for studyDay in (currentStudyDay + 1)...numStudyDays {
+            let dayOffset = studyDay - currentStudyDay
+            guard let nextDate = calendar.date(byAdding: .day, value: dayOffset, to: referenceTime) else {
+                continue
+            }
+
+            var nextWakeupComponents = calendar.dateComponents([.year, .month, .day], from: nextDate)
+            nextWakeupComponents.hour = wakeupComponents.hour
+            nextWakeupComponents.minute = wakeupComponents.minute
+            nextWakeupComponents.second = wakeupComponents.second
+
+            guard let wakeupTime = calendar.date(from: nextWakeupComponents) else {
+                continue
+            }
+
+            scheduledWakeups.append(wakeupTime)
+            scheduleAlarmWithBackupNotifications(
+                Alarm(id: AlarmConstants.initialAlarmId, isActive: true, time: wakeupTime),
+                salivaId: nil,
+                studyDay: studyDay
+            )
+
+            let futureAlarmTimes = alarmTimes(for: wakeupTime)
+            for (sampleId, alarmTime) in futureAlarmTimes.enumerated() {
+                scheduleAlarmWithBackupNotifications(
+                    Alarm(id: sampleId, isActive: true, time: alarmTime),
+                    salivaId: "\(startSample + sampleId)",
+                    studyDay: studyDay
+                )
+            }
+        }
+
+        pendingWakeupNotificationTimes = scheduledWakeups
+    }
+
+    private func notificationIdentifier(alarmId: Int, backupIndex: Int, studyDay: Int?) -> String {
+        guard let studyDay else {
+            return "\(alarmId)_\(backupIndex)"
+        }
+
+        return "\(alarmId)_\(backupIndex)_day\(studyDay)"
     }
 
     func triggerWakeupSampleIfNeeded() -> Alarm? {
@@ -845,11 +1023,13 @@ class AlarmViewModel : ObservableObject {
         timedAlarms = []
         isEveningScanned = false
         studyDayCounter = 0
+        lastFinishedStudyDayCounter = 0
         isDarkModeOn = nil
         eveningReminderTime = nil
         lastEveningReminderSelection = nil
-        pendingWakeupNotificationTime = nil
+        pendingWakeupNotificationTimes = []
         shouldFinishPreviousDayOnWakeup = false
+        studyDaysToFinishOnWakeup = []
         shouldPromptForEveningReminderSetup = false
         dateOfLastInitialAlarm = Date.distantPast
         dateOfLastConfirmedWakeup = Date.distantPast
@@ -876,13 +1056,14 @@ class AlarmViewModel : ObservableObject {
         }
     }
 
-    private func savePendingWakeupNotificationTime() {
-        if let pendingWakeupNotificationTime {
-            if let encodedPendingWakeupNotificationTime = try? JSONEncoder().encode(pendingWakeupNotificationTime) {
-                UserDefaults.standard.set(encodedPendingWakeupNotificationTime, forKey: pendingWakeupNotificationTimeKey)
-            }
-        } else {
+    private func savePendingWakeupNotificationTimes() {
+        if pendingWakeupNotificationTimes.isEmpty {
+            UserDefaults.standard.removeObject(forKey: pendingWakeupNotificationTimesKey)
             UserDefaults.standard.removeObject(forKey: pendingWakeupNotificationTimeKey)
+        } else {
+            if let encodedPendingWakeupNotificationTimes = try? JSONEncoder().encode(pendingWakeupNotificationTimes) {
+                UserDefaults.standard.set(encodedPendingWakeupNotificationTimes, forKey: pendingWakeupNotificationTimesKey)
+            }
         }
     }
 }

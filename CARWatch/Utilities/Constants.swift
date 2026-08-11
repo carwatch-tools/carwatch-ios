@@ -31,6 +31,7 @@ struct AlarmConstants {
     static let initialAlarmId = -1
     static let timedAlarmId = "timed"
     static let eveningAlarmId = 815
+    static let studyDayCutoffHours = 18
     
     static let eveningAlarmLoggerPrefix = "A"
 }
@@ -153,7 +154,7 @@ struct MenuConstants {
     static let killButtonClickCountActivate: Int = 5
     static let killButtonClickCountAlert: Int = 2
     enum ToastType {
-        case clickToKill, killSuccess, zipLogsFailed
+        case clickToKill, killSuccess, zipLogsFailed, studyDayFinished
     }
 }
 
@@ -206,6 +207,7 @@ struct LoggerConstants {
     public static let loggerExtraBarcodeValue = "barcode_value"
     public static let loggerExtraOtherBarcodes = "other_barcodes"
     public static let loggerExtraDayCounter = "day_counter"
+    public static let loggerExtraDayFinishReason = "reason"
     public static let loggerExtraParticipantId = "participant_id"
     public static let loggerExtraScannedDay = "day_scanned"
     public static let loggerExtraExpectedDay = "day_expected"

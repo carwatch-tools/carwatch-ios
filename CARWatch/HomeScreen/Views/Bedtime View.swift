@@ -11,8 +11,9 @@ struct BedtimeView: View {
     @State var showToast: Bool = false
     @State var toastType: NotificationConstants.BedtimeToastType = .feedbackToast
 
-    @State var isBarcodeScannerPresented : Bool = false
-    @State var alarmId : Int? = AlarmConstants.eveningAlarmId
+    @Binding var isScannerPresented: Bool
+    @Binding var alarmId: Int?
+    @Binding var scannerSource: ScannerPresentationSource?
     @State private var showStudyFinishedAlert: Bool = false
     private var isDarkModeEnabled: Bool {
         alarmVM.isDarkModeOn ?? (colorScheme == .dark)
@@ -143,21 +144,6 @@ struct BedtimeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(bedtimeBackgroundColor.ignoresSafeArea())
         }
-        .sheet(isPresented: $isBarcodeScannerPresented) {
-            ScannerView(
-                isPresented: $isBarcodeScannerPresented,
-                alarmId: $alarmId,
-                pendingWakeupConfirmationTime: .constant(nil),
-                codeType: .ean8
-            )
-                .interactiveDismissDisabled()
-                .environmentObject(alarmVM)
-        }
-        .onChange(of: isBarcodeScannerPresented) { isPresented in
-            if !isPresented && alarmVM.isStudyFinished() {
-                showStudyFinishedAlert = true
-            }
-        }
         .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
             let color = Color(UIColor.secondarySystemBackground)
             switch toastType {
@@ -193,7 +179,9 @@ struct BedtimeView: View {
         Button("YES") {
             if studyDataVM.studyData.hasEveningSample {
                 if !alarmVM.isEveningScanned {
-                    isBarcodeScannerPresented = true
+                    alarmId = AlarmConstants.eveningAlarmId
+                    scannerSource = .schedule
+                    isScannerPresented = true
                 } else if alarmVM.isStudyFinished() {
                     showStudyFinishedAlert = true
                 } else {
@@ -233,7 +221,11 @@ struct BedtimeView: View {
 }
 
 #Preview {
-    BedtimeView()
+    BedtimeView(
+        isScannerPresented: .constant(false),
+        alarmId: .constant(AlarmConstants.eveningAlarmId),
+        scannerSource: .constant(nil)
+    )
         .environmentObject(AlarmViewModel())
         .environmentObject(StudyDataViewModel())
 }

@@ -35,9 +35,15 @@ struct OngoingStudyView: View {
     @State private var showDueSampleAlert: Bool = false
     @State private var dueSampleAlertTitle: String = ""
     @State private var showWakeupRequiredBeforeSampleAlert: Bool = false
+    @State private var showPreviousDayUnfinishedWakeupAlert: Bool = false
+    @State private var showSampleDayChoiceAlert: Bool = false
     @State private var pendingForegroundNotificationIdentifier: String? = nil
     @State private var hasAppeared = false
     @State private var pendingBedtimeTabAfterEveningReminder = false
+    @State private var isDeferringScannerForDayChoice = false
+    @State private var skipDayChoiceForNextScannerPresentation = false
+    @State private var shouldFinishPreviousDayAfterLateScan = false
+    @State private var didFinishPreviousDayAfterLateScan = false
 
     private var preferredColorScheme: ColorScheme? {
         guard let isDarkModeOn = alarmVM.isDarkModeOn else {
@@ -51,16 +57,18 @@ struct OngoingStudyView: View {
         appearance.configureWithDefaultBackground()
 
         let normalAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 14, weight: .semibold)
+            .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: UIColor.secondaryLabel
         ]
         let selectedAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 14, weight: .bold)
+            .font: UIFont.systemFont(ofSize: 14, weight: .bold),
+            .foregroundColor: UIColor.systemBlue
         ]
 
         [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance].forEach { itemAppearance in
             itemAppearance.normal.titleTextAttributes = normalAttributes
             itemAppearance.selected.titleTextAttributes = selectedAttributes
-            itemAppearance.normal.iconColor = UIColor.systemBlue.withAlphaComponent(0.8)
+            itemAppearance.normal.iconColor = UIColor.secondaryLabel
             itemAppearance.selected.iconColor = UIColor.systemBlue
         }
 
@@ -81,6 +89,7 @@ struct OngoingStudyView: View {
                         isScannerPresented: $isBarcodeScannerPresented,
                         scannerSource: $scannerSource,
                         pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime,
+                        showPreviousDayUnfinishedAlert: $showPreviousDayUnfinishedWakeupAlert,
                         onDelayedSampleAcknowledged: {
                             selectedTab = 1
                         }
@@ -94,13 +103,18 @@ struct OngoingStudyView: View {
                         initialAlarmTime: $initialAlarmTime,
                         isScannerPresented: $isBarcodeScannerPresented,
                         currentAlarmId: $currentAlarmId,
-                        scannerSource: $scannerSource
+                        scannerSource: $scannerSource,
+                        pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime
                     )
                         .tabItem {
                             tabItemLabel(title: "Schedule", systemImage: "alarm")
                         }.tag(1)
                         .environmentObject(alarmVM)
-                    BedtimeView()
+                    BedtimeView(
+                        isScannerPresented: $isBarcodeScannerPresented,
+                        alarmId: $currentAlarmId,
+                        scannerSource: $scannerSource
+                    )
                         .tabItem {
                             tabItemLabel(title: "Bedtime", systemImage: "bed.double")
                         }.tag(2)
@@ -126,6 +140,8 @@ struct OngoingStudyView: View {
                         toastMsg = localizedAppString("All reminders were deactivated!")
                     case .zipLogsFailed:
                         toastMsg = localizedAppString("Generating the logs failed.\nPlease try again later!")
+                    case .studyDayFinished:
+                        toastMsg = localizedAppString("The current study day has been finished.\nPlease check your wakeup alarm for tomorrow.")
                     }
                     let color = Color(UIColor.secondarySystemBackground)
                     return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
@@ -162,16 +178,32 @@ struct OngoingStudyView: View {
             }
             .onChange(of: isBarcodeScannerPresented) { isPresented in
                 if isPresented {
+                    if skipDayChoiceForNextScannerPresentation {
+                        skipDayChoiceForNextScannerPresentation = false
+                        return
+                    }
+
+                    if shouldAskWhichStudyDateThisScanBelongsTo() {
+                        isDeferringScannerForDayChoice = true
+                        isBarcodeScannerPresented = false
+                        showSampleDayChoiceAlert = true
+                    }
+
                     return
                 }
 
-                let scannedNonEveningSample: Bool = {
+                if isDeferringScannerForDayChoice {
+                    isDeferringScannerForDayChoice = false
+                    return
+                }
+
+                let didScanSelectedSample: Bool = {
                     guard let currentAlarmId else {
                         return false
                     }
 
-                    guard currentAlarmId != AlarmConstants.eveningAlarmId else {
-                        return false
+                    if currentAlarmId == AlarmConstants.eveningAlarmId {
+                        return alarmVM.isEveningScanned
                     }
 
                     guard let scannedAlarm = alarmVM.getAlarmById(alarmId: currentAlarmId) else {
@@ -180,9 +212,22 @@ struct OngoingStudyView: View {
 
                     return scannedAlarm.isScanned
                 }()
+                let scannedNonEveningSample = didScanSelectedSample && currentAlarmId != AlarmConstants.eveningAlarmId
+
+                if shouldFinishPreviousDayAfterLateScan {
+                    shouldFinishPreviousDayAfterLateScan = false
+                    if didScanSelectedSample {
+                        didFinishPreviousDayAfterLateScan = alarmVM.finishPreviousStudyDayAfterLateScan(scannedSampleId: currentAlarmId)
+                    }
+                }
 
                 if scannerSource != nil && alarmVM.didCompleteLastScheduledSample {
-                    if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
+                    if didFinishPreviousDayAfterLateScan && !alarmVM.isStudyFinished() {
+                        pendingBedtimeTabAfterEveningReminder = false
+                        selectedTab = 0
+                        scheduleCompletionTitle = localizedAppString("Previous Study Day Finished")
+                        scheduleCompletionMessage = localizedAppString("The previous study day has been finished. Please continue with today's wakeup when you are ready.")
+                    } else if alarmVM.hasEveningSample && !alarmVM.isEveningScanned {
                         if alarmVM.eveningReminderTime == nil {
                             pendingBedtimeTabAfterEveningReminder = true
                             alarmVM.shouldPromptForEveningReminderSetup = true
@@ -209,6 +254,7 @@ struct OngoingStudyView: View {
                 }
 
                 alarmVM.didCompleteLastScheduledSample = false
+                didFinishPreviousDayAfterLateScan = false
                 currentAlarmId = nil
                 scannerSource = nil
                 pendingWakeupConfirmationTime = nil
@@ -246,6 +292,7 @@ struct OngoingStudyView: View {
                     if shouldRequireWakeupBeforeSampleScan() {
                         showWakeupRequiredBeforeSampleAlert = true
                     } else {
+                        preparePendingWakeupConfirmationIfNeeded()
                         isBarcodeScannerPresented = true
                     }
                 }
@@ -257,7 +304,9 @@ struct OngoingStudyView: View {
             }
             .alert(localizedAppString("Wakeup not recorded"), isPresented: $showWakeupRequiredBeforeSampleAlert) {
                 Button(localizedAppString("Record Wakeup Now")) {
-                    alarmVM.confirmWakeup(at: Date())
+                    if !alarmVM.shouldResolvePreviousStudyDayBeforeScanning() {
+                        alarmVM.confirmWakeup(at: Date())
+                    }
                     isBarcodeScannerPresented = true
                 }
                 Button(localizedAppString("Cancel"), role: .cancel) {
@@ -267,6 +316,21 @@ struct OngoingStudyView: View {
                 }
             } message: {
                 Text(localizedAppString("You have not recorded your wakeup yet. Please record wakeup before scanning this sample."))
+            }
+            .alert(sampleDayChoiceTitle, isPresented: $showSampleDayChoiceAlert) {
+                Button(previousStudyDateButtonTitle) {
+                    continueScanForPreviousDate()
+                }
+                Button(currentStudyDateButtonTitle) {
+                    continueScanForCurrentDate()
+                }
+                Button(localizedAppString("Cancel"), role: .cancel) {
+                    currentAlarmId = nil
+                    scannerSource = nil
+                    pendingWakeupConfirmationTime = nil
+                }
+            } message: {
+                Text(sampleDayChoiceMessage)
             }
             .onChange(of: showScheduleCompletionAlert) { isPresented in
                 guard isPresented else {
@@ -294,6 +358,121 @@ struct OngoingStudyView: View {
         case 2: return "Bedtime"
         default: return "Title"
         }
+    }
+
+    private var sampleDayChoiceTitle: String {
+        localizedAppString("Which study day is this sample for?")
+    }
+
+    private var sampleDayChoiceMessage: String {
+        let consequenceMessage: String
+        if isWakeupSampleConfiguredForTodayChoice() {
+            consequenceMessage = localizedAppString("If you choose today, the current time is used as your wakeup time and you will be able to record your wakeup sample.")
+        } else {
+            consequenceMessage = localizedAppString("If you choose today, the current time is used as your wakeup time.")
+        }
+
+        return String(
+            format: localizedAppString("The previous study day from %@ still has missing samples and the %lld-hour cutoff has been reached. Please choose whether this scan belongs to that day or to today, %@.\n\n%@"),
+            formattedStudyDate(alarmVM.dateOfLastInitialAlarm),
+            Int64(AlarmConstants.studyDayCutoffHours),
+            formattedStudyDate(Date()),
+            consequenceMessage
+        )
+    }
+
+    private var previousStudyDateButtonTitle: String {
+        String(
+            format: localizedAppString("Previous day (%@)"),
+            formattedStudyDate(alarmVM.dateOfLastInitialAlarm)
+        )
+    }
+
+    private var currentStudyDateButtonTitle: String {
+        String(
+            format: localizedAppString("Today (%@)"),
+            formattedStudyDate(Date())
+        )
+    }
+
+    private func formattedStudyDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private func shouldAskWhichStudyDateThisScanBelongsTo() -> Bool {
+        alarmVM.shouldResolvePreviousStudyDayBeforeScanning()
+    }
+
+    private func isWakeupSampleConfiguredForTodayChoice() -> Bool {
+        alarmVM.timeIntervals.first == 0
+    }
+
+    private func continueScanForPreviousDate() {
+        guard let previousDaySampleId = alarmVM.lastMissingSampleIdForCurrentStudyDay() else {
+            isBarcodeScannerPresented = false
+            currentAlarmId = nil
+            scannerSource = nil
+            pendingWakeupConfirmationTime = nil
+            return
+        }
+
+        currentAlarmId = previousDaySampleId
+        scannerSource = .schedule
+        selectedTab = previousDaySampleId == AlarmConstants.eveningAlarmId ? 2 : 1
+        shouldFinishPreviousDayAfterLateScan = true
+        skipDayChoiceForNextScannerPresentation = true
+        isBarcodeScannerPresented = true
+    }
+
+    private func continueScanForCurrentDate() {
+        let wakeupTime = Date()
+        alarmVM.finishPreviousStudyDayAndStartTodayForScan(at: wakeupTime)
+
+        if alarmVM.isStudyFinished() {
+            isBarcodeScannerPresented = false
+            selectedTab = 2
+            scheduleCompletionTitle = localizedAppString("Study Finished")
+            scheduleCompletionMessage = localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email.")
+            showScheduleCompletionAlert = true
+            currentAlarmId = nil
+            scannerSource = nil
+            pendingWakeupConfirmationTime = nil
+            return
+        }
+
+        guard let currentAlarm = alarmVM.getCurrentlyTriggeredAlarm() else {
+            isBarcodeScannerPresented = false
+            currentAlarmId = nil
+            scannerSource = nil
+            pendingWakeupConfirmationTime = nil
+            selectedTab = 1
+            presentPostWakeupSampleMessageIfNeeded(wakeupTime: wakeupTime)
+            return
+        }
+
+        currentAlarmId = currentAlarm.id
+        scannerSource = .wakeup
+        skipDayChoiceForNextScannerPresentation = true
+        isBarcodeScannerPresented = true
+    }
+
+    private func presentPostWakeupSampleMessageIfNeeded(wakeupTime: Date) {
+        guard let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() else {
+            return
+        }
+
+        let delayedSampleMinutes = Int(
+            ceil(nextTimedAlarm.time.timeIntervalSince(wakeupTime) / 60)
+        )
+        scheduleCompletionTitle = localizedAppString("Delayed sample planned")
+        scheduleCompletionMessage = String(
+            format: localizedAppString("A delayed sample is planned for your study. You will receive a reminder to take that sample in %lld minutes."),
+            Int64(delayedSampleMinutes)
+        )
+        showScheduleCompletionAlert = true
     }
 
     @ViewBuilder
@@ -364,11 +543,14 @@ struct OngoingStudyView: View {
             return nil
         }
 
-        if alarmId == AlarmConstants.initialAlarmId {
-            alarmVM.setUpcomingAlarmTriggered()
-            if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
-                return nil
-            }
+            if alarmId == AlarmConstants.initialAlarmId {
+                alarmVM.setUpcomingAlarmTriggered()
+                if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                    initialAlarmTime = Date()
+                    selectedTab = 0
+                    showPreviousDayUnfinishedWakeupAlert = true
+                    return nil
+                }
 
             guard let triggeredAlarm = alarmVM.getCurrentlyTriggeredAlarm() else {
                 return nil
@@ -451,13 +633,16 @@ struct OngoingStudyView: View {
                 if tappedAlarmId == AlarmConstants.initialAlarmId {
                     alarmVM.setUpcomingAlarmTriggered()
                     if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                        initialAlarmTime = Date()
                         selectedTab = 0
+                        showPreviousDayUnfinishedWakeupAlert = true
                         return
                     }
 
                     if let alarm = alarmVM.getCurrentlyTriggeredAlarm() {
                         currentAlarmId = alarm.id
                         scannerSource = .wakeup
+                        pendingWakeupConfirmationTime = Date()
                         isBarcodeScannerPresented = true
                     }
                 } else if tappedAlarmId == AlarmConstants.eveningAlarmId {
@@ -475,6 +660,7 @@ struct OngoingStudyView: View {
                         selectedTab = 1
                         showWakeupRequiredBeforeSampleAlert = true
                     } else {
+                        preparePendingWakeupConfirmationIfNeeded()
                         isBarcodeScannerPresented = true
                     }
                 }
@@ -482,7 +668,9 @@ struct OngoingStudyView: View {
                 // fallback when no specific notification identifier is available
                 alarmVM.setUpcomingAlarmTriggered()
                 if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                    initialAlarmTime = Date()
                     selectedTab = 0
+                    showPreviousDayUnfinishedWakeupAlert = true
                     return
                 }
 
@@ -493,6 +681,7 @@ struct OngoingStudyView: View {
                         selectedTab = 1
                         showWakeupRequiredBeforeSampleAlert = true
                     } else {
+                        preparePendingWakeupConfirmationIfNeeded()
                         isBarcodeScannerPresented = true
                     }
                 }
@@ -517,6 +706,14 @@ struct OngoingStudyView: View {
         }
 
         return !alarmVM.isWakeupConfirmedToday()
+    }
+
+    private func preparePendingWakeupConfirmationIfNeeded() {
+        guard scannerSource == .wakeup, !alarmVM.isWakeupConfirmedToday() else {
+            return
+        }
+
+        pendingWakeupConfirmationTime = Date()
     }
 
     private func consumePendingAlarmKitOpenIdentifier() -> String? {

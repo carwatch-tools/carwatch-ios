@@ -48,6 +48,15 @@ class NotificationManager {
     
     func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int, second: Int) {
         let dateComponents = DateComponents(day: day, hour: hour, minute: minute, second: second)
+        scheduleCalendarBasedNotification(id: id, salivaId: salivaId, dateComponents: dateComponents)
+    }
+
+    func scheduleCalendarBasedNotification(id: String, salivaId: String?, date: Date) {
+        let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        scheduleCalendarBasedNotification(id: id, salivaId: salivaId, dateComponents: dateComponents)
+    }
+
+    private func scheduleCalendarBasedNotification(id: String, salivaId: String?, dateComponents: DateComponents) {
         if let salivaId, scheduleSampleAlarm(id: id, salivaId: salivaId, dateComponents: dateComponents) {
             return
         }

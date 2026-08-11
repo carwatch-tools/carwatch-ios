@@ -23,6 +23,7 @@ struct MainViewToolbarMenu: View {
     @State private var showFinishStudyDayConfirmation = false
     @State private var showDeleteLogsConfirmation = false
     @State private var showKillNotificationsConfirmation = false
+    @State private var showStudyFinishedAlert = false
     
     var body: some View {
         Menu {
@@ -140,6 +141,11 @@ struct MainViewToolbarMenu: View {
         } message: {
             Text("All scheduled reminders will be deactivated.")
         }
+        .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email."))
+        }
         .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
                 let subject = zipFileURL.lastPathComponent
@@ -179,6 +185,7 @@ struct MainViewToolbarMenu: View {
     }
 
     private func performFinishStudyDay() {
+        let isFinishingCurrentStudyDate = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
         let didFinishDay = alarmVM.finishCurrentStudyDay()
 
         guard didFinishDay else {
@@ -186,6 +193,12 @@ struct MainViewToolbarMenu: View {
         }
 
         selectedTab = 2
+        if alarmVM.isStudyFinished() {
+            showStudyFinishedAlert = true
+        } else if isFinishingCurrentStudyDate {
+            toastType = .studyDayFinished
+            showToast = true
+        }
     }
 
     private func performDeleteLogs() {
@@ -272,4 +285,5 @@ private struct StudyInformationSheet: View {
     .environmentObject(SessionViewModel())
     .environmentObject(StudyDataViewModel())
     .environmentObject(AlarmViewModel())
+    .environmentObject(PermissionDataViewModel())
 }

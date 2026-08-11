@@ -22,6 +22,7 @@ struct ScannerView: View {
     @State var alertType: ScannerConstants.AlertType = .invalid
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
+    @State private var didAcceptScanInCurrentSession = false
     
     private let rotationChangePublisher = NotificationCenter.default
         .publisher(for: UIDevice.orientationDidChangeNotification)
@@ -49,6 +50,7 @@ struct ScannerView: View {
         }
         .accessibilityElement(children: .contain)
         .onAppear {
+            didAcceptScanInCurrentSession = false
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isBackButtonFocused = true
                 postAccessibilityScreenChanged(nil)
@@ -138,6 +140,10 @@ struct ScannerView: View {
     }
     
     func validateScanResult(result: String) -> Bool {
+        guard !didAcceptScanInCurrentSession else {
+            return false
+        }
+
         switch codeType {
         case .ean8:
             // remove check digit
@@ -233,8 +239,13 @@ struct ScannerView: View {
     }
     
     func handleScanResult(result: Result<String, ScanError>){
+        guard !didAcceptScanInCurrentSession else {
+            return
+        }
+
         switch result {
         case .success(let result):
+            didAcceptScanInCurrentSession = true
             alertType = .success
             showAlert = true
             switch codeType {
