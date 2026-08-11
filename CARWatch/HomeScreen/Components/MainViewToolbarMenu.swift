@@ -177,6 +177,7 @@ struct MainViewToolbarMenu: View {
     private func performReregister() {
 #if DEBUG
         UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
 #endif
         alarmVM.resetAlarmDataForNewUser()
         studyDataVM.resetStudyData()

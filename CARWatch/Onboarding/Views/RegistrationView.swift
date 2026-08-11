@@ -678,6 +678,12 @@ struct RegistrationView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
+
+                        Button("Open Demo Study History") {
+                            loadDemoStudyHistory()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
 #endif
                     }
                 }
@@ -688,6 +694,7 @@ struct RegistrationView: View {
 #if DEBUG
     private func loadDemoStudy() {
         UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
         studyDataVM.studyData = StudyData(
             isValid: true,
             studyName: "Demo Cortisol Awakening Response Study",
@@ -706,6 +713,7 @@ struct RegistrationView: View {
 
     private func loadDemoOngoingStudy() {
         UserDefaults.standard.set(true, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
 
         permissionDataVM.permissionData = PermissionData(
             notificationPermissionGranted: true,
@@ -735,6 +743,36 @@ struct RegistrationView: View {
             shareEmailAdress: "preview@example.com",
             isCheckDuplicatesEnabled: false,
             participantId: "preview"
+        )
+
+        sessionVM.startStudy()
+    }
+
+    private func loadDemoStudyHistory() {
+        UserDefaults.standard.set(true, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.set("history", forKey: AppConstants.demoOngoingStudyVariantKey)
+
+        permissionDataVM.permissionData = PermissionData(
+            notificationPermissionGranted: true,
+            notificationPermissionDialogHandled: true,
+            alarmPermissionGranted: true,
+            alarmPermissionDialogHandled: true,
+            cameraPermissionGranted: true,
+            cameraPermissionDialogHandled: true
+        )
+
+        studyDataVM.studyData = StudyData(
+            isValid: true,
+            studyName: "Demo Study History",
+            salivaDistances: [0, 15, 30, 45],
+            salivaTimes: [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)],
+            startSample: "S1",
+            studyDays: 5,
+            numParticipants: 1,
+            hasEveningSample: true,
+            shareEmailAdress: "study@example.com",
+            isCheckDuplicatesEnabled: false,
+            participantId: "history-demo"
         )
 
         sessionVM.startStudy()

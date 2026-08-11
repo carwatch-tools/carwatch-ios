@@ -8,6 +8,11 @@ enum ScannerPresentationSource {
     case notification
 }
 
+private enum StudyDayChoiceContext {
+    case openingAfterCutoff
+    case scanningAfterCutoff
+}
+
 struct OngoingStudyView: View {
     @StateObject var alarmVM: AlarmViewModel
     
@@ -37,6 +42,8 @@ struct OngoingStudyView: View {
     @State private var showWakeupRequiredBeforeSampleAlert: Bool = false
     @State private var showPreviousDayUnfinishedWakeupAlert: Bool = false
     @State private var showSampleDayChoiceAlert: Bool = false
+    @State private var studyDayChoiceContext: StudyDayChoiceContext = .scanningAfterCutoff
+    @State private var didPromptForCutoffChoice = false
     @State private var pendingForegroundNotificationIdentifier: String? = nil
     @State private var hasAppeared = false
     @State private var pendingBedtimeTabAfterEveningReminder = false
@@ -162,12 +169,14 @@ struct OngoingStudyView: View {
             .onForeground {
                 updateAlarmStatus()
                 checkScannerStatus()
+                presentCutoffStudyDayChoiceIfNeeded()
             }
             .onAppear {
                 configureTabBarAppearance()
                 initializeStudyData()
                 updateTimedAlarms()
                 checkScannerStatus()
+                presentCutoffStudyDayChoiceIfNeeded()
                 if !hasAppeared {
                     hasAppeared = true
                     announceCurrentTab()
@@ -186,6 +195,7 @@ struct OngoingStudyView: View {
                     if shouldAskWhichStudyDateThisScanBelongsTo() {
                         isDeferringScannerForDayChoice = true
                         isBarcodeScannerPresented = false
+                        studyDayChoiceContext = .scanningAfterCutoff
                         showSampleDayChoiceAlert = true
                     }
 
@@ -319,10 +329,10 @@ struct OngoingStudyView: View {
             }
             .alert(sampleDayChoiceTitle, isPresented: $showSampleDayChoiceAlert) {
                 Button(previousStudyDateButtonTitle) {
-                    continueScanForPreviousDate()
+                    continueWithPreviousStudyDate()
                 }
                 Button(currentStudyDateButtonTitle) {
-                    continueScanForCurrentDate()
+                    continueWithCurrentStudyDate()
                 }
                 Button(localizedAppString("Cancel"), role: .cancel) {
                     currentAlarmId = nil
@@ -361,10 +371,28 @@ struct OngoingStudyView: View {
     }
 
     private var sampleDayChoiceTitle: String {
-        localizedAppString("Which study day is this sample for?")
+        switch studyDayChoiceContext {
+        case .openingAfterCutoff:
+            return localizedAppString("Continue or start a study day?")
+        case .scanningAfterCutoff:
+            return localizedAppString("Which study day is this sample for?")
+        }
     }
 
     private var sampleDayChoiceMessage: String {
+        switch studyDayChoiceContext {
+        case .openingAfterCutoff:
+            return String(
+                format: localizedAppString("The study day that started at %@ still has missing samples. Please choose whether you want to continue the current study day or finish it and start a new study day today, %@."),
+                formattedStudyDateTime(unresolvedStudyDayStartTime),
+                formattedStudyDate(Date())
+            )
+        case .scanningAfterCutoff:
+            return scanDayChoiceMessage
+        }
+    }
+
+    private var scanDayChoiceMessage: String {
         let consequenceMessage: String
         if isWakeupSampleConfiguredForTodayChoice() {
             consequenceMessage = localizedAppString("If you choose today, the current time is used as your wakeup time and you will be able to record your wakeup sample.")
@@ -373,9 +401,8 @@ struct OngoingStudyView: View {
         }
 
         return String(
-            format: localizedAppString("The previous study day from %@ still has missing samples and the %lld-hour cutoff has been reached. Please choose whether this scan belongs to that day or to today, %@.\n\n%@"),
-            formattedStudyDate(alarmVM.dateOfLastInitialAlarm),
-            Int64(AlarmConstants.studyDayCutoffHours),
+            format: localizedAppString("The previous study day that started at %@ still has missing samples. Please choose whether this scan belongs to that study day or to today, %@.\n\n%@"),
+            formattedStudyDateTime(alarmVM.dateOfLastInitialAlarm),
             formattedStudyDate(Date()),
             consequenceMessage
         )
@@ -384,7 +411,7 @@ struct OngoingStudyView: View {
     private var previousStudyDateButtonTitle: String {
         String(
             format: localizedAppString("Previous day (%@)"),
-            formattedStudyDate(alarmVM.dateOfLastInitialAlarm)
+            formattedStudyDate(unresolvedStudyDayStartTime)
         )
     }
 
@@ -402,15 +429,60 @@ struct OngoingStudyView: View {
         return formatter.string(from: date)
     }
 
+    private func formattedStudyDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    private var unresolvedStudyDayStartTime: Date {
+        alarmVM.pendingUnfinishedStudyDayStartTimeForWakeupConfirmation() ?? alarmVM.dateOfLastInitialAlarm
+    }
+
     private func shouldAskWhichStudyDateThisScanBelongsTo() -> Bool {
         alarmVM.shouldResolvePreviousStudyDayBeforeScanning()
+    }
+
+    private func presentCutoffStudyDayChoiceIfNeeded() {
+        let shouldPresentChoice = alarmVM.shouldResolvePreviousStudyDayBeforeScanning()
+            || alarmVM.shouldFinishPreviousDayOnWakeupConfirmation()
+
+        guard shouldPresentChoice else {
+            didPromptForCutoffChoice = false
+            return
+        }
+
+        guard !didPromptForCutoffChoice,
+              !isBarcodeScannerPresented,
+              !showSampleDayChoiceAlert,
+              !showPreviousDayUnfinishedWakeupAlert,
+              !showWakeupRequiredBeforeSampleAlert,
+              !showDueSampleAlert,
+              !showScheduleCompletionAlert else {
+            return
+        }
+
+        studyDayChoiceContext = .openingAfterCutoff
+        didPromptForCutoffChoice = true
+        selectedTab = 1
+        showSampleDayChoiceAlert = true
     }
 
     private func isWakeupSampleConfiguredForTodayChoice() -> Bool {
         alarmVM.timeIntervals.first == 0
     }
 
-    private func continueScanForPreviousDate() {
+    private func continueWithPreviousStudyDate() {
+        if studyDayChoiceContext == .openingAfterCutoff {
+            didPromptForCutoffChoice = false
+            currentAlarmId = nil
+            scannerSource = nil
+            pendingWakeupConfirmationTime = nil
+            selectedTab = 1
+            return
+        }
+
         guard let previousDaySampleId = alarmVM.lastMissingSampleIdForCurrentStudyDay() else {
             isBarcodeScannerPresented = false
             currentAlarmId = nil
@@ -427,9 +499,21 @@ struct OngoingStudyView: View {
         isBarcodeScannerPresented = true
     }
 
-    private func continueScanForCurrentDate() {
+    private func continueWithCurrentStudyDate() {
         let wakeupTime = Date()
+        if studyDayChoiceContext == .openingAfterCutoff,
+           alarmVM.finishPendingPreviousStudyDayAndKeepWakeupPending() {
+            didPromptForCutoffChoice = false
+            isBarcodeScannerPresented = false
+            currentAlarmId = nil
+            scannerSource = nil
+            pendingWakeupConfirmationTime = nil
+            selectedTab = 1
+            return
+        }
+
         alarmVM.finishPreviousStudyDayAndStartTodayForScan(at: wakeupTime)
+        didPromptForCutoffChoice = false
 
         if alarmVM.isStudyFinished() {
             isBarcodeScannerPresented = false

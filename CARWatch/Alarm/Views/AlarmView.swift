@@ -37,6 +37,7 @@ struct AlarmView: View {
     @State private var showPostWakeupAlert: Bool = false
     @State private var delayedSampleMinutes: Int = 0
     @State private var postWakeupAlertType: SchedulePostWakeupAlertType = .delayedSample
+    @State private var displayedStudyDay: Int = 0
 
     private var isWakeupTimeSelectionDisabled: Bool {
         alarmVM.isStudyFinished()
@@ -59,22 +60,121 @@ struct AlarmView: View {
     }
 
     private var currentStudyDayText: String {
-        guard alarmVM.studyDayCounter > 0 else {
+        guard selectedStudyDay > 0 else {
             return localizedAppString("Study day not started")
         }
 
         if alarmVM.numStudyDays > 0 {
             return String(
                 format: localizedAppString("Study day %lld of %lld"),
-                Int64(alarmVM.studyDayCounter),
+                Int64(selectedStudyDay),
                 Int64(alarmVM.numStudyDays)
             )
         }
 
         return String(
             format: localizedAppString("Study day %lld"),
-            Int64(alarmVM.studyDayCounter)
+            Int64(selectedStudyDay)
         )
+    }
+
+    private var selectedStudyDay: Int {
+        let fallbackDay = max(scheduleActiveStudyDay, 1)
+        let day = displayedStudyDay == 0 ? fallbackDay : displayedStudyDay
+        guard alarmVM.numStudyDays > 0 else {
+            return day
+        }
+        return min(max(day, 1), alarmVM.numStudyDays)
+    }
+
+    private var scheduleActiveStudyDay: Int {
+        alarmVM.pendingUnfinishedStudyDayForWakeupConfirmation() ?? alarmVM.studyDayCounter
+    }
+
+    private var isShowingCurrentStudyDay: Bool {
+        selectedStudyDay == scheduleActiveStudyDay || scheduleActiveStudyDay == 0 && selectedStudyDay == 1
+    }
+
+    private var isShowingFutureStudyDay: Bool {
+        scheduleActiveStudyDay > 0 && selectedStudyDay > scheduleActiveStudyDay
+    }
+
+    private var displayedTimedAlarms: [Alarm] {
+        if let summary = alarmVM.studyDaySummary(for: selectedStudyDay) {
+            return summary.timedAlarms
+        }
+
+        return alarmVM.scheduledTimedAlarms(forStudyDay: selectedStudyDay)
+    }
+
+    private var displayedSampleAlarms: [Alarm] {
+        var alarms = displayedTimedAlarms
+        guard studyDataVM.studyData.hasEveningSample && !isShowingCurrentStudyDay else {
+            return alarms
+        }
+
+        let summary = alarmVM.studyDaySummary(for: selectedStudyDay)
+        alarms.append(
+            Alarm(
+                id: AlarmConstants.eveningAlarmId,
+                isActive: isShowingCurrentStudyDay ? alarmVM.eveningReminderTime != nil : true,
+                isScanned: isShowingCurrentStudyDay ? alarmVM.isEveningScanned : summary?.isEveningScanned ?? false,
+                isTriggered: false,
+                time: displayedEveningSampleTime(summary: summary)
+            )
+        )
+        return alarms
+    }
+
+    private var currentEveningSampleAlarm: Alarm? {
+        guard studyDataVM.studyData.hasEveningSample && isShowingCurrentStudyDay else {
+            return nil
+        }
+
+        return Alarm(
+            id: AlarmConstants.eveningAlarmId,
+            isActive: alarmVM.eveningReminderTime != nil,
+            isScanned: alarmVM.isEveningScanned,
+            isTriggered: false,
+            time: displayedEveningSampleTime(summary: nil)
+        )
+    }
+
+    private var studyDayStatusText: String? {
+        if selectedStudyDay > alarmVM.studyDayCounter && alarmVM.studyDayCounter > 0 {
+            return nil
+        }
+
+        if isShowingCurrentStudyDay {
+            return nil
+        }
+
+        guard let summary = alarmVM.studyDaySummary(for: selectedStudyDay) else {
+            return localizedAppString("Study day not finished")
+        }
+
+        if !summary.isFinished {
+            return localizedAppString("Study day not finished")
+        }
+
+        let missedCount = summary.missedSampleCount
+        guard missedCount > 0 else {
+            return nil
+        }
+
+        return String(format: localizedAppString("%lld samples missed"), Int64(missedCount))
+    }
+
+    private var sampleSectionTitle: LocalizedStringKey {
+        if isShowingCurrentStudyDay {
+            return "Saliva sample reminders"
+        }
+
+        if isShowingFutureStudyDay {
+            return "Planned samples"
+        }
+
+        return "Past samples"
     }
 
     private func usesExpandedPadLayout(for size: CGSize) -> Bool {
@@ -84,7 +184,7 @@ struct AlarmView: View {
     private func reminderAccessibilityLabel(for alarm: Alarm) -> String {
         String(
             format: localizedAppString("Reminder for sample %@ at %@"),
-            "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))",
+            sampleName(for: alarm),
             getHourMinFormattedString(time: alarm.time)
         )
     }
@@ -92,9 +192,53 @@ struct AlarmView: View {
     private func sampleActionAccessibilityLabel(for alarm: Alarm) -> String {
         String(
             format: localizedAppString("Take sample %@ at %@"),
-            "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))",
+            sampleName(for: alarm),
             getHourMinFormattedString(time: alarm.time)
         )
+    }
+
+    private func sampleName(for alarm: Alarm) -> String {
+        if alarm.id == AlarmConstants.eveningAlarmId {
+            return "S\(studyDataVM.studyData.eveningSampleId + startSampleIndex)"
+        }
+
+        return "S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample))"
+    }
+
+    private var startSampleIndex: Int {
+        Int(studyDataVM.studyData.startSample.dropFirst()) ?? 0
+    }
+
+    private func sampleLabel(for alarm: Alarm) -> String {
+        "\(sampleName(for: alarm)):"
+    }
+
+    private func isToggleEditable(for alarm: Alarm) -> Bool {
+        isShowingCurrentStudyDay && alarm.id != AlarmConstants.eveningAlarmId
+    }
+
+    private func displayedEveningSampleTime(summary: StudyDaySummary?) -> Date {
+        if let summaryTime = summary?.eveningTime {
+            return summaryTime
+        }
+
+        if isShowingCurrentStudyDay {
+            return alarmVM.eveningReminderTime ?? alarmVM.lastEveningReminderSelection ?? defaultEveningReminderSelection()
+        }
+
+        let calendar = Calendar.current
+        let reference = displayedTimedAlarms.last?.time ?? alarmVM.getInitialAlarm().time
+        let sourceTime = alarmVM.lastEveningReminderSelection ?? alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
+        let sourceComponents = calendar.dateComponents([.hour, .minute], from: sourceTime)
+        var targetComponents = calendar.dateComponents([.year, .month, .day], from: reference)
+        targetComponents.hour = sourceComponents.hour ?? 21
+        targetComponents.minute = sourceComponents.minute ?? 0
+        return calendar.date(from: targetComponents) ?? reference
+    }
+
+    private func missedSampleCount(timedAlarms: [Alarm], isEveningScanned: Bool) -> Int {
+        let missedTimedSamples = timedAlarms.filter { $0.isTriggered && !$0.isScanned }.count
+        return missedTimedSamples + (studyDataVM.studyData.hasEveningSample && !isEveningScanned && alarmVM.hasReachedStudyDayCutoff() ? 1 : 0)
     }
 
     private func isAlarmMarkedMissed(_ alarm: Alarm) -> Bool {
@@ -147,57 +291,46 @@ struct AlarmView: View {
                     .padding(.bottom, usesExpandedLayout ? 36 : 12)
                 ScrollView(showsIndicators: false, content: {
                     VStack(alignment: .center, spacing: usesExpandedLayout ? 16 : 8) {
-                        Text(currentStudyDayText)
-                            .font(.system(size: usesExpandedLayout ? explanationFontSize + 4 : explanationFontSize + 2, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .accessibilityIdentifier("schedule.currentStudyDay")
+                        studyDayNavigation(fontSize: usesExpandedLayout ? explanationFontSize + 4 : explanationFontSize + 2)
 
-                        Text("Saliva sample reminders")
+                        Text(sampleSectionTitle)
                             .font(.system(size: usesExpandedLayout ? explanationFontSize + 2 : explanationFontSize))
                             .frame(maxWidth: .infinity, alignment: .center)
-                        ForEach(Array(alarmVM.timedAlarms.enumerated()), id: \.1) {
-                            index, alarm in
-                            HStack(alignment: .center, spacing: usesExpandedLayout ? 16 : (isCompact ? 8 : 10)) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    Text("S\(alarm.getSalivaId(startSample: studyDataVM.studyData.startSample)):")
-                                        .font(.system(size: explanationFontSize))
-                                        .frame(width: isCompact ? 34 : 40, alignment: .leading)
-                                        .accessibilityHidden(true)
 
-                                    Toggle("", isOn: timedAlarmActivityBinding(index: index))
-                                        .labelsHidden()
-                                        .disabled(alarm.isScanned)
-                                        .frame(width: isCompact ? 40 : 50)
-                                        .accessibilityIdentifier("schedule.toggle.\(alarm.id)")
-                                        .accessibilityLabel(reminderAccessibilityLabel(for: alarm))
-                                        .accessibilityValue(alarmVM.timedAlarmActivity.indices.contains(index) && alarmVM.timedAlarmActivity[index] ? localizedAppString("On") : localizedAppString("Off"))
-                                        .accessibilityHint(localizedAppString("Turns this sample reminder on or off."))
-
-                                    Color.clear
-                                        .frame(width: isCompact ? 4 : 6)
-                                        .accessibilityHidden(true)
-
-                                    Text(getHourMinFormattedString(time: alarm.time))
-                                        .font(.system(size: explanationFontSize))
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.85)
-                                        .frame(width: isCompact ? 74 : 92, alignment: .leading)
-                                        .accessibilityHidden(true)
-                                }
-                                sampleTrailingColumn(for: alarm, fontSize: explanationFontSize)
+                        ForEach(Array(displayedSampleAlarms.enumerated()), id: \.1) { index, alarm in
+                            if isShowingCurrentStudyDay {
+                                currentStudyDaySampleRow(
+                                    alarm: alarm,
+                                    index: index,
+                                    isCompact: isCompact,
+                                    fontSize: explanationFontSize,
+                                    usesExpandedLayout: usesExpandedLayout
+                                )
+                            } else {
+                                historicalStudyDaySampleRow(
+                                    alarm: alarm,
+                                    isCompact: isCompact,
+                                    fontSize: explanationFontSize,
+                                    usesExpandedLayout: usesExpandedLayout
+                                )
                             }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, usesExpandedLayout ? 4 : 0)
-                            .accessibilityElement(children: .contain)
                         }
 
-                        if studyDataVM.studyData.hasEveningSample {
+                        if let studyDayStatusText {
+                            Text(studyDayStatusText)
+                                .font(.system(size: explanationFontSize, weight: .semibold))
+                                .foregroundStyle(.orange)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.top, usesExpandedLayout ? 16 : 10)
+                                .accessibilityIdentifier("schedule.studyDayStatus")
+                        }
+
+                        if studyDataVM.studyData.hasEveningSample && isShowingCurrentStudyDay {
                             VStack(spacing: 6) {
                                 Text("Evening sample reminder")
                                     .font(.system(size: usesExpandedLayout ? explanationFontSize + 2 : explanationFontSize))
                                     .frame(maxWidth: .infinity, alignment: .center)
-                                eveningReminderControls(isCompact: isCompact, edgePadding: edgePadding)
+                                eveningReminderControls(isCompact: isCompact, edgePadding: edgePadding, fontSize: explanationFontSize)
                             }
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, usesExpandedLayout ? 20 : 12)
@@ -284,6 +417,7 @@ struct AlarmView: View {
                         isScheduleHeaderFocused = true
                     }
                     initialAlarmTime = alarmVM.wakeupAlarmSelectionTime()
+                    displayedStudyDay = selectedStudyDay
                     eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                     if alarmVM.shouldPromptForEveningReminderSetup && studyDataVM.studyData.hasEveningSample {
                         alarmVM.shouldPromptForEveningReminderSetup = false
@@ -313,6 +447,12 @@ struct AlarmView: View {
                         eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                         alarmVM.shouldPromptForEveningReminderSetup = false
                     }
+                }
+                .onChange(of: alarmVM.studyDayCounter) { _ in
+                    displayedStudyDay = selectedStudyDay
+                }
+                .onChange(of: alarmVM.pendingWakeupRecoveryRevision) { _ in
+                    displayedStudyDay = max(scheduleActiveStudyDay, 1)
                 }
                 Spacer()
             }
@@ -364,7 +504,9 @@ struct AlarmView: View {
 
     @ViewBuilder
     private func sampleTrailingContent(for alarm: Alarm, fontSize: CGFloat) -> some View {
-        if alarm.isScanned {
+        if !isShowingCurrentStudyDay {
+            historicalStatusIcon(for: alarm, fontSize: fontSize)
+        } else if alarm.isScanned {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: fontSize))
                 .foregroundStyle(.green)
@@ -377,6 +519,72 @@ struct AlarmView: View {
         } else {
             sampleActionButton(for: alarm, fontSize: fontSize, isMissed: alarm.isTriggered && isAlarmMarkedMissed(alarm))
         }
+    }
+
+    private func currentStudyDaySampleRow(
+        alarm: Alarm,
+        index: Int,
+        isCompact: Bool,
+        fontSize: CGFloat,
+        usesExpandedLayout: Bool
+    ) -> some View {
+        HStack(alignment: .center, spacing: usesExpandedLayout ? 16 : (isCompact ? 8 : 10)) {
+            HStack(alignment: .center, spacing: 6) {
+                Text(sampleLabel(for: alarm))
+                    .font(.system(size: fontSize))
+                    .frame(width: isCompact ? 34 : 40, alignment: .leading)
+                    .accessibilityHidden(true)
+
+                Toggle("", isOn: isToggleEditable(for: alarm) ? timedAlarmActivityBinding(index: index) : .constant(alarm.isActive))
+                    .labelsHidden()
+                    .disabled(alarm.isScanned || !isToggleEditable(for: alarm))
+                    .frame(width: isCompact ? 40 : 50)
+                    .accessibilityIdentifier("schedule.toggle.\(alarm.id)")
+                    .accessibilityLabel(reminderAccessibilityLabel(for: alarm))
+                    .accessibilityValue(alarm.isActive ? localizedAppString("On") : localizedAppString("Off"))
+                    .accessibilityHint(localizedAppString("Turns this sample reminder on or off."))
+
+                Color.clear
+                    .frame(width: isCompact ? 4 : 6)
+                    .accessibilityHidden(true)
+
+                Text(getHourMinFormattedString(time: alarm.time))
+                    .font(.system(size: fontSize))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .frame(width: isCompact ? 74 : 92, alignment: .leading)
+                    .accessibilityHidden(true)
+            }
+            sampleTrailingColumn(for: alarm, fontSize: fontSize)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, usesExpandedLayout ? 4 : 0)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func historicalStudyDaySampleRow(
+        alarm: Alarm,
+        isCompact: Bool,
+        fontSize: CGFloat,
+        usesExpandedLayout: Bool
+    ) -> some View {
+        HStack(alignment: .center, spacing: isCompact ? 22 : 30) {
+            Text(sampleLabel(for: alarm))
+                .font(.system(size: fontSize))
+                .frame(width: isCompact ? 52 : 60, alignment: .trailing)
+
+            Text(getHourMinFormattedString(time: alarm.time))
+                .font(.system(size: fontSize))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(width: isCompact ? 88 : 100, alignment: .center)
+
+            historicalStatusIcon(for: alarm, fontSize: fontSize)
+                .frame(width: isCompact ? 34 : 40, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, usesExpandedLayout ? 4 : 1)
+        .accessibilityElement(children: .combine)
     }
 
     private func sampleActionButton(for alarm: Alarm, fontSize: CGFloat, isMissed: Bool) -> some View {
@@ -428,12 +636,74 @@ struct AlarmView: View {
         }
     }
 
+    @ViewBuilder
+    private func historicalStatusIcon(for alarm: Alarm, fontSize: CGFloat) -> some View {
+        if isShowingFutureStudyDay {
+            Color.clear
+                .frame(width: 28, alignment: .center)
+                .accessibilityHidden(true)
+        } else if alarm.isScanned {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: fontSize))
+                .foregroundStyle(.green)
+                .frame(width: 28, alignment: .center)
+                .accessibilityLabel(
+                    String(
+                        format: localizedAppString("Sample %@ already recorded"),
+                        sampleName(for: alarm)
+                    )
+                )
+        } else {
+            Image(systemName: "exclamationmark.arrow.circlepath")
+                .font(.system(size: fontSize))
+                .foregroundStyle(.orange)
+                .frame(width: 28, alignment: .center)
+                .accessibilityLabel(
+                    String(
+                        format: localizedAppString("Sample %@ missed"),
+                        sampleName(for: alarm)
+                    )
+                )
+        }
+    }
+
     private func sampleTrailingColumn(for alarm: Alarm, fontSize: CGFloat) -> some View {
         ZStack(alignment: .leading) {
             sampleTrailingReference(fontSize: fontSize)
                 .hidden()
             sampleTrailingContent(for: alarm, fontSize: fontSize)
         }
+    }
+
+    private func studyDayNavigation(fontSize: CGFloat) -> some View {
+        HStack(spacing: 16) {
+            Button {
+                displayedStudyDay = max(1, selectedStudyDay - 1)
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: fontSize, weight: .semibold))
+            }
+            .buttonStyle(.borderless)
+            .disabled(selectedStudyDay <= 1)
+            .accessibilityLabel(localizedAppString("Previous study day"))
+
+            Text(currentStudyDayText)
+                .font(.system(size: fontSize, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 170)
+                .accessibilityIdentifier("schedule.currentStudyDay")
+
+            Button {
+                displayedStudyDay = min(max(alarmVM.numStudyDays, 1), selectedStudyDay + 1)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: fontSize, weight: .semibold))
+            }
+            .buttonStyle(.borderless)
+            .disabled(alarmVM.numStudyDays <= 0 || selectedStudyDay >= alarmVM.numStudyDays)
+            .accessibilityLabel(localizedAppString("Next study day"))
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     @ViewBuilder
@@ -487,7 +757,7 @@ struct AlarmView: View {
         }
     }
 
-    private func eveningReminderControls(isCompact: Bool, edgePadding: CGFloat) -> some View {
+    private func eveningReminderControls(isCompact: Bool, edgePadding: CGFloat, fontSize: CGFloat) -> some View {
         HStack(spacing: 14) {
             Toggle("", isOn: Binding<Bool>(
                 get: { alarmVM.eveningReminderTime != nil },
@@ -524,6 +794,10 @@ struct AlarmView: View {
                 .accessibilityIdentifier("schedule.eveningReminderTime")
                 .accessibilityLabel(localizedAppString("Evening reminder time"))
                 .accessibilityHint(localizedAppString("Select when you want to be reminded to take your evening sample."))
+
+            if let currentEveningSampleAlarm {
+                sampleTrailingColumn(for: currentEveningSampleAlarm, fontSize: fontSize)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }

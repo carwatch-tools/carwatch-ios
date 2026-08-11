@@ -4,6 +4,7 @@ import UIKit
 struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
     static let demoOngoingStudyModeKey = "demo_ongoing_study_mode"
+    static let demoOngoingStudyVariantKey = "demo_ongoing_study_variant"
     static let pendingAlarmKitOpenIdentifierKey = "pending_alarmkit_open_identifier"
     static let alarmKitPermissionGrantedKey = "alarmkit_permission_granted"
 }

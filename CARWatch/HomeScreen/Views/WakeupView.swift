@@ -140,12 +140,13 @@ struct WakeupView: View {
         } message: {
             Text(postWakeupAlertMessage)
         }
-        .alert(localizedAppString("Previous day unfinished"), isPresented: $showPreviousDayUnfinishedAlert) {
-            Button(localizedAppString("Continue")) {
+        .alert(localizedAppString("Continue or start a study day?"), isPresented: $showPreviousDayUnfinishedAlert) {
+            Button(localizedAppString("Continue current study day"), role: .cancel) { }
+            Button(localizedAppString("Finish and start today")) {
                 performWakeupConfirmation()
             }
         } message: {
-            Text(localizedAppString("This is a new study day. We noticed that one or more previous study days were not finished. Previous study days will be marked as finished, remaining samples will be treated as missing, and you can continue with today's study day."))
+            Text(previousDayUnfinishedMessage)
         }
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
@@ -303,6 +304,28 @@ struct WakeupView: View {
         case .overdueSample:
             return localizedAppString("You still have at least one overdue sample from earlier today. You will now be taken to the Schedule screen, where you can choose which sample you want to take now.")
         }
+    }
+
+    private var previousDayUnfinishedMessage: String {
+        String(
+            format: localizedAppString("The study day that started at %@ still has missing samples. Please choose whether you want to continue the current study day or finish it and start a new study day today, %@."),
+            formattedStudyDateTime(alarmVM.pendingUnfinishedStudyDayStartTimeForWakeupConfirmation() ?? alarmVM.dateOfLastInitialAlarm),
+            formattedStudyDate(Date())
+        )
+    }
+
+    private func formattedStudyDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private func formattedStudyDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 
     private func hasOverdueSample(before wakeupTime: Date) -> Bool {
