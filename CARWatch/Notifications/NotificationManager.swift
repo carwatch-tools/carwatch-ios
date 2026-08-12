@@ -92,9 +92,30 @@ class NotificationManager {
         }
 
         cancelAlarmKitAlarms(withIdentifiers: notificationIds)
-        
+        cancelAlarmKitAlarmsMatching(baseIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
+
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            let dayScopedNotificationIds = requests
+                .map(\.identifier)
+                .filter { identifier in
+                    notificationIds.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+                }
+
+            self.cancelAlarmKitAlarms(withIdentifiers: dayScopedNotificationIds)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: dayScopedNotificationIds)
+        }
+
+        UNUserNotificationCenter.current().getDeliveredNotifications { notifications in
+            let dayScopedNotificationIds = notifications
+                .map(\.request.identifier)
+                .filter { identifier in
+                    notificationIds.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+                }
+
+            UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: dayScopedNotificationIds)
+        }
         
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarmId
@@ -235,6 +256,20 @@ class NotificationManager {
             } catch {
             }
         }
+#endif
+    }
+
+    private func cancelAlarmKitAlarmsMatching(baseIdentifiers: [String]) {
+#if canImport(AlarmKit)
+        guard #available(iOS 26.0, *) else {
+            return
+        }
+
+        let identifiers = UserDefaults.standard.stringArray(forKey: alarmKitIdentifierStorageKey) ?? []
+        let matchingIdentifiers = identifiers.filter { identifier in
+            baseIdentifiers.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+        }
+        cancelAlarmKitAlarms(withIdentifiers: matchingIdentifiers)
 #endif
     }
 

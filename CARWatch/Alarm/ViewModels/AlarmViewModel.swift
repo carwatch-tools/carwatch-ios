@@ -1092,6 +1092,10 @@ class AlarmViewModel : ObservableObject {
     }
     
     func scheduleAlarmWithBackupNotifications(_ alarm: Alarm, salivaId: String?, studyDay: Int? = nil) {
+        guard alarm.isActive else {
+            return
+        }
+
         for i in 0..<NotificationConstants.numberOfSubsequentNotifications {
             // calculate notification time
             guard let notificationTime = alarm.getCurrentAlarmTimePlusInterval(numMinutes: i * NotificationConstants.minutesBetweenNotifications) else {

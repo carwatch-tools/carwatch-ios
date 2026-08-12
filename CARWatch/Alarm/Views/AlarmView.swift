@@ -214,7 +214,9 @@ struct AlarmView: View {
     }
 
     private func isToggleEditable(for alarm: Alarm) -> Bool {
-        isShowingCurrentStudyDay && alarm.id != AlarmConstants.eveningAlarmId
+        isShowingCurrentStudyDay
+            && alarm.id != AlarmConstants.eveningAlarmId
+            && alarmVM.isWakeupConfirmedToday()
     }
 
     private func displayedEveningSampleTime(summary: StudyDaySummary?) -> Date {
@@ -242,11 +244,11 @@ struct AlarmView: View {
     }
 
     private func isAlarmMarkedMissed(_ alarm: Alarm) -> Bool {
-        guard alarm.isTriggered, !alarm.isScanned else {
+        guard !alarm.isScanned else {
             return false
         }
 
-        return true
+        return alarm.time < Date()
     }
     
     var body: some View {
@@ -462,10 +464,8 @@ struct AlarmView: View {
     func setInitialAlarmActivity(isActive: Bool){
         alarmVM.setInitialAlarmActivity(isActive: isActive)
         if(alarmVM.getInitialAlarm().isActive) {
-            alarmVM.updateAlarmTime(time: alarmVM.getInitialAlarm().time)
-            // if initial alarm is activated, automatically activate all others
             for (index, _) in alarmVM.timedAlarms.enumerated() {
-                alarmVM.setTimedAlarmActivity(index: index, isActive: isActive)
+                alarmVM.setTimedAlarmActivity(index: index, isActive: true)
             }
             showToast = true
         }
@@ -517,7 +517,7 @@ struct AlarmView: View {
                     )
                 )
         } else {
-            sampleActionButton(for: alarm, fontSize: fontSize, isMissed: alarm.isTriggered && isAlarmMarkedMissed(alarm))
+            sampleActionButton(for: alarm, fontSize: fontSize, isMissed: isAlarmMarkedMissed(alarm))
         }
     }
 
@@ -542,7 +542,7 @@ struct AlarmView: View {
                     .accessibilityIdentifier("schedule.toggle.\(alarm.id)")
                     .accessibilityLabel(reminderAccessibilityLabel(for: alarm))
                     .accessibilityValue(alarm.isActive ? localizedAppString("On") : localizedAppString("Off"))
-                    .accessibilityHint(localizedAppString("Turns this sample reminder on or off."))
+                    .accessibilityHint(sampleReminderToggleHint)
 
                 Color.clear
                     .frame(width: isCompact ? 4 : 6)
@@ -623,6 +623,14 @@ struct AlarmView: View {
         .accessibilityIdentifier("schedule.takeSample.\(alarm.id)")
         .accessibilityLabel(sampleActionAccessibilityLabel(for: alarm))
         .accessibilityHint(localizedAppString(isMissed ? "Opens the barcode scanner for this late sample." : "Opens the barcode scanner for this sample."))
+    }
+
+    private var sampleReminderToggleHint: String {
+        if alarmVM.isWakeupConfirmedToday() {
+            return localizedAppString("Turns this sample reminder on or off.")
+        }
+
+        return localizedAppString("Sample reminders can be changed after reporting wakeup.")
     }
 
     private func sampleTrailingReference(fontSize: CGFloat) -> some View {

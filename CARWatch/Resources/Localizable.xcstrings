@@ -3969,6 +3969,23 @@
         }
       }
     },
+    "Sample reminders can be changed after reporting wakeup." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probenerinnerungen können nach dem Erfassen des Aufwachens geändert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les rappels d’échantillons peuvent être modifiés après l’enregistrement du réveil."
+          }
+        }
+      }
+    },
     "Turns tomorrow's wakeup reminder on or off." : {
       "extractionState" : "manual",
       "localizations" : {
