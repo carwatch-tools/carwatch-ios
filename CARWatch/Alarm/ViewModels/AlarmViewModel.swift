@@ -442,11 +442,16 @@ class AlarmViewModel : ObservableObject {
         guard timedAlarms.indices.contains(index) else {
             return
         }
+        let currentStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
         timedAlarms[index] = timedAlarms[index].setIsActive(isActive: isActive)
         if !isActive {
-            NotificationManager.instance.cancelNotificationsById(alarmId: timedAlarms[index].id)
+            NotificationManager.instance.cancelNotificationsById(alarmId: timedAlarms[index].id, studyDay: currentStudyDay)
         } else {
-            scheduleAlarmWithBackupNotifications(timedAlarms[index], salivaId: "\(startSample + timedAlarms[index].id)")
+            scheduleAlarmWithBackupNotifications(
+                timedAlarms[index],
+                salivaId: "\(startSample + timedAlarms[index].id)",
+                studyDay: currentStudyDay
+            )
         }
     }
     
@@ -489,8 +494,11 @@ class AlarmViewModel : ObservableObject {
             // set alarm as scanned and inactive
             modifyAlarmById(alarm: alarm!.setScanned())
             didCompleteLastScheduledSample = !timedAlarms.contains(where: { $0.isActive && !$0.isScanned })
-            // cancel all remaining alarms
-            NotificationManager.instance.cancelNotificationsById(alarmId: alarm!.id)
+            // cancel this sample's remaining backup notifications for the active study day
+            NotificationManager.instance.cancelNotificationsById(
+                alarmId: alarm!.id,
+                studyDay: studyDayCounter == 0 ? 1 : studyDayCounter
+            )
         }
 
         let dayFinished = isDayFinished()
@@ -828,14 +836,25 @@ class AlarmViewModel : ObservableObject {
     }
 
     private func alarmTimes(for initialTime: Date) -> [Date] {
-        var previousAlarmTime = initialTime
         var updatedAlarmTimes = [Date]()
-        for interval in timeIntervals {
-            // add times of timed alarms
+        updatedAlarmTimes.append(contentsOf: intervalAlarmTimes(for: initialTime))
+        updatedAlarmTimes.append(contentsOf: fixedAlarmTimes(for: initialTime))
+        // bring times in correct chronological order
+        updatedAlarmTimes.sort()
+        return updatedAlarmTimes
+    }
+
+    private func intervalAlarmTimes(for initialTime: Date) -> [Date] {
+        var previousAlarmTime = initialTime
+        return timeIntervals.map { interval in
             let newAlarmTime = previousAlarmTime.addingTimeInterval(TimeInterval(interval * 60))
-            updatedAlarmTimes.append(newAlarmTime)
             previousAlarmTime = newAlarmTime
+            return newAlarmTime
         }
+    }
+
+    private func fixedAlarmTimes(for initialTime: Date) -> [Date] {
+        var updatedAlarmTimes = [Date]()
         for time in fixedTimes {
             // add times of fixed alarms
             var dc = Calendar.current.dateComponents([.year, .month, .day], from: initialTime)
@@ -845,7 +864,6 @@ class AlarmViewModel : ObservableObject {
                 updatedAlarmTimes.append(fixedTime)
             }
         }
-        // bring times in correct chronological order
         updatedAlarmTimes.sort()
         return updatedAlarmTimes
     }
@@ -1074,7 +1092,7 @@ class AlarmViewModel : ObservableObject {
             return
         }
         scheduleAlarmWithBackupNotifications(getInitialAlarm(), salivaId: nil, studyDay: studyDayCounter == 0 ? 1 : studyDayCounter)
-        for alarm in timedAlarms {
+        for alarm in fixedSampleAlarms(forStudyDay: studyDayCounter == 0 ? 1 : studyDayCounter, wakeupTime: getInitialAlarm().time) {
             scheduleAlarmWithBackupNotifications(alarm, salivaId: "\(startSample + alarm.id)", studyDay: studyDayCounter == 0 ? 1 : studyDayCounter)
         }
         scheduleFutureStudyDayNotifications(referenceTime: getInitialAlarm().time)
@@ -1143,17 +1161,37 @@ class AlarmViewModel : ObservableObject {
                 studyDay: studyDay
             )
 
-            let futureAlarmTimes = alarmTimes(for: wakeupTime)
-            for (sampleId, alarmTime) in futureAlarmTimes.enumerated() {
+            for alarm in fixedSampleAlarms(forStudyDay: studyDay, wakeupTime: wakeupTime) {
                 scheduleAlarmWithBackupNotifications(
-                    Alarm(id: sampleId, isActive: true, time: alarmTime),
-                    salivaId: "\(startSample + sampleId)",
+                    alarm,
+                    salivaId: "\(startSample + alarm.id)",
                     studyDay: studyDay
                 )
             }
         }
 
         pendingWakeupNotificationTimes = scheduledWakeups
+    }
+
+    private func fixedSampleAlarms(forStudyDay studyDay: Int, wakeupTime: Date) -> [Alarm] {
+        let allAlarmTimes = alarmTimes(for: wakeupTime)
+        let fixedTimes = Set(fixedAlarmTimes(for: wakeupTime))
+        let currentStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
+
+        return allAlarmTimes.enumerated().compactMap { offset, alarmTime in
+            guard fixedTimes.contains(alarmTime) else {
+                return nil
+            }
+
+            let currentAlarm = studyDay == currentStudyDay ? timedAlarms.first { $0.id == offset } : nil
+            return Alarm(
+                id: offset,
+                isActive: currentAlarm?.isActive ?? true,
+                isScanned: currentAlarm?.isScanned ?? false,
+                isTriggered: currentAlarm?.isTriggered ?? false,
+                time: alarmTime
+            )
+        }
     }
 
     func scheduledTimedAlarms(forStudyDay studyDay: Int) -> [Alarm] {

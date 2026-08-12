@@ -84,15 +84,22 @@ class NotificationManager {
         )
     }
     
-    func cancelNotificationsById(alarmId: Int) {
+    func cancelNotificationsById(alarmId: Int, studyDay: Int? = nil) {
+        var baseNotificationIds = [String]()
         var notificationIds = [String]()
         for i in 0...NotificationConstants.numberOfSubsequentNotifications-1 {
             let notificationId = "\(alarmId)_\(i)"
+            baseNotificationIds.append(notificationId)
             notificationIds.append(notificationId)
+            if let studyDay {
+                notificationIds.append("\(notificationId)_day\(studyDay)")
+            }
         }
 
         cancelAlarmKitAlarms(withIdentifiers: notificationIds)
-        cancelAlarmKitAlarmsMatching(baseIdentifiers: notificationIds)
+        if studyDay == nil {
+            cancelAlarmKitAlarmsMatching(baseIdentifiers: baseNotificationIds)
+        }
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
 
@@ -100,7 +107,12 @@ class NotificationManager {
             let dayScopedNotificationIds = requests
                 .map(\.identifier)
                 .filter { identifier in
-                    notificationIds.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+                    self.shouldCancelIdentifier(
+                        identifier,
+                        baseIdentifiers: baseNotificationIds,
+                        exactIdentifiers: notificationIds,
+                        studyDay: studyDay
+                    )
                 }
 
             self.cancelAlarmKitAlarms(withIdentifiers: dayScopedNotificationIds)
@@ -111,7 +123,12 @@ class NotificationManager {
             let dayScopedNotificationIds = notifications
                 .map(\.request.identifier)
                 .filter { identifier in
-                    notificationIds.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+                    self.shouldCancelIdentifier(
+                        identifier,
+                        baseIdentifiers: baseNotificationIds,
+                        exactIdentifiers: notificationIds,
+                        studyDay: studyDay
+                    )
                 }
 
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: dayScopedNotificationIds)
@@ -120,6 +137,23 @@ class NotificationManager {
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarmId
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmCancel, message: msg)
+    }
+
+    private func shouldCancelIdentifier(
+        _ identifier: String,
+        baseIdentifiers: [String],
+        exactIdentifiers: [String],
+        studyDay: Int?
+    ) -> Bool {
+        if exactIdentifiers.contains(identifier) {
+            return true
+        }
+
+        guard studyDay == nil else {
+            return false
+        }
+
+        return baseIdentifiers.contains { identifier.hasPrefix("\($0)_day") }
     }
     
     func cancelAllNotifications() {
