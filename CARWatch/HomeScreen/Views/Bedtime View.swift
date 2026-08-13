@@ -1,5 +1,4 @@
 import SwiftUI
-import AlertToast
 
 struct BedtimeView: View {
     @AccessibilityFocusState private var isBedtimeHeaderFocused: Bool
@@ -34,6 +33,21 @@ struct BedtimeView: View {
 
     private var shouldUseVerticalActionLayout: Bool {
         StyleConstants.isAccessibilitySize(dynamicTypeSize)
+    }
+
+    private var toastMessage: String {
+        switch toastType {
+        case .feedbackToast:
+            return localizedAppString("Thank you for your feedback!")
+        case .bedtimeReminderToast:
+            return localizedAppString("Remember to take your sample\nright before going to bed.")
+        case .noSampleTonightToast:
+            return localizedAppString("Tonight no sample is required.")
+        case .noEveningSampleToast:
+            return localizedAppString("Your study does not require an evening sample.\nGood night!")
+        case .eveningSampleTakenToast:
+            return localizedAppString("You have already taken your evening sample.\nGood night!")
+        }
     }
 
     private func usesExpandedPadLayout(for size: CGSize) -> Bool {
@@ -149,21 +163,7 @@ struct BedtimeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(bedtimeBackgroundColor.ignoresSafeArea())
         }
-        .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-            let color = Color(UIColor.secondarySystemBackground)
-            switch toastType {
-            case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Thank you for your feedback!"), style: .style(backgroundColor: color))
-            case .bedtimeReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Remember to take your sample\nright before going to bed."), style: .style(backgroundColor: color))
-            case .noSampleTonightToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Tonight no sample is required."), style: .style(backgroundColor: color))
-            case .noEveningSampleToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Your study does not require an evening sample.\nGood night!"), style: .style(backgroundColor: color))
-            case .eveningSampleTakenToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already taken your evening sample.\nGood night!"), style: .style(backgroundColor: color))
-            }
-        }
+        .topToast(isPresented: $showToast, message: toastMessage)
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
         } message: {

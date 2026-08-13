@@ -16,7 +16,6 @@
 		841BADA12C89D79600FFA4B7 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841BADA02C89D79600FFA4B7 /* Logger.swift */; };
 		8420E0072C46B60E0061ABA0 /* CodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8420E0062C46B60E0061ABA0 /* CodeScanner.swift */; };
 		8420E0092C46B6520061ABA0 /* CodeScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8420E0082C46B6520061ABA0 /* CodeScannerViewController.swift */; };
-		843171042C8A019800BEFD7D /* AlertToast in Frameworks */ = {isa = PBXBuildFile; productRef = 843171032C8A019800BEFD7D /* AlertToast */; };
 		843171062C8A01DA00BEFD7D /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 843171052C8A01DA00BEFD7D /* ZIPFoundation */; };
 		843219112C3C0D750029A9DD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843219102C3C0D750029A9DD /* AppDelegate.swift */; };
 		843219132C3C156F0029A9DD /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843219122C3C156F0029A9DD /* NotificationManager.swift */; };
@@ -102,7 +101,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				843171042C8A019800BEFD7D /* AlertToast in Frameworks */,
 				843171062C8A01DA00BEFD7D /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -353,7 +351,6 @@
 			);
 			name = CARWatch;
 			packageProductDependencies = (
-				843171032C8A019800BEFD7D /* AlertToast */,
 				843171052C8A01DA00BEFD7D /* ZIPFoundation */,
 			);
 			productName = CARWatch;
@@ -387,7 +384,6 @@
 			mainGroup = 91ED1E462C21D6AC0041751A;
 			packageReferences = (
 				843171012C8A016C00BEFD7D /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
-				843171022C8A019800BEFD7D /* XCRemoteSwiftPackageReference "AlertToast" */,
 			);
 			productRefGroup = 91ED1E502C21D6AC0041751A /* Products */;
 			projectDirPath = "";
@@ -686,22 +682,9 @@
 				minimumVersion = 0.9.19;
 			};
 		};
-		843171022C8A019800BEFD7D /* XCRemoteSwiftPackageReference "AlertToast" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/elai950/AlertToast.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.9;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		843171032C8A019800BEFD7D /* AlertToast */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 843171022C8A019800BEFD7D /* XCRemoteSwiftPackageReference "AlertToast" */;
-			productName = AlertToast;
-		};
 		843171052C8A01DA00BEFD7D /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 843171012C8A016C00BEFD7D /* XCRemoteSwiftPackageReference "ZIPFoundation" */;

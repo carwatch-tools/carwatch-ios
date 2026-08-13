@@ -1,5 +1,4 @@
 import SwiftUI
-import AlertToast
 
 private enum PostWakeupAlertType {
     case delayedSample
@@ -32,6 +31,19 @@ struct WakeupView: View {
 
     private var shouldUseVerticalActionLayout: Bool {
         StyleConstants.isAccessibilitySize(dynamicTypeSize)
+    }
+
+    private var toastMessage: String {
+        switch toastType {
+        case .feedbackToast:
+            return localizedAppString("Thank you for your feedback!")
+        case .wakeupReminderToast:
+            return localizedAppString("Please remember to take your sample\nwhen you wake up.")
+        case .wakeupReportedToast:
+            return localizedAppString("You have already reported your wakeup.")
+        case .delayedSampleToast:
+            return ""
+        }
     }
 
     private func usesExpandedPadLayout(for size: CGSize) -> Bool {
@@ -120,19 +132,7 @@ struct WakeupView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear.ignoresSafeArea())
         }
-        .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-            let color = Color(UIColor.secondarySystemBackground)
-            switch toastType {
-            case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Thank you for your feedback!"), style: .style(backgroundColor: color))
-            case .wakeupReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
-            case .wakeupReportedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already reported your wakeup."), style: .style(backgroundColor: color))
-            case .delayedSampleToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
-            }
-        }
+        .topToast(isPresented: $showToast, message: toastMessage)
         .alert(postWakeupAlertTitle, isPresented: $showPostWakeupAlert) {
             Button("OK", role: .cancel) {
                 onDelayedSampleAcknowledged()

@@ -1,5 +1,4 @@
 import SwiftUI
-import AlertToast
 import UIKit
 
 enum ScannerPresentationSource {
@@ -58,6 +57,34 @@ struct OngoingStudyView: View {
             return nil
         }
         return isDarkModeOn ? .dark : .light
+    }
+
+    private var toastMessage: String {
+        switch toastType {
+        case .clickToKill:
+            let clicksLeft = MenuConstants.killButtonClickCountActivate - killButtonClickCount
+            return String(
+                format: localizedAppString("Click %lld more times to kill all reminders!"),
+                Int64(clicksLeft)
+            )
+        case .killSuccess:
+            return localizedAppString("All reminders were deactivated!")
+        case .zipLogsFailed:
+            return localizedAppString("Generating the logs failed.\nPlease try again later!")
+        case .studyDayFinished:
+            return localizedAppString("The current study day has been finished.\nPlease check your wakeup alarm for tomorrow.")
+        }
+    }
+
+    private var toastStyle: TopToastStyle {
+        switch toastType {
+        case .killSuccess, .studyDayFinished:
+            return .success
+        case .zipLogsFailed:
+            return .error
+        case .clickToKill:
+            return .regular
+        }
     }
 
     private func configureTabBarAppearance() {
@@ -138,25 +165,7 @@ struct OngoingStudyView: View {
                             .environmentObject(alarmVM)
                     }
                 }
-                .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-                    var toastMsg = ""
-                    switch toastType {
-                    case .clickToKill:
-                        let clicksLeft = MenuConstants.killButtonClickCountActivate - killButtonClickCount
-                        toastMsg = String(
-                            format: localizedAppString("Click %lld more times to kill all reminders!"),
-                            Int64(clicksLeft)
-                        )
-                    case .killSuccess:
-                        toastMsg = localizedAppString("All reminders were deactivated!")
-                    case .zipLogsFailed:
-                        toastMsg = localizedAppString("Generating the logs failed.\nPlease try again later!")
-                    case .studyDayFinished:
-                        toastMsg = localizedAppString("The current study day has been finished.\nPlease check your wakeup alarm for tomorrow.")
-                    }
-                    let color = Color(UIColor.secondarySystemBackground)
-                    return AlertToast(displayMode: .banner(.slide), type: .regular, title: toastMsg, style: .style(backgroundColor: color))
-                }
+                .topToast(isPresented: $showToast, message: toastMessage, style: toastStyle)
             }
             .onReceive(NotificationCenter.default.publisher(for: .notificationTapped)) { _ in
                 updateAlarmStatus()

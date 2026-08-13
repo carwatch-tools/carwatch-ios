@@ -1,7 +1,114 @@
 import SwiftUI
-import AlertToast
 import UIKit
 import MessageUI
+
+enum TopToastStyle {
+    case regular
+    case success
+    case error
+
+    var iconName: String {
+        switch self {
+        case .regular:
+            return "info.circle.fill"
+        case .success:
+            return "checkmark.circle.fill"
+        case .error:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .regular:
+            return .blue
+        case .success:
+            return .green
+        case .error:
+            return .orange
+        }
+    }
+}
+
+private struct TopToastView: View {
+    let message: String
+    let style: TopToastStyle
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: style.iconName)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(style.tint)
+                .accessibilityHidden(true)
+
+            Text(message)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: 560, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct TopToastModifier: ViewModifier {
+    @Binding var isPresented: Bool
+
+    let message: String
+    let style: TopToastStyle
+    let duration: TimeInterval
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .top) {
+                if isPresented && !message.isEmpty {
+                    TopToastView(message: message, style: style)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1)
+                        .allowsHitTesting(false)
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: isPresented)
+            .onChange(of: isPresented) { isVisible in
+                guard isVisible else { return }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                    guard isPresented else { return }
+                    isPresented = false
+                }
+            }
+    }
+}
+
+extension View {
+    func topToast(
+        isPresented: Binding<Bool>,
+        message: String,
+        style: TopToastStyle = .regular,
+        duration: TimeInterval = StyleConstants.toastDuration
+    ) -> some View {
+        modifier(
+            TopToastModifier(
+                isPresented: isPresented,
+                message: message,
+                style: style,
+                duration: duration
+            )
+        )
+    }
+}
 
 struct MainViewToolbarMenu: View {
     @EnvironmentObject var sessionVM: SessionViewModel

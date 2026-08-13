@@ -1,5 +1,4 @@
 import SwiftUI
-import AlertToast
 
 enum ActiveAlert {
     case toggleActivityAlert, takeSampleEarlyAlert, recordWakeupBeforeSampleAlert
@@ -362,12 +361,11 @@ struct AlarmView: View {
                     .padding(.horizontal, usesExpandedLayout ? onboardingPadding + 8 : onboardingPadding)
                 })
                 .frame(maxWidth: .infinity)
-                .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-                    let color = Color(UIColor.secondarySystemBackground)
-                    let toastMsg = localizedAppString("Wakeup alarm set for tomorrow.\nAdjust the time if needed.")
-                    return AlertToast(displayMode: .banner(.slide), type: .complete(Color.green), title: toastMsg, style: .style(backgroundColor: color))
-                    
-                }
+                .topToast(
+                    isPresented: $showToast,
+                    message: localizedAppString("Wakeup alarm set for tomorrow.\nAdjust the time if needed."),
+                    style: .success
+                )
                 .alert(isPresented: $showAlert) {
                     switch activeAlert {
                     case .takeSampleEarlyAlert:
