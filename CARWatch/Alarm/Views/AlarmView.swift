@@ -94,6 +94,10 @@ struct AlarmView: View {
         alarmVM.pendingUnfinishedStudyDayForWakeupConfirmation() ?? alarmVM.studyDayCounter
     }
 
+    private var scheduleTimelineStudyDay: Int {
+        max(scheduleActiveStudyDay, 1)
+    }
+
     private var selectedStudyDaySummary: StudyDaySummary? {
         alarmVM.studyDaySummary(for: selectedStudyDay)
     }
@@ -108,11 +112,11 @@ struct AlarmView: View {
 
     private var isShowingCurrentStudyDay: Bool {
         !isShowingFinishedStudyDay
-            && (selectedStudyDay == scheduleActiveStudyDay || scheduleActiveStudyDay == 0 && selectedStudyDay == 1)
+            && selectedStudyDay == scheduleTimelineStudyDay
     }
 
     private var isShowingFutureStudyDay: Bool {
-        scheduleActiveStudyDay > 0 && selectedStudyDay > scheduleActiveStudyDay
+        selectedStudyDay > scheduleTimelineStudyDay
     }
 
     private var displayedTimedAlarms: [Alarm] {
@@ -157,7 +161,7 @@ struct AlarmView: View {
     }
 
     private var studyDayStatusText: String? {
-        if selectedStudyDay > alarmVM.studyDayCounter && alarmVM.studyDayCounter > 0 {
+        if isShowingFutureStudyDay {
             return nil
         }
 
