@@ -431,15 +431,24 @@ class AlarmViewModel : ObservableObject {
         Calendar.current.isDate(dateOfLastConfirmedWakeup, inSameDayAs: Date())
     }
     
-    func setInitialAlarmActivity(isActive: Bool) {
+    func setInitialAlarmActivity(isActive: Bool, selectedWakeupTime: Date? = nil) {
         /// called when initial alarm activity is toggled
         setInitialAlarm(alarm: getInitialAlarm().setIsActive(isActive: isActive))
-        updateAlarmTime(time: getInitialAlarm().time)
-        
+        if isWakeupConfirmedToday() {
+            scheduleFutureWakeupNotificationsOnly(
+                referenceTime: dateOfLastInitialAlarm,
+                selectedTime: selectedWakeupTime ?? wakeupAlarmSelectionTime()
+            )
+        } else {
+            updateAlarmTime(time: selectedWakeupTime ?? getInitialAlarm().time)
+        }
     }
     
     func setTimedAlarmActivity(index: Int, isActive: Bool) {
         guard timedAlarms.indices.contains(index) else {
+            return
+        }
+        guard !isActive || !timedAlarms[index].isScanned else {
             return
         }
         let currentStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
@@ -1168,6 +1177,46 @@ class AlarmViewModel : ObservableObject {
                     studyDay: studyDay
                 )
             }
+        }
+
+        pendingWakeupNotificationTimes = scheduledWakeups
+    }
+
+    private func scheduleFutureWakeupNotificationsOnly(referenceTime: Date, selectedTime: Date? = nil) {
+        NotificationManager.instance.cancelNotificationsById(alarmId: AlarmConstants.initialAlarmId)
+
+        guard initialAlarm.isActive, studyDayCounter < numStudyDays else {
+            pendingWakeupNotificationTimes = []
+            return
+        }
+
+        let calendar = Calendar.current
+        let configuredWakeupTime = selectedTime ?? initialAlarm.time
+        let wakeupComponents = calendar.dateComponents([.hour, .minute, .second], from: configuredWakeupTime)
+        var scheduledWakeups: [Date] = []
+        let currentStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
+
+        for studyDay in (currentStudyDay + 1)...numStudyDays {
+            let dayOffset = studyDay - currentStudyDay
+            guard let nextDate = calendar.date(byAdding: .day, value: dayOffset, to: referenceTime) else {
+                continue
+            }
+
+            var nextWakeupComponents = calendar.dateComponents([.year, .month, .day], from: nextDate)
+            nextWakeupComponents.hour = wakeupComponents.hour
+            nextWakeupComponents.minute = wakeupComponents.minute
+            nextWakeupComponents.second = wakeupComponents.second
+
+            guard let wakeupTime = calendar.date(from: nextWakeupComponents) else {
+                continue
+            }
+
+            scheduledWakeups.append(wakeupTime)
+            scheduleAlarmWithBackupNotifications(
+                Alarm(id: AlarmConstants.initialAlarmId, isActive: true, time: wakeupTime),
+                salivaId: nil,
+                studyDay: studyDay
+            )
         }
 
         pendingWakeupNotificationTimes = scheduledWakeups

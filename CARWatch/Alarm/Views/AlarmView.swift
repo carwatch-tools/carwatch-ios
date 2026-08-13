@@ -39,6 +39,7 @@ struct AlarmView: View {
     @State private var delayedSampleMinutes: Int = 0
     @State private var postWakeupAlertType: SchedulePostWakeupAlertType = .delayedSample
     @State private var displayedStudyDay: Int = 0
+    @State private var suppressNextWakeupTimeChangeFeedback = false
 
     private var isWakeupTimeSelectionDisabled: Bool {
         alarmVM.isStudyFinished()
@@ -424,7 +425,7 @@ struct AlarmView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         isScheduleHeaderFocused = true
                     }
-                    initialAlarmTime = alarmVM.wakeupAlarmSelectionTime()
+                    syncWakeupAlarmSelectionFromModel()
                     displayedStudyDay = selectedStudyDay
                     eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                     if alarmVM.shouldPromptForEveningReminderSetup && studyDataVM.studyData.hasEveningSample {
@@ -468,11 +469,8 @@ struct AlarmView: View {
     }
     
     func setInitialAlarmActivity(isActive: Bool){
-        alarmVM.setInitialAlarmActivity(isActive: isActive)
+        alarmVM.setInitialAlarmActivity(isActive: isActive, selectedWakeupTime: initialAlarmTime)
         if(alarmVM.getInitialAlarm().isActive) {
-            for (index, _) in alarmVM.timedAlarms.enumerated() {
-                alarmVM.setTimedAlarmActivity(index: index, isActive: true)
-            }
             showToast = true
             showOwnWakeupAlarmReminderIfNeeded()
         }
@@ -739,6 +737,8 @@ struct AlarmView: View {
 
             DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
                 .onChange(of: initialAlarmTime, perform: { _ in
+                    let shouldSuppressFeedback = suppressNextWakeupTimeChangeFeedback
+                    suppressNextWakeupTimeChangeFeedback = false
                     let backupTime = alarmVM.getInitialAlarm().time
                     alarmVM.updateWakeupAlarmSelection(time: initialAlarmTime)
                     if !Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date()),
@@ -747,7 +747,7 @@ struct AlarmView: View {
                         initialAlarmTime = backupTime
                         alarmVM.updateWakeupAlarmSelection(time: initialAlarmTime)
                     }
-                    if alarmVM.getInitialAlarm().isActive {
+                    if alarmVM.getInitialAlarm().isActive && !shouldSuppressFeedback {
                         showToast = true
                         showOwnWakeupAlarmReminderIfNeeded()
                     }
@@ -779,6 +779,16 @@ struct AlarmView: View {
         }
 
         showOwnWakeupAlarmAlert = true
+    }
+
+    private func syncWakeupAlarmSelectionFromModel() {
+        let wakeupTime = alarmVM.wakeupAlarmSelectionTime()
+        guard initialAlarmTime != wakeupTime else {
+            return
+        }
+
+        suppressNextWakeupTimeChangeFeedback = true
+        initialAlarmTime = wakeupTime
     }
 
     private func eveningReminderControls(isCompact: Bool, edgePadding: CGFloat, fontSize: CGFloat) -> some View {
@@ -879,14 +889,14 @@ struct AlarmView: View {
         scannerSource = nil
         showPreviousWakeupTimeSheet = false
         alarmVM.confirmWakeup(at: wakeupTime)
-        initialAlarmTime = alarmVM.wakeupAlarmSelectionTime()
+        syncWakeupAlarmSelectionFromModel()
     }
 
     private func recordWakeupNowFromSchedule() {
         let wakeupTime = Date()
         pendingWakeupConfirmationTime = nil
         alarmVM.confirmWakeup(at: wakeupTime)
-        initialAlarmTime = alarmVM.wakeupAlarmSelectionTime()
+        syncWakeupAlarmSelectionFromModel()
 
         guard let firstTimedAlarm = alarmVM.timedAlarms.first,
               firstTimedAlarm.isActive,
