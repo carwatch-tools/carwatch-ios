@@ -9,7 +9,7 @@ import AppIntents
 @available(iOS 26.0, *)
 private struct SampleAlarmMetadata: AlarmMetadata {
     let notificationIdentifier: String
-    let salivaId: String
+    let salivaId: String?
 }
 
 @available(iOS 26.0, *)
@@ -45,6 +45,15 @@ struct OpenSampleAlarmIntent: LiveActivityIntent {
 class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
+
+    func hasAlarmKitAccess() -> Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            return AlarmManager.shared.authorizationState == .authorized
+        }
+#endif
+        return false
+    }
     
     func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int, second: Int) {
         let dateComponents = DateComponents(day: day, hour: hour, minute: minute, second: second)
@@ -57,12 +66,13 @@ class NotificationManager {
     }
 
     private func scheduleCalendarBasedNotification(id: String, salivaId: String?, dateComponents: DateComponents) {
-        if let salivaId, scheduleSampleAlarm(id: id, salivaId: salivaId, dateComponents: dateComponents) {
+        if scheduleAlarmKitAlarm(id: id, salivaId: salivaId, dateComponents: dateComponents) {
             return
         }
 
         let content = UNMutableNotificationContent()
         content.title = notificationTitle(for: salivaId)
+        content.body = notificationBody(for: salivaId)
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
@@ -82,6 +92,25 @@ class NotificationManager {
             format: localizedAppString("Please take saliva sample #%@!"),
             salivaId
         )
+    }
+
+    private func alarmKitTitle(for salivaId: String?) -> String {
+        guard let salivaId else {
+            return notificationTitle(for: nil)
+        }
+
+        return String(
+            format: localizedAppString("Sample #%@ is due!"),
+            salivaId
+        )
+    }
+
+    private func notificationBody(for salivaId: String?) -> String {
+        guard salivaId == nil, isAlarmKitUnavailable() else {
+            return ""
+        }
+
+        return localizedAppString("Alarm access is turned off. Please set your own wakeup alarm.")
     }
     
     func cancelNotificationsById(alarmId: Int, studyDay: Int? = nil) {
@@ -164,7 +193,7 @@ class NotificationManager {
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmKillAll, message: [String: Any]())
     }
 
-    private func scheduleSampleAlarm(id: String, salivaId: String, dateComponents: DateComponents) -> Bool {
+    private func scheduleAlarmKitAlarm(id: String, salivaId: String?, dateComponents: DateComponents) -> Bool {
 #if canImport(AlarmKit)
         guard #available(iOS 26.0, *) else {
             return false
@@ -178,7 +207,7 @@ class NotificationManager {
             return false
         }
 
-        let title = notificationTitle(for: salivaId)
+        let title = alarmKitTitle(for: salivaId)
         let alarmId = alarmKitId(for: id)
         let metadata = SampleAlarmMetadata(notificationIdentifier: id, salivaId: salivaId)
         let stopButton = AlarmButton(
@@ -217,7 +246,7 @@ class NotificationManager {
                 _ = try await AlarmManager.shared.schedule(id: alarmId, configuration: configuration)
             } catch {
                 self.forgetAlarmKitIdentifier(id)
-                self.scheduleFallbackNotification(id: id, title: title, dateComponents: dateComponents)
+                self.scheduleFallbackNotification(id: id, title: title, salivaId: salivaId, dateComponents: dateComponents)
             }
         }
         return true
@@ -243,9 +272,14 @@ class NotificationManager {
     }
 #endif
 
-    private func scheduleFallbackNotification(id: String, title: String, dateComponents: DateComponents) {
+    private func isAlarmKitUnavailable() -> Bool {
+        !hasAlarmKitAccess()
+    }
+
+    private func scheduleFallbackNotification(id: String, title: String, salivaId: String?, dateComponents: DateComponents) {
         let content = UNMutableNotificationContent()
         content.title = title
+        content.body = notificationBody(for: salivaId)
         content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)

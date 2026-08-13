@@ -42,7 +42,7 @@ struct RegistrationView: View {
         }
 
         if shouldShowAlarmWarning {
-            return "Alarm access is turned off. Sample reminders may not ring when the phone is set to silent."
+            return "Alarm access is turned off. CARWatch wakeup alarms may not ring. Please set your own wakeup alarm."
         }
 
         if shouldShowNotificationWarning {

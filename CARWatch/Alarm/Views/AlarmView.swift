@@ -35,6 +35,7 @@ struct AlarmView: View {
     @State private var showPreviousWakeupTimeSheet: Bool = false
     @State private var previousWakeupTime: Date = Date()
     @State private var showPostWakeupAlert: Bool = false
+    @State private var showOwnWakeupAlarmAlert: Bool = false
     @State private var delayedSampleMinutes: Int = 0
     @State private var postWakeupAlertType: SchedulePostWakeupAlertType = .delayedSample
     @State private var displayedStudyDay: Int = 0
@@ -393,6 +394,11 @@ struct AlarmView: View {
                 } message: {
                     Text(schedulePostWakeupAlertMessage)
                 }
+                .alert("Set your own wakeup alarm", isPresented: $showOwnWakeupAlarmAlert) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Alarm access is turned off. Please set your own wakeup alarm.")
+                }
                 .confirmationDialog(
                     localizedAppString("Record wakeup first"),
                     isPresented: $showWakeupTimeChoiceDialog,
@@ -468,6 +474,7 @@ struct AlarmView: View {
                 alarmVM.setTimedAlarmActivity(index: index, isActive: true)
             }
             showToast = true
+            showOwnWakeupAlarmReminderIfNeeded()
         }
     }
     
@@ -742,6 +749,7 @@ struct AlarmView: View {
                     }
                     if alarmVM.getInitialAlarm().isActive {
                         showToast = true
+                        showOwnWakeupAlarmReminderIfNeeded()
                     }
                 })
                 .labelsHidden()
@@ -763,6 +771,14 @@ struct AlarmView: View {
             .accessibilityIdentifier("schedule.disabledInfo")
             .accessibilityLabel("Why is wakeup time disabled?")
         }
+    }
+
+    private func showOwnWakeupAlarmReminderIfNeeded() {
+        guard !NotificationManager.instance.hasAlarmKitAccess() else {
+            return
+        }
+
+        showOwnWakeupAlarmAlert = true
     }
 
     private func eveningReminderControls(isCompact: Bool, edgePadding: CGFloat, fontSize: CGFloat) -> some View {
