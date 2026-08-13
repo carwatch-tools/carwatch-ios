@@ -14,7 +14,12 @@ struct BedtimeView: View {
     @Binding var isScannerPresented: Bool
     @Binding var alarmId: Int?
     @Binding var scannerSource: ScannerPresentationSource?
+    @Binding var selectedTab: Int
+    @Binding var finishedStudyDayToDisplay: Int?
     @State private var showStudyFinishedAlert: Bool = false
+    @State private var showRemainingSamplesAlert: Bool = false
+    @State private var pendingFinishAfterEveningSample = false
+    @State private var pendingMissedTimedAlarmsSnapshot: [Alarm]? = nil
     private var isDarkModeEnabled: Bool {
         alarmVM.isDarkModeOn ?? (colorScheme == .dark)
     }
@@ -164,9 +169,34 @@ struct BedtimeView: View {
         } message: {
             Text(localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email."))
         }
+        .alert("Remaining samples", isPresented: $showRemainingSamplesAlert) {
+            Button("Keep Samples", role: .cancel) { }
+            Button("Mark as missed", role: .destructive) {
+                continueBedtimeFlow(markRemainingDaytimeSamplesAsMissed: true)
+            }
+        } message: {
+            Text(
+                String(
+                    format: localizedAppString("%lld daytime samples are still open. Do you want to mark them as missed and finish the study day after bedtime is recorded?"),
+                    Int64(alarmVM.remainingDaytimeSampleCountForCurrentDay())
+                )
+            )
+        }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isBedtimeHeaderFocused = true
+            }
+        }
+        .onChange(of: isScannerPresented) { isPresented in
+            guard !isPresented, pendingFinishAfterEveningSample else {
+                return
+            }
+
+            if alarmVM.isEveningScanned {
+                finishDayFromBedtime()
+            } else {
+                pendingFinishAfterEveningSample = false
+                pendingMissedTimedAlarmsSnapshot = nil
             }
         }
         .onChange(of: showStudyFinishedAlert) { isPresented in
@@ -177,21 +207,12 @@ struct BedtimeView: View {
     }
     private var bedtimeYesButton: some View {
         Button("YES") {
-            if studyDataVM.studyData.hasEveningSample {
-                if !alarmVM.isEveningScanned {
-                    alarmId = AlarmConstants.eveningAlarmId
-                    scannerSource = .schedule
-                    isScannerPresented = true
-                } else if alarmVM.isStudyFinished() {
-                    showStudyFinishedAlert = true
-                } else {
-                    toastType = .eveningSampleTakenToast
-                    showToast = true
-                }
-            } else {
-                toastType = .noEveningSampleToast
-                showToast = true
+            if alarmVM.remainingDaytimeSampleCountForCurrentDay() > 0 {
+                showRemainingSamplesAlert = true
+                return
             }
+
+            continueBedtimeFlow(markRemainingDaytimeSamplesAsMissed: false)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
@@ -218,13 +239,60 @@ struct BedtimeView: View {
         .accessibilityLabel(localizedAppString("No, I am not going to bed"))
         .accessibilityHint(localizedAppString("Keeps the bedtime flow unchanged and shows a reminder if needed."))
     }
+
+    private func continueBedtimeFlow(markRemainingDaytimeSamplesAsMissed: Bool) {
+        pendingMissedTimedAlarmsSnapshot = markRemainingDaytimeSamplesAsMissed ? alarmVM.missedDaytimeSamplesSnapshotForBedtime() : nil
+
+        if studyDataVM.studyData.hasEveningSample {
+            if !alarmVM.isEveningScanned {
+                pendingFinishAfterEveningSample = markRemainingDaytimeSamplesAsMissed
+                alarmId = AlarmConstants.eveningAlarmId
+                scannerSource = .schedule
+                isScannerPresented = true
+            } else if markRemainingDaytimeSamplesAsMissed {
+                finishDayFromBedtime()
+            } else if alarmVM.isStudyFinished() {
+                showStudyFinishedAlert = true
+            } else {
+                toastType = .eveningSampleTakenToast
+                showToast = true
+            }
+        } else if markRemainingDaytimeSamplesAsMissed {
+            finishDayFromBedtime()
+        } else {
+            toastType = .noEveningSampleToast
+            showToast = true
+        }
+    }
+
+    private func finishDayFromBedtime() {
+        let finishedStudyDay = alarmVM.studyDayCounter
+        let didFinishDay = alarmVM.finishCurrentStudyDayFromBedtime(missedTimedAlarmsSnapshot: pendingMissedTimedAlarmsSnapshot)
+        pendingFinishAfterEveningSample = false
+        pendingMissedTimedAlarmsSnapshot = nil
+
+        guard didFinishDay else {
+            return
+        }
+
+        finishedStudyDayToDisplay = finishedStudyDay
+        selectedTab = 1
+        if alarmVM.isStudyFinished() {
+            showStudyFinishedAlert = true
+        } else {
+            toastType = .feedbackToast
+            showToast = true
+        }
+    }
 }
 
 #Preview {
     BedtimeView(
         isScannerPresented: .constant(false),
         alarmId: .constant(AlarmConstants.eveningAlarmId),
-        scannerSource: .constant(nil)
+        scannerSource: .constant(nil),
+        selectedTab: .constant(2),
+        finishedStudyDayToDisplay: .constant(nil)
     )
         .environmentObject(AlarmViewModel())
         .environmentObject(StudyDataViewModel())

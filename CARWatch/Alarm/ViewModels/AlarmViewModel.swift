@@ -414,6 +414,26 @@ class AlarmViewModel : ObservableObject {
 
         return timedAlarms.contains { !$0.isScanned }
     }
+
+    func remainingDaytimeSampleCountForCurrentDay() -> Int {
+        timedAlarms.filter { !$0.isScanned }.count
+    }
+
+    func missedDaytimeSamplesSnapshotForBedtime() -> [Alarm] {
+        timedAlarms.map { alarm in
+            guard !alarm.isScanned else {
+                return alarm
+            }
+
+            return Alarm(
+                id: alarm.id,
+                isActive: false,
+                isScanned: false,
+                isTriggered: true,
+                time: alarm.time
+            )
+        }
+    }
     
     func wakeupAlarmSelectionTime() -> Date {
         pendingWakeupNotificationTimes.first ?? getInitialAlarm().time
@@ -582,6 +602,48 @@ class AlarmViewModel : ObservableObject {
 
         if studyDayCounter < numStudyDays {
             resetAlarmData()
+        }
+
+        return true
+    }
+
+    @discardableResult
+    func finishCurrentStudyDayFromBedtime(missedTimedAlarmsSnapshot: [Alarm]? = nil) -> Bool {
+        guard studyDayCounter > 0, !hasEveningSample || isEveningScanned else {
+            return false
+        }
+
+        NotificationManager.instance.cancelAllNotifications()
+        let timedAlarmsSnapshot = missedTimedAlarmsSnapshot ?? missedDaytimeSamplesSnapshotForBedtime()
+        let eveningTimeSnapshot = eveningReminderTime ?? lastEveningReminderSelection
+        cancelEveningReminder(clearStoredSelection: false)
+
+        timedAlarms = timedAlarms.map { alarm in
+            guard !alarm.isScanned else {
+                return alarm
+            }
+
+            return Alarm(
+                id: alarm.id,
+                isActive: false,
+                isScanned: true,
+                isTriggered: true,
+                time: alarm.time
+            )
+        }
+
+        didCompleteLastScheduledSample = true
+        markDayFinished(
+            reason: .userFinishedDay,
+            timedAlarmsSnapshot: timedAlarmsSnapshot,
+            isEveningScannedSnapshot: isEveningScanned,
+            eveningTimeSnapshot: eveningTimeSnapshot
+        )
+
+        if studyDayCounter < numStudyDays {
+            resetAlarmData()
+        } else {
+            hasPendingDayReset = false
         }
 
         return true

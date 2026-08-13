@@ -122,7 +122,9 @@ struct OngoingStudyView: View {
                     BedtimeView(
                         isScannerPresented: $isBarcodeScannerPresented,
                         alarmId: $currentAlarmId,
-                        scannerSource: $scannerSource
+                        scannerSource: $scannerSource,
+                        selectedTab: $selectedTab,
+                        finishedStudyDayToDisplay: $finishedStudyDayToDisplay
                     )
                         .tabItem {
                             tabItemLabel(title: "Bedtime", systemImage: "bed.double")
