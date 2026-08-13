@@ -1254,6 +1254,12 @@ class AlarmViewModel : ObservableObject {
 
         let calendar = Calendar.current
         let referenceStudyDay = studyDayCounter == 0 ? 1 : studyDayCounter
+        if let scheduledWakeupTime = pendingWakeupTime(forStudyDay: studyDay, referenceStudyDay: referenceStudyDay) {
+            return alarmTimes(for: scheduledWakeupTime).enumerated().map { offset, time in
+                Alarm(id: offset, isActive: true, isScanned: false, isTriggered: false, time: time)
+            }
+        }
+
         let referenceWakeupTime = initialAlarm.time
         let dayOffset = studyDay - referenceStudyDay
         guard let targetDate = calendar.date(byAdding: .day, value: dayOffset, to: referenceWakeupTime) else {
@@ -1273,6 +1279,19 @@ class AlarmViewModel : ObservableObject {
         return alarmTimes(for: wakeupTime).enumerated().map { offset, time in
             Alarm(id: offset, isActive: true, isScanned: false, isTriggered: false, time: time)
         }
+    }
+
+    private func pendingWakeupTime(forStudyDay studyDay: Int, referenceStudyDay: Int) -> Date? {
+        guard studyDay > referenceStudyDay else {
+            return nil
+        }
+
+        let pendingWakeupIndex = studyDay - referenceStudyDay - 1
+        guard pendingWakeupNotificationTimes.indices.contains(pendingWakeupIndex) else {
+            return nil
+        }
+
+        return pendingWakeupNotificationTimes[pendingWakeupIndex]
     }
 
     private func notificationIdentifier(alarmId: Int, backupIndex: Int, studyDay: Int?) -> String {

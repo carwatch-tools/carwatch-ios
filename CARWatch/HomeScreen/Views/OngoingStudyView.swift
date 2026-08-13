@@ -51,6 +51,7 @@ struct OngoingStudyView: View {
     @State private var skipDayChoiceForNextScannerPresentation = false
     @State private var shouldFinishPreviousDayAfterLateScan = false
     @State private var didFinishPreviousDayAfterLateScan = false
+    @State private var finishedStudyDayToDisplay: Int? = nil
 
     private var preferredColorScheme: ColorScheme? {
         guard let isDarkModeOn = alarmVM.isDarkModeOn else {
@@ -111,7 +112,8 @@ struct OngoingStudyView: View {
                         isScannerPresented: $isBarcodeScannerPresented,
                         currentAlarmId: $currentAlarmId,
                         scannerSource: $scannerSource,
-                        pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime
+                        pendingWakeupConfirmationTime: $pendingWakeupConfirmationTime,
+                        finishedStudyDayToDisplay: $finishedStudyDayToDisplay
                     )
                         .tabItem {
                             tabItemLabel(title: "Schedule", systemImage: "alarm")
@@ -130,7 +132,7 @@ struct OngoingStudyView: View {
                 .navigationBarTitle(tabTitle)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType, selectedTab: $selectedTab)
+                        MainViewToolbarMenu(showAppInfoDialog: $showAppInfoDialog, appVersion: $appVersion, showToast: $showToast, killButtonClickCount: $killButtonClickCount, toastType: $toastType, selectedTab: $selectedTab, finishedStudyDayToDisplay: $finishedStudyDayToDisplay)
                             .environmentObject(alarmVM)
                     }
                 }

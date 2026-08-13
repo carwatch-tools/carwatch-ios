@@ -23,6 +23,7 @@ struct AlarmView: View {
     @Binding var currentAlarmId: Int?
     @Binding var scannerSource: ScannerPresentationSource?
     @Binding var pendingWakeupConfirmationTime: Date?
+    @Binding var finishedStudyDayToDisplay: Int?
     
     @State private var showToast: Bool = false
     @State private var showAlert: Bool = false
@@ -93,8 +94,21 @@ struct AlarmView: View {
         alarmVM.pendingUnfinishedStudyDayForWakeupConfirmation() ?? alarmVM.studyDayCounter
     }
 
+    private var selectedStudyDaySummary: StudyDaySummary? {
+        alarmVM.studyDaySummary(for: selectedStudyDay)
+    }
+
+    private var isShowingFinishedStudyDay: Bool {
+        selectedStudyDaySummary?.isFinished == true
+    }
+
+    private var wasSelectedStudyDayManuallyFinished: Bool {
+        selectedStudyDaySummary?.finishReason == DayFinishReason.userFinishedDay.rawValue
+    }
+
     private var isShowingCurrentStudyDay: Bool {
-        selectedStudyDay == scheduleActiveStudyDay || scheduleActiveStudyDay == 0 && selectedStudyDay == 1
+        !isShowingFinishedStudyDay
+            && (selectedStudyDay == scheduleActiveStudyDay || scheduleActiveStudyDay == 0 && selectedStudyDay == 1)
     }
 
     private var isShowingFutureStudyDay: Bool {
@@ -102,7 +116,7 @@ struct AlarmView: View {
     }
 
     private var displayedTimedAlarms: [Alarm] {
-        if let summary = alarmVM.studyDaySummary(for: selectedStudyDay) {
+        if let summary = selectedStudyDaySummary {
             return summary.timedAlarms
         }
 
@@ -115,7 +129,7 @@ struct AlarmView: View {
             return alarms
         }
 
-        let summary = alarmVM.studyDaySummary(for: selectedStudyDay)
+        let summary = selectedStudyDaySummary
         alarms.append(
             Alarm(
                 id: AlarmConstants.eveningAlarmId,
@@ -426,7 +440,7 @@ struct AlarmView: View {
                         isScheduleHeaderFocused = true
                     }
                     syncWakeupAlarmSelectionFromModel()
-                    displayedStudyDay = selectedStudyDay
+                    displayedStudyDay = finishedStudyDayToDisplay ?? selectedStudyDay
                     eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                     if alarmVM.shouldPromptForEveningReminderSetup && studyDataVM.studyData.hasEveningSample {
                         alarmVM.shouldPromptForEveningReminderSetup = false
@@ -462,6 +476,14 @@ struct AlarmView: View {
                 }
                 .onChange(of: alarmVM.pendingWakeupRecoveryRevision) { _ in
                     displayedStudyDay = max(scheduleActiveStudyDay, 1)
+                }
+                .onChange(of: finishedStudyDayToDisplay) { studyDay in
+                    guard let studyDay else {
+                        return
+                    }
+
+                    displayedStudyDay = studyDay
+                    finishedStudyDayToDisplay = nil
                 }
                 Spacer()
             }
@@ -667,9 +689,9 @@ struct AlarmView: View {
                     )
                 )
         } else {
-            Image(systemName: "exclamationmark.arrow.circlepath")
+            Image(systemName: wasSelectedStudyDayManuallyFinished ? "xmark.circle" : "exclamationmark.arrow.circlepath")
                 .font(.system(size: fontSize))
-                .foregroundStyle(.orange)
+                .foregroundStyle(wasSelectedStudyDayManuallyFinished ? .red : .orange)
                 .frame(width: 28, alignment: .center)
                 .accessibilityLabel(
                     String(
@@ -999,7 +1021,8 @@ struct AlarmView_PreviewContainer: View {
             isScannerPresented: $isScannerPresented,
             currentAlarmId: $currentAlarmId,
             scannerSource: .constant(nil),
-            pendingWakeupConfirmationTime: .constant(nil)
+            pendingWakeupConfirmationTime: .constant(nil),
+            finishedStudyDayToDisplay: .constant(nil)
         )
         .environmentObject(alarmVM)
         .environmentObject(StudyDataViewModel())

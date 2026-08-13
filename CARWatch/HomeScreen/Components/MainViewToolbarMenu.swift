@@ -15,6 +15,7 @@ struct MainViewToolbarMenu: View {
     @Binding var killButtonClickCount: Int
     @Binding var toastType: MenuConstants.ToastType
     @Binding var selectedTab: Int
+    @Binding var finishedStudyDayToDisplay: Int?
     
     @State var showShareSheet = false
     @State private var showStudyInfoSheet = false
@@ -187,13 +188,15 @@ struct MainViewToolbarMenu: View {
 
     private func performFinishStudyDay() {
         let isFinishingCurrentStudyDate = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+        let finishedStudyDay = alarmVM.studyDayCounter
         let didFinishDay = alarmVM.finishCurrentStudyDay()
 
         guard didFinishDay else {
             return
         }
 
-        selectedTab = 2
+        finishedStudyDayToDisplay = finishedStudyDay
+        selectedTab = 1
         if alarmVM.isStudyFinished() {
             showStudyFinishedAlert = true
         } else if isFinishingCurrentStudyDate {
@@ -281,7 +284,8 @@ private struct StudyInformationSheet: View {
         showToast: .constant(false),
         killButtonClickCount: .constant(0),
         toastType: .constant(.clickToKill),
-        selectedTab: .constant(0)
+        selectedTab: .constant(0),
+        finishedStudyDayToDisplay: .constant(nil)
     )
     .environmentObject(SessionViewModel())
     .environmentObject(StudyDataViewModel())
