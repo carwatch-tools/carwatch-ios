@@ -67,11 +67,13 @@ struct TutorialSlide: View {
     }
 
     private var sampleStatusExplanationText: Text {
-        Text("The symbols next to the alarm time show whether a sample has been taken ")
+        Text("The symbols show the sample status: recorded ")
             + Text(Image(systemName: "checkmark.circle")).foregroundColor(.green)
-            + Text(" or was already due ")
+            + Text(" overdue ")
             + Text(Image(systemName: "exclamationmark.arrow.circlepath")).foregroundColor(.orange)
-            + Text(". Remaining samples are scheduled for later. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.")
+            + Text(" and missed ")
+            + Text(Image(systemName: "xmark.circle")).foregroundColor(.red)
+            + Text(". Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.")
     }
 }
 
@@ -79,7 +81,7 @@ struct TutorialSlide: View {
     TutorialSlide(
         imageName: "sampleListSymbols",
         titleText: "Track your alarms",
-        explanationText: "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.",
+        explanationText: "The symbols show the sample status: recorded (green checkmark), overdue (orange symbol), or missed after the study day was finished (red X). Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.",
         showsSampleStatusSymbols: true
     )
 }

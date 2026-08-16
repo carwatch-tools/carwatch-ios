@@ -57,6 +57,10 @@ struct AlarmView: View {
             : localizedAppString("The wakeup time can be changed after reporting wakeup.")
     }
 
+    private var wakeupAlarmFeedbackMessage: String {
+        localizedAppString("Wakeup alarm set for tomorrow.\nAdjust the time if needed.")
+    }
+
     private var shouldUseVerticalWakeupControls: Bool {
         StyleConstants.isAccessibilitySize(dynamicTypeSize)
     }
@@ -306,6 +310,12 @@ struct AlarmView: View {
                     }
                 }
                 .padding(.bottom, usesExpandedLayout ? 18 : 0)
+
+                if showToast {
+                    wakeupAlarmFeedbackView
+                        .padding(.bottom, usesExpandedLayout ? 14 : 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 Divider()
                     .padding(.top, usesExpandedLayout ? 18 : 0)
@@ -361,11 +371,6 @@ struct AlarmView: View {
                     .padding(.horizontal, usesExpandedLayout ? onboardingPadding + 8 : onboardingPadding)
                 })
                 .frame(maxWidth: .infinity)
-                .topToast(
-                    isPresented: $showToast,
-                    message: localizedAppString("Wakeup alarm set for tomorrow.\nAdjust the time if needed."),
-                    style: .success
-                )
                 .alert(isPresented: $showAlert) {
                     switch activeAlert {
                     case .takeSampleEarlyAlert:
@@ -486,6 +491,16 @@ struct AlarmView: View {
 
                     displayedStudyDay = studyDay
                     finishedStudyDayToDisplay = nil
+                }
+                .onChange(of: showToast) { isVisible in
+                    guard isVisible else { return }
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + StyleConstants.toastDuration) {
+                        guard showToast else { return }
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showToast = false
+                        }
+                    }
                 }
                 Spacer()
             }
@@ -773,8 +788,7 @@ struct AlarmView: View {
                         alarmVM.updateWakeupAlarmSelection(time: initialAlarmTime)
                     }
                     if alarmVM.getInitialAlarm().isActive && !shouldSuppressFeedback {
-                        showToast = true
-                        showOwnWakeupAlarmReminderIfNeeded()
+                        showToast = false
                     }
                 })
                 .labelsHidden()
@@ -796,6 +810,31 @@ struct AlarmView: View {
             .accessibilityIdentifier("schedule.disabledInfo")
             .accessibilityLabel("Why is wakeup time disabled?")
         }
+    }
+
+    private var wakeupAlarmFeedbackView: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.system(size: 18, weight: .semibold))
+                .accessibilityHidden(true)
+
+            Text(wakeupAlarmFeedbackMessage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: 560, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .padding(.horizontal, 24)
+        .accessibilityElement(children: .combine)
     }
 
     private func showOwnWakeupAlarmReminderIfNeeded() {

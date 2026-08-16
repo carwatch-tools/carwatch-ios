@@ -692,22 +692,34 @@ struct RegistrationView: View {
     }
 
 #if DEBUG
-    private func loadDemoStudy() {
-        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
-        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
-        studyDataVM.studyData = StudyData(
+    private func makeCARWatchExampleStudyData() -> StudyData {
+        StudyData(
             isValid: true,
-            studyName: "Demo Cortisol Awakening Response Study",
-            salivaDistances: [0, 15, 30, 45],
+            studyName: "CARWatchExample",
+            salivaDistances: [0, 15, 15, 15],
             salivaTimes: [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)],
             startSample: "S1",
             studyDays: 3,
-            numParticipants: 200,
+            numParticipants: 1,
             hasEveningSample: true,
-            shareEmailAdress: "study@example.com",
+            shareEmailAdress: "joana.joanidopoulos@fau.de",
             isCheckDuplicatesEnabled: true,
-            participantId: "1001"
+            participantId: "VP_01"
         )
+    }
+
+    private func logDemoStudyLoaded() {
+        logDeviceProperties()
+        logAppMetadata()
+        logStudyData(studyData: studyDataVM.studyData)
+        logParticipantId(participantId: studyDataVM.studyData.participantId)
+    }
+
+    private func loadDemoStudy() {
+        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
         sessionVM.startStudyConfirmation()
     }
 
@@ -724,26 +736,8 @@ struct RegistrationView: View {
             cameraPermissionDialogHandled: true
         )
 
-        studyDataVM.studyData = StudyData(
-            isValid: true,
-            studyName: "Preview Study",
-            salivaDistances: [],
-            salivaTimes: [
-                Time(hour: 8, minute: 0),
-                Time(hour: 8, minute: 15),
-                Time(hour: 8, minute: 30),
-                Time(hour: 8, minute: 45),
-                Time(hour: 12, minute: 0),
-                Time(hour: 15, minute: 0)
-            ],
-            startSample: "S0",
-            studyDays: 1,
-            numParticipants: 1,
-            hasEveningSample: false,
-            shareEmailAdress: "preview@example.com",
-            isCheckDuplicatesEnabled: false,
-            participantId: "preview"
-        )
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
 
         sessionVM.startStudy()
     }
@@ -761,19 +755,8 @@ struct RegistrationView: View {
             cameraPermissionDialogHandled: true
         )
 
-        studyDataVM.studyData = StudyData(
-            isValid: true,
-            studyName: "Demo Study History",
-            salivaDistances: [0, 15, 30, 45],
-            salivaTimes: [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)],
-            startSample: "S1",
-            studyDays: 5,
-            numParticipants: 1,
-            hasEveningSample: true,
-            shareEmailAdress: "study@example.com",
-            isCheckDuplicatesEnabled: false,
-            participantId: "history-demo"
-        )
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
 
         sessionVM.startStudy()
     }

@@ -77,11 +77,16 @@ struct MainView: View {
 #if DEBUG
 private func makeDemoOngoingStudyAlarmViewModel() -> AlarmViewModel {
     let alarmVM = AlarmViewModel()
-    let now = Date()
-    var wakeupComponents = Calendar.current.dateComponents([.year, .month, .day], from: now)
-    wakeupComponents.hour = 8
-    wakeupComponents.minute = 0
-    let initialAlarmTime = Calendar.current.date(from: wakeupComponents) ?? now
+    let initialAlarmTime = demoDate(dayOffset: 0, hour: 8, minute: 0)
+
+    alarmVM.numStudyDays = 3
+    alarmVM.timeIntervals = [0, 15, 15, 15]
+    alarmVM.fixedTimes = [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)]
+    alarmVM.hasEveningSample = true
+    alarmVM.startSample = 1
+    alarmVM.studyDayCounter = 1
+    alarmVM.dateOfLastInitialAlarm = initialAlarmTime
+    alarmVM.setDemoConfirmedWakeupDate(initialAlarmTime)
     alarmVM.initialAlarm = Alarm(
         id: AlarmConstants.initialAlarmId,
         isActive: true,
@@ -89,14 +94,16 @@ private func makeDemoOngoingStudyAlarmViewModel() -> AlarmViewModel {
         isTriggered: true,
         time: initialAlarmTime
     )
-    alarmVM.timedAlarms = [
-        Alarm(id: 0, isActive: false, isScanned: true, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: -15, to: now) ?? now),
-        Alarm(id: 1, isActive: true, isScanned: false, isTriggered: true, time: Calendar.current.date(byAdding: .minute, value: -10, to: now) ?? now),
-        Alarm(id: 2, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: 5, to: now) ?? now),
-        Alarm(id: 3, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .minute, value: 20, to: now) ?? now),
-        Alarm(id: 4, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .hour, value: 2, to: now) ?? now),
-        Alarm(id: 5, isActive: true, isScanned: false, isTriggered: false, time: Calendar.current.date(byAdding: .hour, value: 4, to: now) ?? now)
-    ]
+    alarmVM.timedAlarms = demoTimedAlarms(for: initialAlarmTime).map { alarm in
+        Alarm(
+            id: alarm.id,
+            isActive: alarm.id != 0,
+            isScanned: alarm.id == 0,
+            isTriggered: alarm.time < Date(),
+            time: alarm.time
+        )
+    }
+    alarmVM.lastEveningReminderSelection = demoEveningTime(for: initialAlarmTime)
     return alarmVM
 }
 
@@ -105,8 +112,8 @@ private func makeDemoStudyHistoryAlarmViewModel() -> AlarmViewModel {
     let calendar = Calendar.current
     let wakeupToday = demoDate(dayOffset: 0, hour: 8, minute: 0)
 
-    alarmVM.numStudyDays = 5
-    alarmVM.timeIntervals = [0, 15, 30, 45]
+    alarmVM.numStudyDays = 3
+    alarmVM.timeIntervals = [0, 15, 15, 15]
     alarmVM.fixedTimes = [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)]
     alarmVM.hasEveningSample = true
     alarmVM.startSample = 1
@@ -195,14 +202,17 @@ private func makeDemoStudyHistoryAlarmViewModel() -> AlarmViewModel {
 }
 
 private func demoTimedAlarms(for wakeupTime: Date) -> [Alarm] {
-    let intervals = [0, 15, 30, 45]
+    let intervals = [0, 15, 15, 15]
+    var previousAlarmTime = wakeupTime
     let intervalAlarms = intervals.enumerated().map { offset, minutes in
-        Alarm(
+        let time = previousAlarmTime.addingTimeInterval(TimeInterval(minutes * 60))
+        previousAlarmTime = time
+        return Alarm(
             id: offset,
             isActive: true,
             isScanned: false,
             isTriggered: false,
-            time: wakeupTime.addingTimeInterval(TimeInterval(minutes * 60))
+            time: time
         )
     }
     let fixedTimes = [

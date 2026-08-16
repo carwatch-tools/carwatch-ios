@@ -4,36 +4,53 @@
     "" : {
 
     },
-    " or was already due " : {
+    " overdue " : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " oder fällig ist "
+            "value" : " überfällig "
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " ou s’il était déjà dû "
+            "value" : " en retard "
           }
         }
       }
     },
-    ". Remaining samples are scheduled for later. Pressing the 'Take sample' button opens the barcode scanner for the respective sample." : {
+    " and missed " : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ". Erinnerungen für verbleibende Proben sind für später eingeplant. Durch Drücken der Schaltfläche „Probe nehmen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
+            "value" : " und verpasst "
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ". Les échantillons restants sont programmés pour plus tard. Appuyer sur le bouton « Prélever l’échantillon » ouvre le scanner de code-barres pour l’échantillon correspondant."
+            "value" : " et manqué "
+          }
+        }
+      }
+    },
+    ". Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Zukünftige Proben werden ohne Warnsymbole angezeigt. Durch Drücken der Schaltfläche „Probe nehmen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Les échantillons futurs sont affichés sans symbole d’avertissement. Appuyer sur le bouton « Prélever l’échantillon » ouvre le scanner de code-barres pour l’échantillon correspondant."
           }
         }
       }
@@ -1421,18 +1438,18 @@
         }
       }
     },
-    "In the bedtime screen, you can initiate the evening procedure before going to bed. You only need to do this if your study requires to take an evening sample. The 'LIGHTS OUT' button will activate the app's dark mode." : {
+    "Use the bedtime screen before going to sleep. If your study requires an evening sample, CARWatch will guide you through it. If daytime samples are still open, CARWatch may ask whether they should be marked as missed before finishing the study day." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Im Bettzeit-Bildschirm können Sie vor dem Schlafengehen die Abendprobe starten. Dies ist nur erforderlich, wenn in Ihrer Studie eine Abendprobe vorgesehen ist. Die Schaltfläche 'LICHT AUS' aktiviert den Dunkelmodus der App."
+            "value" : "Verwenden Sie den Bettzeit-Bildschirm, bevor Sie schlafen gehen. Wenn Ihre Studie eine Abendprobe erfordert, führt CARWatch Sie dadurch. Wenn noch Tagesproben offen sind, fragt CARWatch möglicherweise, ob diese vor dem Beenden des Studientags als verpasst markiert werden sollen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans l’écran Coucher, vous pouvez lancer la procédure du soir avant d’aller au lit. Vous ne devez le faire que si votre étude exige un échantillon du soir. Le bouton « LUMIÈRES ÉTEINTES » active le mode sombre de l’app."
+            "value" : "Utilisez l’écran Coucher avant d’aller dormir. Si votre étude exige un échantillon du soir, CARWatch vous guidera. Si des échantillons de journée sont encore ouverts, CARWatch peut vous demander s’ils doivent être marqués comme manqués avant de terminer le jour d’étude."
           }
         }
       }
@@ -3744,18 +3761,18 @@
         }
       }
     },
-    "The CARWatch app is now ready to go. To start the study, set the alarm for the next day or report your awakening in the morning. If you need to reconfigure the app or you want to do the tutorial again, press the respective entries in the top-right menu." : {
+    "CARWatch is ready. To start the study, set your wakeup alarm for tomorrow or report your wakeup in the morning. You can review the tutorial or reconfigure the app from the top-right menu." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die CARWatch-App ist jetzt einsatzbereit. Um die Studie zu starten, stellen Sie einen Wecker für den nächsten Tag oder geben Sie am Morgen ein, dass Sie aufgewacht sind. Wenn Sie die App neu konfigurieren oder das Tutorial erneut durchführen möchten, wählen Sie die entsprechende Option im Menü oben rechts."
+            "value" : "CARWatch ist bereit. Um die Studie zu starten, stellen Sie Ihren Weckalarm für morgen oder erfassen Sie morgens Ihr Aufwachen. Sie können das Tutorial erneut ansehen oder die App über das Menü oben rechts neu konfigurieren."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’app CARWatch est maintenant prête. Pour commencer l’étude, réglez l’alarme pour le lendemain ou indiquez votre réveil le matin. Si vous devez reconfigurer l’app ou revoir le tutoriel, utilisez les entrées correspondantes dans le menu en haut à droite."
+            "value" : "CARWatch est prête. Pour commencer l’étude, réglez votre alarme de réveil pour demain ou indiquez votre réveil le matin. Vous pouvez revoir le tutoriel ou reconfigurer l’app depuis le menu en haut à droite."
           }
         }
       }
@@ -3827,35 +3844,35 @@
         }
       }
     },
-    "The symbols next to the alarm time show whether a sample has been taken " : {
+    "The symbols show the sample status: recorded " : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Symbole neben dem Probezeitpunkt zeigen an, ob eine Probe bereits genommen wurde "
+            "value" : "Die Symbole zeigen den Probenstatus: erfasst "
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les symboles à côté de l’heure d’alarme indiquent si un échantillon a été prélevé "
+            "value" : "Les symboles indiquent l’état de l’échantillon : enregistré "
           }
         }
       }
     },
-    "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Take sample' button opens the barcode scanner for the respective sample." : {
+    "The symbols show the sample status: recorded (green checkmark), overdue (orange symbol), or missed after the study day was finished (red X). Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Symbole neben dem Probezeitpunkt zeigen an, ob eine Probe bereits genommen wurde (grünes Häkchen) oder fällig ist (oranges Ausrufezeichen). Erinnerungen für verbleibende Proben sind für später eingeplant. Durch Drücken der Schaltfläche „Probe nehmen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
+            "value" : "Die Symbole zeigen den Probenstatus: erfasst (grünes Häkchen), überfällig (oranges Symbol) oder verpasst, nachdem der Studientag beendet wurde (rotes X). Zukünftige Proben werden ohne Warnsymbole angezeigt. Durch Drücken der Schaltfläche „Probe nehmen“ wird der Barcode-Scanner für die jeweilige Probe geöffnet."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les symboles à côté de l’heure d’alarme indiquent si un échantillon a été prélevé (coche verte) ou s’il était déjà dû (point d’exclamation orange). Les échantillons restants sont programmés pour plus tard. Appuyer sur le bouton « Prélever l’échantillon » ouvre le scanner de code-barres pour l’échantillon correspondant."
+            "value" : "Les symboles indiquent l’état de l’échantillon : enregistré (coche verte), en retard (symbole orange) ou manqué après la fin du jour d’étude (X rouge). Les échantillons futurs sont affichés sans symbole d’avertissement. Appuyer sur le bouton « Prélever l’échantillon » ouvre le scanner de code-barres pour l’échantillon correspondant."
           }
         }
       }
@@ -4754,18 +4771,18 @@
         }
       }
     },
-    "You only need to report your awakening if you didn't set an alarm for the morning, or if you woke up before the alarm went off. Clicking the 'YES' button will schedule the sample alarms for the upcoming day." : {
+    "Report your wakeup when you wake up, especially if you woke up before your alarm or did not use the CARWatch alarm. After wakeup is recorded, CARWatch calculates and schedules the samples for the active study day." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sie müssen Ihr Aufwachen nur manuell eingeben, wenn Sie keinen Wecker für den Morgen gestellt haben oder wenn Sie aufgewacht sind, bevor der Wecker losging. Wenn Sie auf die Schaltfläche „JA“ klicken, werden die Probenerinnerungen für den aktuellen Tag geplant."
+            "value" : "Erfassen Sie Ihr Aufwachen, wenn Sie aufwachen, besonders wenn Sie vor Ihrem Wecker aufgewacht sind oder den CARWatch-Wecker nicht verwendet haben. Nachdem das Aufwachen erfasst wurde, berechnet und plant CARWatch die Proben für den aktiven Studientag."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous devez indiquer votre réveil uniquement si vous n’avez pas réglé d’alarme pour le matin ou si vous vous êtes réveillé avant que l’alarme ne sonne. En appuyant sur « OUI », les alarmes d’échantillons seront programmées pour la journée à venir."
+            "value" : "Indiquez votre réveil lorsque vous vous réveillez, surtout si vous vous êtes réveillé avant votre alarme ou si vous n’avez pas utilisé l’alarme CARWatch. Une fois le réveil enregistré, CARWatch calcule et programme les échantillons pour le jour d’étude actif."
           }
         }
       }
