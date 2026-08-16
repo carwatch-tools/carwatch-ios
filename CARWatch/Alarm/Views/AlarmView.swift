@@ -691,9 +691,10 @@ struct AlarmView: View {
                     )
                 )
         } else {
-            Image(systemName: wasSelectedStudyDayManuallyFinished ? "xmark.circle" : "exclamationmark.arrow.circlepath")
+            let isMissed = isShowingFinishedStudyDay
+            Image(systemName: isMissed ? "xmark.circle" : "exclamationmark.arrow.circlepath")
                 .font(.system(size: fontSize))
-                .foregroundStyle(wasSelectedStudyDayManuallyFinished ? .red : .orange)
+                .foregroundStyle(isMissed ? .red : .orange)
                 .frame(width: 28, alignment: .center)
                 .accessibilityLabel(
                     String(
