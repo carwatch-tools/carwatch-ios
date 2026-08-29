@@ -315,7 +315,6 @@
 				84CB0D8E2C4FFA10004DF7EF /* Permissions */,
 				840C388D2C3E88CC004DB9FE /* Utilities */,
 				840C388A2C3E7A15004DB9FE /* Scanner */,
-				847C381E2C240E34007548E8 /* Resources */,
 				91ED1E522C21D6AC0041751A /* CARWatchApp.swift */,
 				91ED1E562C21D6B10041751A /* Assets.xcassets */,
 				4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */,
@@ -327,6 +326,7 @@
 			isa = PBXGroup;
 			children = (
 				845816EA2C345B6100706038 /* Alarm.swift */,
+				847C381E2C240E34007548E8 /* Resources */,
 			);
 			path = Models;
 			sourceTree = "<group>";
