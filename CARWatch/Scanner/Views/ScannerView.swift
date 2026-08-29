@@ -221,10 +221,13 @@ struct ScannerView: View {
         let participantId = barcodeValue / 10000
         let dayId = (barcodeValue / 100) % 100
         let salivaId = barcodeValue % 100
+        let lastSampleIndex = startSampleIndex + totalNumSamples - 1
 
         guard participantId <= numParticipants,
               dayId <= numDays,
-              salivaId <= totalNumSamples else {
+              totalNumSamples > 0,
+              salivaId >= startSampleIndex,
+              salivaId <= lastSampleIndex else {
             return .invalid
         }
 

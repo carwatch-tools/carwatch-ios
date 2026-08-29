@@ -52,7 +52,7 @@ struct StudyData : Codable {
     }
     
     var description: String {
-        return "valid: \(isValid), study name: \(studyName), saliva dist.: \(salivaDistances), saliva times: \(salivaDistances), start sample: \(startSample), study days: \(studyDays), #participants: \(numParticipants), evening: \(hasEveningSample), contact: \(shareEmailAdress), duplicates: \(isCheckDuplicatesEnabled), participant id: \(participantId)"
+        return "valid: \(isValid), study name: \(studyName), saliva dist.: \(salivaDistances), saliva times: \(salivaTimes), start sample: \(startSample), study days: \(studyDays), #participants: \(numParticipants), evening: \(hasEveningSample), contact: \(shareEmailAdress), duplicates: \(isCheckDuplicatesEnabled), participant id: \(participantId)"
     }
     
     static private func parseSalivaDistances(salivaDistancesString: String) -> [Int]{
@@ -97,5 +97,4 @@ struct StudyData : Codable {
         return hasEvening ? numSamples - 1 : -1
     }
 }
-
 
