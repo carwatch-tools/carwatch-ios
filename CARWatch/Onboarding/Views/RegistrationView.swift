@@ -201,7 +201,7 @@ struct RegistrationView: View {
             .onAppear {
                 focusCurrentHeader()
             }
-            .onChange(of: pageIndex) { _ in
+            .onChange(of: pageIndex) {
                 focusCurrentHeader()
             }
     }

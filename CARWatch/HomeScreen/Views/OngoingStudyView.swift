@@ -195,10 +195,10 @@ struct OngoingStudyView: View {
                     announceCurrentTab()
                 }
             }
-            .onChange(of: selectedTab) { _ in
+            .onChange(of: selectedTab) {
                 announceCurrentTab()
             }
-            .onChange(of: isBarcodeScannerPresented) { isPresented in
+            .onChange(of: isBarcodeScannerPresented) { _, isPresented in
                 if isPresented {
                     if skipDayChoiceForNextScannerPresentation {
                         skipDayChoiceForNextScannerPresentation = false
@@ -355,14 +355,14 @@ struct OngoingStudyView: View {
             } message: {
                 Text(sampleDayChoiceMessage)
             }
-            .onChange(of: showScheduleCompletionAlert) { isPresented in
+            .onChange(of: showScheduleCompletionAlert) { _, isPresented in
                 guard isPresented else {
                     return
                 }
 
                 postAccessibilityAnnouncement("\(scheduleCompletionTitle). \(scheduleCompletionMessage)")
             }
-            .onChange(of: alarmVM.eveningReminderTime) { newValue in
+            .onChange(of: alarmVM.eveningReminderTime) { _, newValue in
                 if pendingBedtimeTabAfterEveningReminder, newValue != nil {
                     pendingBedtimeTabAfterEveningReminder = false
                     selectedTab = 2
@@ -522,6 +522,9 @@ struct OngoingStudyView: View {
             scannerSource = nil
             pendingWakeupConfirmationTime = nil
             selectedTab = 1
+            if alarmVM.studyDaySummary(for: alarmVM.numStudyDays)?.isFinished == true {
+                presentStudyFinishedAfterTodayChoice()
+            }
             return
         }
 
@@ -530,10 +533,7 @@ struct OngoingStudyView: View {
 
         if alarmVM.isStudyFinished() {
             isBarcodeScannerPresented = false
-            selectedTab = 2
-            scheduleCompletionTitle = localizedAppString("Study Finished")
-            scheduleCompletionMessage = localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email.")
-            showScheduleCompletionAlert = true
+            presentStudyFinishedAfterTodayChoice()
             currentAlarmId = nil
             scannerSource = nil
             pendingWakeupConfirmationTime = nil
@@ -554,6 +554,13 @@ struct OngoingStudyView: View {
         scannerSource = .wakeup
         skipDayChoiceForNextScannerPresentation = true
         isBarcodeScannerPresented = true
+    }
+
+    private func presentStudyFinishedAfterTodayChoice() {
+        selectedTab = 2
+        scheduleCompletionTitle = localizedAppString("Study Finished")
+        scheduleCompletionMessage = localizedAppString("The previous day was your last study day. Your study is now finished, so no new study day will be started today. Any unrecorded samples have been marked as missed. Thank you for participating! Please export your logs and send them to your study contact email.")
+        showScheduleCompletionAlert = true
     }
 
     private func presentPostWakeupSampleMessageIfNeeded(wakeupTime: Date) {

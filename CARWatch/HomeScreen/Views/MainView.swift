@@ -117,11 +117,11 @@ private func makeDemoStudyHistoryAlarmViewModel() -> AlarmViewModel {
     alarmVM.fixedTimes = [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)]
     alarmVM.hasEveningSample = true
     alarmVM.startSample = 1
-    let day3Wakeup = calendar.date(byAdding: .day, value: -1, to: wakeupToday) ?? wakeupToday
-    alarmVM.studyDayCounter = 4
+    let day2Wakeup = calendar.date(byAdding: .day, value: -1, to: wakeupToday) ?? wakeupToday
+    alarmVM.studyDayCounter = 3
     alarmVM.dateOfLastInitialAlarm = wakeupToday
-    alarmVM.setDemoConfirmedWakeupDate(day3Wakeup)
-    alarmVM.setDemoStudyDaysToFinishOnWakeup([3])
+    alarmVM.setDemoConfirmedWakeupDate(day2Wakeup)
+    alarmVM.setDemoStudyDaysToFinishOnWakeup([2])
     alarmVM.initialAlarm = Alarm(
         id: AlarmConstants.initialAlarmId,
         isActive: true,
@@ -129,40 +129,29 @@ private func makeDemoStudyHistoryAlarmViewModel() -> AlarmViewModel {
         isTriggered: true,
         time: wakeupToday
     )
-    let day3DueSampleIds: Set<Int> = [4, 5]
-    alarmVM.timedAlarms = demoTimedAlarms(for: day3Wakeup).map { alarm in
+    let day2DueSampleIds: Set<Int> = [4, 5]
+    alarmVM.timedAlarms = demoTimedAlarms(for: day2Wakeup).map { alarm in
         Alarm(
             id: alarm.id,
-            isActive: day3DueSampleIds.contains(alarm.id),
-            isScanned: !day3DueSampleIds.contains(alarm.id),
+            isActive: day2DueSampleIds.contains(alarm.id),
+            isScanned: !day2DueSampleIds.contains(alarm.id),
             isTriggered: true,
             time: alarm.time
         )
     }
     alarmVM.isEveningScanned = true
-    alarmVM.lastEveningReminderSelection = demoEveningTime(for: day3Wakeup)
+    alarmVM.lastEveningReminderSelection = demoEveningTime(for: day2Wakeup)
 
-    let day1Wakeup = calendar.date(byAdding: .day, value: -3, to: wakeupToday) ?? wakeupToday
-    let day2Wakeup = calendar.date(byAdding: .day, value: -2, to: wakeupToday) ?? wakeupToday
+    let day1Wakeup = calendar.date(byAdding: .day, value: -2, to: wakeupToday) ?? wakeupToday
 
     let day1Alarms = demoTimedAlarms(for: day1Wakeup).map {
         Alarm(id: $0.id, isActive: false, isScanned: true, isTriggered: true, time: $0.time)
     }
     let day2Alarms = demoTimedAlarms(for: day2Wakeup).map { alarm in
-        let missedIds: Set<Int> = [2, 4]
-        return Alarm(
-            id: alarm.id,
-            isActive: !missedIds.contains(alarm.id),
-            isScanned: !missedIds.contains(alarm.id),
-            isTriggered: true,
-            time: alarm.time
-        )
-    }
-    let day3Alarms = demoTimedAlarms(for: day3Wakeup).map { alarm in
         Alarm(
             id: alarm.id,
-            isActive: day3DueSampleIds.contains(alarm.id),
-            isScanned: !day3DueSampleIds.contains(alarm.id),
+            isActive: day2DueSampleIds.contains(alarm.id),
+            isScanned: !day2DueSampleIds.contains(alarm.id),
             isTriggered: true,
             time: alarm.time
         )
@@ -184,15 +173,6 @@ private func makeDemoStudyHistoryAlarmViewModel() -> AlarmViewModel {
             hasEveningSample: true,
             isEveningScanned: true,
             eveningTime: demoEveningTime(for: day2Wakeup),
-            finishReason: DayFinishReason.userFinishedDay.rawValue,
-            isFinished: true
-        ),
-        StudyDaySummary(
-            studyDay: 3,
-            timedAlarms: day3Alarms,
-            hasEveningSample: true,
-            isEveningScanned: true,
-            eveningTime: demoEveningTime(for: day3Wakeup),
             finishReason: nil,
             isFinished: false
         )

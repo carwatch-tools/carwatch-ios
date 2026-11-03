@@ -187,7 +187,7 @@ struct BedtimeView: View {
                 isBedtimeHeaderFocused = true
             }
         }
-        .onChange(of: isScannerPresented) { isPresented in
+        .onChange(of: isScannerPresented) { _, isPresented in
             guard !isPresented, pendingFinishAfterEveningSample else {
                 return
             }
@@ -199,7 +199,7 @@ struct BedtimeView: View {
                 pendingMissedTimedAlarmsSnapshot = nil
             }
         }
-        .onChange(of: showStudyFinishedAlert) { isPresented in
+        .onChange(of: showStudyFinishedAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(localizedAppString("Study finished. Please export your logs and send them to your study contact email."))
             }

@@ -81,7 +81,7 @@ private struct TopToastModifier: ViewModifier {
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: isPresented)
-            .onChange(of: isPresented) { isVisible in
+            .onChange(of: isPresented) { _, isVisible in
                 guard isVisible else { return }
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + duration) {

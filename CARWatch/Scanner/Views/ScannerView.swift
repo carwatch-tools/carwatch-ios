@@ -60,7 +60,7 @@ struct ScannerView: View {
         .onDisappear {
             appDelegate.resetNotificationNavigationState()
         }
-        .onChange(of: showAlert) { isPresented in
+        .onChange(of: showAlert) { _, isPresented in
             guard isPresented else {
                 return
             }

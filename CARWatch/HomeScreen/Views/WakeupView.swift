@@ -161,12 +161,12 @@ struct WakeupView: View {
                 isWakeupHeaderFocused = true
             }
         }
-        .onChange(of: showPostWakeupAlert) { isPresented in
+        .onChange(of: showPostWakeupAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(postWakeupAccessibilityAnnouncement)
             }
         }
-        .onChange(of: showStudyFinishedAlert) { isPresented in
+        .onChange(of: showStudyFinishedAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(localizedAppString("Study finished. Please export your logs and send them to your study contact email."))
             }

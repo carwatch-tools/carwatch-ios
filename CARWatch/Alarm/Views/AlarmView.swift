@@ -453,7 +453,7 @@ struct AlarmView: View {
                         alarmVM.shouldPromptForEveningReminderSetup = false
                     }
                 }
-                .onChange(of: showAlert) { isPresented in
+                .onChange(of: showAlert) { _, isPresented in
                     guard isPresented else {
                         return
                     }
@@ -467,24 +467,24 @@ struct AlarmView: View {
                         postAccessibilityAnnouncement(localizedAppString("This only disables the reminder. The sample still needs to be taken and recorded. Are you sure you want to turn off this reminder?"))
                     }
                 }
-                .onChange(of: showDisabledInfoAlert) { isPresented in
+                .onChange(of: showDisabledInfoAlert) { _, isPresented in
                     if isPresented {
                         postAccessibilityAnnouncement(disabledWakeupAnnouncement)
                     }
                 }
-                .onChange(of: alarmVM.shouldPromptForEveningReminderSetup) { shouldPrompt in
+                .onChange(of: alarmVM.shouldPromptForEveningReminderSetup) { _, shouldPrompt in
                     if shouldPrompt && studyDataVM.studyData.hasEveningSample {
                         eveningReminderSelection = alarmVM.eveningReminderTime ?? defaultEveningReminderSelection()
                         alarmVM.shouldPromptForEveningReminderSetup = false
                     }
                 }
-                .onChange(of: alarmVM.studyDayCounter) { _ in
+                .onChange(of: alarmVM.studyDayCounter) {
                     displayedStudyDay = selectedStudyDay
                 }
-                .onChange(of: alarmVM.pendingWakeupRecoveryRevision) { _ in
+                .onChange(of: alarmVM.pendingWakeupRecoveryRevision) {
                     displayedStudyDay = max(scheduleActiveStudyDay, 1)
                 }
-                .onChange(of: finishedStudyDayToDisplay) { studyDay in
+                .onChange(of: finishedStudyDayToDisplay) { _, studyDay in
                     guard let studyDay else {
                         return
                     }
@@ -492,7 +492,7 @@ struct AlarmView: View {
                     displayedStudyDay = studyDay
                     finishedStudyDayToDisplay = nil
                 }
-                .onChange(of: showToast) { isVisible in
+                .onChange(of: showToast) { _, isVisible in
                     guard isVisible else { return }
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + StyleConstants.toastDuration) {
@@ -776,7 +776,7 @@ struct AlarmView: View {
             .accessibilityHint(localizedAppString("Turns tomorrow's wakeup reminder on or off."))
 
             DatePicker("", selection: $initialAlarmTime, displayedComponents: .hourAndMinute)
-                .onChange(of: initialAlarmTime, perform: { _ in
+                .onChange(of: initialAlarmTime, initial: false, {
                     let shouldSuppressFeedback = suppressNextWakeupTimeChangeFeedback
                     suppressNextWakeupTimeChangeFeedback = false
                     let backupTime = alarmVM.getInitialAlarm().time
@@ -877,7 +877,7 @@ struct AlarmView: View {
             .accessibilityHint(localizedAppString("Turns the evening sample reminder on or off."))
 
             DatePicker("", selection: $eveningReminderSelection, displayedComponents: .hourAndMinute)
-                .onChange(of: eveningReminderSelection) { newValue in
+                .onChange(of: eveningReminderSelection) { _, newValue in
                     guard alarmVM.eveningReminderTime != nil else {
                         return
                     }
