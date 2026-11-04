@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "select_study_day 1.png",
       "idiom" : "iphone",
       "scale" : "1x"
     },
@@ -13,7 +14,7 @@
       "scale" : "3x"
     },
     {
-      "filename" : "select_study_day.png",
+      "filename" : "select_study_day_ipad.png",
       "idiom" : "ipad",
       "scale" : "1x"
     },

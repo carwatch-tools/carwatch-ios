@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Simulator Screenshot - iPad mini (A17 Pro) - 2026-04-10 at 11.02.13.jpeg",
+      "filename" : "bedtime.png",
       "idiom" : "iphone",
       "scale" : "1x"
     },
@@ -14,6 +14,7 @@
       "scale" : "3x"
     },
     {
+      "filename" : "bedtime_ipad.png",
       "idiom" : "ipad",
       "scale" : "1x"
     },

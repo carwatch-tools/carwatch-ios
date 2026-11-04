@@ -1,18 +1,7 @@
 {
   "images" : [
     {
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    },
-    {
+      "filename" : "study_day_overview.png",
       "idiom" : "iphone",
       "scale" : "1x"
     },
@@ -25,7 +14,7 @@
       "scale" : "3x"
     },
     {
-      "filename" : "study_overview.png",
+      "filename" : "study_day_overview_ipad.png",
       "idiom" : "ipad",
       "scale" : "1x"
     },
