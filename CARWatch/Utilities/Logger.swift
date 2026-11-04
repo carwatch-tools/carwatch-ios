@@ -9,7 +9,6 @@ class Logger {
     private var participantId: String? = nil
     
     func setStudyData(studyName: String?, participantId: String?) {
-        print("Setting study data in logger: \(studyName!), \(participantId!)")
         self.studyName = studyName
         self.participantId = participantId
     }
@@ -101,7 +100,6 @@ class Logger {
                 try logEntry.write(to: fileURL, atomically: true, encoding: .utf8)
             }
         } catch {
-            print("Failed to write log: \(error)")
         }
     }
     
@@ -114,7 +112,6 @@ class Logger {
             do {
                 try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                print("Failed to create log directory \(directoryURL.lastPathComponent): \(error)")
                 return false
             }
         }
@@ -137,7 +134,6 @@ class Logger {
             do {
                 try fileManager.removeItem(at: destinationURL)
             } catch {
-                print("Failed to remove existing ZIP file with error: \(error)")
                 return nil
             }
         }
@@ -146,7 +142,6 @@ class Logger {
         do {
             try fileManager.zipItem(at: sourceURL, to: destinationURL)
         } catch {
-            print("Creation of ZIP archive failed with error: \(error)")
             return nil
         }
         
@@ -163,9 +158,7 @@ class Logger {
             for filePath in filePaths {
                 try fileManager.removeItem(at: filePath)
             }
-            print("All files deleted from directory: \(logDirectory)")
-        } catch let error {
-            print("Error while deleting files: \(error.localizedDescription)")
+        } catch {
         }
     }
 }

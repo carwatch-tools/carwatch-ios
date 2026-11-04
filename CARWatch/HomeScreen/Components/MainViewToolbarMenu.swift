@@ -1,12 +1,120 @@
 import SwiftUI
-import AlertToast
 import UIKit
 import MessageUI
+
+enum TopToastStyle {
+    case regular
+    case success
+    case error
+
+    var iconName: String {
+        switch self {
+        case .regular:
+            return "info.circle.fill"
+        case .success:
+            return "checkmark.circle.fill"
+        case .error:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .regular:
+            return .blue
+        case .success:
+            return .green
+        case .error:
+            return .orange
+        }
+    }
+}
+
+private struct TopToastView: View {
+    let message: String
+    let style: TopToastStyle
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: style.iconName)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(style.tint)
+                .accessibilityHidden(true)
+
+            Text(message)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: 560, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct TopToastModifier: ViewModifier {
+    @Binding var isPresented: Bool
+
+    let message: String
+    let style: TopToastStyle
+    let duration: TimeInterval
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .top) {
+                if isPresented && !message.isEmpty {
+                    TopToastView(message: message, style: style)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1)
+                        .allowsHitTesting(false)
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: isPresented)
+            .onChange(of: isPresented) { _, isVisible in
+                guard isVisible else { return }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                    guard isPresented else { return }
+                    isPresented = false
+                }
+            }
+    }
+}
+
+extension View {
+    func topToast(
+        isPresented: Binding<Bool>,
+        message: String,
+        style: TopToastStyle = .regular,
+        duration: TimeInterval = StyleConstants.toastDuration
+    ) -> some View {
+        modifier(
+            TopToastModifier(
+                isPresented: isPresented,
+                message: message,
+                style: style,
+                duration: duration
+            )
+        )
+    }
+}
 
 struct MainViewToolbarMenu: View {
     @EnvironmentObject var sessionVM: SessionViewModel
     @EnvironmentObject var studyDataVM: StudyDataViewModel
     @EnvironmentObject var alarmVM: AlarmViewModel
+    @EnvironmentObject var permissionDataVM: PermissionDataViewModel
 
     @Binding var showAppInfoDialog : Bool
     @Binding var appVersion: String?
@@ -14,6 +122,7 @@ struct MainViewToolbarMenu: View {
     @Binding var killButtonClickCount: Int
     @Binding var toastType: MenuConstants.ToastType
     @Binding var selectedTab: Int
+    @Binding var finishedStudyDayToDisplay: Int?
     
     @State var showShareSheet = false
     @State private var showStudyInfoSheet = false
@@ -22,6 +131,7 @@ struct MainViewToolbarMenu: View {
     @State private var showFinishStudyDayConfirmation = false
     @State private var showDeleteLogsConfirmation = false
     @State private var showKillNotificationsConfirmation = false
+    @State private var showStudyFinishedAlert = false
     
     var body: some View {
         Menu {
@@ -139,6 +249,11 @@ struct MainViewToolbarMenu: View {
         } message: {
             Text("All scheduled reminders will be deactivated.")
         }
+        .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(localizedAppString("This was your last sample. Thank you for participating in the study! Please export your logs and send them to your study contact email."))
+        }
         .sheet(isPresented: $showShareSheet, content: {
             if let zipFileURL = Logger.instance.zipCurrentLogDirectoryContent() {
                 let subject = zipFileURL.lastPathComponent
@@ -170,19 +285,31 @@ struct MainViewToolbarMenu: View {
     private func performReregister() {
 #if DEBUG
         UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
 #endif
         alarmVM.resetAlarmDataForNewUser()
+        studyDataVM.resetStudyData()
+        permissionDataVM.resetPermissionChecksForReregistration()
         sessionVM.reregister()
     }
 
     private func performFinishStudyDay() {
+        let isFinishingCurrentStudyDate = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
+        let finishedStudyDay = alarmVM.studyDayCounter
         let didFinishDay = alarmVM.finishCurrentStudyDay()
 
         guard didFinishDay else {
             return
         }
 
-        selectedTab = 2
+        finishedStudyDayToDisplay = finishedStudyDay
+        selectedTab = 1
+        if alarmVM.isStudyFinished() {
+            showStudyFinishedAlert = true
+        } else if isFinishingCurrentStudyDate {
+            toastType = .studyDayFinished
+            showToast = true
+        }
     }
 
     private func performDeleteLogs() {
@@ -264,9 +391,11 @@ private struct StudyInformationSheet: View {
         showToast: .constant(false),
         killButtonClickCount: .constant(0),
         toastType: .constant(.clickToKill),
-        selectedTab: .constant(0)
+        selectedTab: .constant(0),
+        finishedStudyDayToDisplay: .constant(nil)
     )
     .environmentObject(SessionViewModel())
     .environmentObject(StudyDataViewModel())
     .environmentObject(AlarmViewModel())
+    .environmentObject(PermissionDataViewModel())
 }

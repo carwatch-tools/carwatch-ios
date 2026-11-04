@@ -22,7 +22,7 @@ struct ScannerView: View {
     @State var alertType: ScannerConstants.AlertType = .invalid
     @State var scanResult: String = ""
     @State var codeType: ScannerConstants.CodeType
-    var isManualScan: Bool = false
+    @State private var didAcceptScanInCurrentSession = false
     
     private let rotationChangePublisher = NotificationCenter.default
         .publisher(for: UIDevice.orientationDidChangeNotification)
@@ -50,6 +50,7 @@ struct ScannerView: View {
         }
         .accessibilityElement(children: .contain)
         .onAppear {
+            didAcceptScanInCurrentSession = false
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isBackButtonFocused = true
                 postAccessibilityScreenChanged(nil)
@@ -59,7 +60,7 @@ struct ScannerView: View {
         .onDisappear {
             appDelegate.resetNotificationNavigationState()
         }
-        .onChange(of: showAlert) { isPresented in
+        .onChange(of: showAlert) { _, isPresented in
             guard isPresented else {
                 return
             }
@@ -139,6 +140,10 @@ struct ScannerView: View {
     }
     
     func validateScanResult(result: String) -> Bool {
+        guard !didAcceptScanInCurrentSession else {
+            return false
+        }
+
         switch codeType {
         case .ean8:
             // remove check digit
@@ -152,13 +157,11 @@ struct ScannerView: View {
                 totalNumSamples: studyDataVM.studyData.numSamples,
                 currentDay: alarmVM.studyDayCounter,
                 expectedSalivaId: expectedSalivaId(),
-                startSampleIndex: startSampleIndex(),
-                isManualScan: isManualScan
+                startSampleIndex: startSampleIndex()
             )
 
             switch validationResult {
             case .valid:
-                print("Barcode \(barcodeData) is valid")
                 return true
             case .duplicate:
                 alertType = .duplicate
@@ -172,13 +175,11 @@ struct ScannerView: View {
                 alertType = .wrongSample
                 showAlert = true
                 logRejectedBarcode(barcodeData)
-                print("Barcode \(barcodeData) does not match the expected sample")
                 return false
             case .invalid:
                 alertType = .invalid
                 showAlert = true
                 logRejectedBarcode(barcodeData)
-                print("Barcode \(barcodeData) is invalid")
                 return false
             }
             
@@ -190,7 +191,6 @@ struct ScannerView: View {
                 msg[LoggerConstants.loggerExtraBarcodeValue] = result
                 Logger.instance.log(tag: LoggerConstants.loggerActionInvalidBarcodeScanned, message: msg)
             }
-            print("QR code valid: \(isValid)")
             return isValid
         }
     }
@@ -204,8 +204,7 @@ struct ScannerView: View {
         totalNumSamples: Int,
         currentDay: Int,
         expectedSalivaId: Int,
-        startSampleIndex: Int,
-        isManualScan: Bool
+        startSampleIndex: Int
     ) -> BarcodeResult {
         if !fdEnabled {
             return .valid
@@ -222,15 +221,14 @@ struct ScannerView: View {
         let participantId = barcodeValue / 10000
         let dayId = (barcodeValue / 100) % 100
         let salivaId = barcodeValue % 100
+        let lastSampleIndex = startSampleIndex + totalNumSamples - 1
 
         guard participantId <= numParticipants,
               dayId <= numDays,
-              salivaId <= totalNumSamples else {
+              totalNumSamples > 0,
+              salivaId >= startSampleIndex,
+              salivaId <= lastSampleIndex else {
             return .invalid
-        }
-
-        if isManualScan {
-            return .valid
         }
 
         let expectedSampleId = expectedSalivaId + startSampleIndex
@@ -244,9 +242,13 @@ struct ScannerView: View {
     }
     
     func handleScanResult(result: Result<String, ScanError>){
+        guard !didAcceptScanInCurrentSession else {
+            return
+        }
+
         switch result {
         case .success(let result):
-            print("Scan successful with result: \(result)")
+            didAcceptScanInCurrentSession = true
             alertType = .success
             showAlert = true
             switch codeType {
@@ -264,8 +266,8 @@ struct ScannerView: View {
                 sessionVM.startStudyConfirmation()
                 postAccessibilityAnnouncement(localizedAppString("Study QR code accepted. Opening study details."))
             }
-        case .failure(let error):
-            print("Scan failed: \(error.localizedDescription)")
+        case .failure:
+            break
         }
     }
     
@@ -301,8 +303,6 @@ struct ScannerView: View {
 
         if alarmId == AlarmConstants.eveningAlarmId {
             sampleId = "\(samplePrefix)\(AlarmConstants.eveningAlarmLoggerPrefix)"
-        } else if isManualScan {
-            sampleId = "\(samplePrefix)M"
         } else {
             sampleId = "\(samplePrefix)\(expectedSalivaId() + startSampleIndex())"
         }

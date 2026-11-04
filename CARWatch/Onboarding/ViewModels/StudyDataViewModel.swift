@@ -2,7 +2,7 @@ import Foundation
 
 class StudyDataViewModel : ObservableObject {
     
-    @Published var studyData = StudyData(isValid: false, studyName: "", salivaDistancesString: "", salivaTimesString: "", startSample: "", studyDays: 0, numParticipants: 0, hasEveningSample: false, shareEmailAdress: "", isCheckDuplicatesEnabled: false) {
+    @Published var studyData = StudyDataViewModel.emptyStudyData() {
         didSet {
             saveStudyData()
         }
@@ -30,8 +30,14 @@ class StudyDataViewModel : ObservableObject {
             UserDefaults.standard.set(encodedStudyData, forKey: studyDataKey)
         }
     }
+
+    func resetStudyData() {
+        propertyMap.removeAll()
+        studyData = StudyDataViewModel.emptyStudyData()
+    }
     
     func parseQrCodeData(_ dataString: String) {
+        propertyMap.removeAll()
         let properties = dataString.split(separator: QrParserConstants.separator).map { String($0) }
         
         if properties.isEmpty {
@@ -67,7 +73,6 @@ class StudyDataViewModel : ObservableObject {
         let participantId = getStringProperty(QrParserConstants.participantIdProperty,isMandatory: false)
         
         studyData = StudyData(isValid: true, studyName: studyName, salivaDistancesString: salivaDistances, salivaTimesString: salivaTimes, startSample: startSample, studyDays: studyDays, numParticipants: numParticipants, hasEveningSample: hasEveningSample, shareEmailAdress: shareEmailAddress, isCheckDuplicatesEnabled: isCheckDuplicatesEnabled, participantId: participantId)
-        print("parsed study data: \(studyData)")
         if !isParticipantIdRequired(){
             logDeviceProperties()
             logAppMetadata()
@@ -104,5 +109,9 @@ class StudyDataViewModel : ObservableObject {
     
     func isParticipantIdRequired() -> Bool {
         return studyData.participantId.isEmpty
+    }
+
+    private static func emptyStudyData() -> StudyData {
+        StudyData(isValid: false, studyName: "", salivaDistancesString: "", salivaTimesString: "", startSample: "", studyDays: 0, numParticipants: 0, hasEveningSample: false, shareEmailAdress: "", isCheckDuplicatesEnabled: false)
     }
 }

@@ -1,5 +1,4 @@
 import SwiftUI
-import AlertToast
 
 private enum PostWakeupAlertType {
     case delayedSample
@@ -20,15 +19,31 @@ struct WakeupView: View {
     @State private var showPostWakeupAlert: Bool = false
     @State private var postWakeupAlertType: PostWakeupAlertType = .delayedSample
     @State private var showStudyFinishedAlert: Bool = false
+    @State private var showPreviousWakeupTimeSheet: Bool = false
+    @State private var previousWakeupTime: Date = Date()
     
     @Binding var initialAlarmTime: Date
     @Binding var isScannerPresented: Bool
     @Binding var scannerSource: ScannerPresentationSource?
     @Binding var pendingWakeupConfirmationTime: Date?
+    @Binding var showPreviousDayUnfinishedAlert: Bool
     var onDelayedSampleAcknowledged: () -> Void = {}
 
     private var shouldUseVerticalActionLayout: Bool {
         StyleConstants.isAccessibilitySize(dynamicTypeSize)
+    }
+
+    private var toastMessage: String {
+        switch toastType {
+        case .feedbackToast:
+            return localizedAppString("Thank you for your feedback!")
+        case .wakeupReminderToast:
+            return localizedAppString("Please remember to take your sample\nwhen you wake up.")
+        case .wakeupReportedToast:
+            return localizedAppString("You have already reported your wakeup.")
+        case .delayedSampleToast:
+            return ""
+        }
     }
 
     private func usesExpandedPadLayout(for size: CGSize) -> Bool {
@@ -72,6 +87,7 @@ struct WakeupView: View {
                                     wakeupYesButton
                                     wakeupNoButton
                                 }
+                                previousWakeupButton
                             }
                             .frame(maxWidth: 320, alignment: .leading)
                         }
@@ -105,6 +121,7 @@ struct WakeupView: View {
                                         wakeupNoButton
                                     }
                                 }
+                                previousWakeupButton
                             }
                         }
                     }
@@ -115,19 +132,7 @@ struct WakeupView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear.ignoresSafeArea())
         }
-        .toast(isPresenting: $showToast, duration: StyleConstants.toastDuration) {
-            let color = Color(UIColor.secondarySystemBackground)
-            switch toastType {
-            case .feedbackToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Thank you for your feedback!"), style: .style(backgroundColor: color))
-            case .wakeupReminderToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("Please remember to take your sample\nwhen you wake up."), style: .style(backgroundColor: color))
-            case .wakeupReportedToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: localizedAppString("You have already reported your wakeup."), style: .style(backgroundColor: color))
-            case .delayedSampleToast:
-                return AlertToast(displayMode: .banner(.slide), type: .regular, title: "", style: .style(backgroundColor: color))
-            }
-        }
+        .topToast(isPresented: $showToast, message: toastMessage)
         .alert(postWakeupAlertTitle, isPresented: $showPostWakeupAlert) {
             Button("OK", role: .cancel) {
                 onDelayedSampleAcknowledged()
@@ -135,22 +140,33 @@ struct WakeupView: View {
         } message: {
             Text(postWakeupAlertMessage)
         }
+        .alert(localizedAppString("Continue or start a study day?"), isPresented: $showPreviousDayUnfinishedAlert) {
+            Button(localizedAppString("Continue current study day"), role: .cancel) { }
+            Button(localizedAppString("Finish and start today")) {
+                performWakeupConfirmation()
+            }
+        } message: {
+            Text(previousDayUnfinishedMessage)
+        }
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(localizedAppString("You have already finished the study.\nThanks for participating!\nPlease export your logs and send them to your study contact email."))
+        }
+        .sheet(isPresented: $showPreviousWakeupTimeSheet) {
+            previousWakeupTimeSheet
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isWakeupHeaderFocused = true
             }
         }
-        .onChange(of: showPostWakeupAlert) { isPresented in
+        .onChange(of: showPostWakeupAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(postWakeupAccessibilityAnnouncement)
             }
         }
-        .onChange(of: showStudyFinishedAlert) { isPresented in
+        .onChange(of: showStudyFinishedAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(localizedAppString("Study finished. Please export your logs and send them to your study contact email."))
             }
@@ -164,13 +180,10 @@ struct WakeupView: View {
                 return
             }
 
-            let wakeupAlreadyReportedToday = Calendar.current.isDate(alarmVM.dateOfLastInitialAlarm, inSameDayAs: Date())
-            let canResumeWakeupSampleScan = wakeupAlreadyReportedToday
-                && alarmVM.getInitialAlarm().isTriggered
-                && alarmVM.getCurrentlyTriggeredAlarm() != nil
-                && alarmVM.isScanRequired()
+            let wakeupAlreadyReportedToday = alarmVM.isWakeupConfirmedToday()
+            let shouldFinishPreviousDay = alarmVM.shouldFinishPreviousDayOnWakeupConfirmation()
 
-            if wakeupAlreadyReportedToday && !canResumeWakeupSampleScan {
+            if wakeupAlreadyReportedToday {
                 toastType = .wakeupReportedToast
                 showToast = true
             } else {
@@ -178,25 +191,17 @@ struct WakeupView: View {
                 msg[LoggerConstants.loggerExtraAlarmId] = AlarmConstants.initialAlarmId
                 Logger.instance.log(tag: LoggerConstants.loggerActionSpontaneousAwakening, message: msg)
                 initialAlarmTime = Date()
-                if alarmVM.isScanRequired() {
+                if shouldFinishPreviousDay {
+                    showPreviousDayUnfinishedAlert = true
+                    return
+                }
+
+                if alarmVM.isScanRequired() && !shouldFinishPreviousDay {
                     pendingWakeupConfirmationTime = initialAlarmTime
                     scannerSource = .wakeup
                     isScannerPresented = true
                 } else {
-                    alarmVM.confirmWakeup(at: initialAlarmTime)
-                    if hasOverdueSample(before: initialAlarmTime) {
-                        postWakeupAlertType = .overdueSample
-                        showPostWakeupAlert = true
-                    } else if alarmVM.isScanRequired() {
-                        scannerSource = .wakeup
-                        isScannerPresented = true
-                    } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
-                        delayedSampleMinutes = Int(
-                            ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
-                        )
-                        postWakeupAlertType = .delayedSample
-                        showPostWakeupAlert = true
-                    }
+                    performWakeupConfirmation()
                 }
             }
         }
@@ -225,6 +230,47 @@ struct WakeupView: View {
         .accessibilityIdentifier("wakeup.no")
         .accessibilityLabel(localizedAppString("No, I did not just wake up"))
         .accessibilityHint(localizedAppString("Keeps the wakeup report unchanged and shows a reminder if needed."))
+    }
+
+    private var previousWakeupButton: some View {
+        Button("Record previous wakeup") {
+            if alarmVM.isStudyFinished() {
+                showStudyFinishedAlert = true
+                return
+            }
+
+            if alarmVM.isWakeupConfirmedToday() {
+                toastType = .wakeupReportedToast
+                showToast = true
+                return
+            }
+
+            previousWakeupTime = Date()
+            showPreviousWakeupTimeSheet = true
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("wakeup.previous")
+        .accessibilityLabel(localizedAppString("Record previous wakeup"))
+        .accessibilityHint(localizedAppString("Enter the time you woke up earlier so the sample schedule can be calculated."))
+    }
+
+    private func performWakeupConfirmation() {
+        alarmVM.confirmWakeup(at: initialAlarmTime)
+        if hasOverdueSample(before: initialAlarmTime) {
+            postWakeupAlertType = .overdueSample
+            showPostWakeupAlert = true
+        } else if alarmVM.isScanRequired() {
+            scannerSource = .wakeup
+            isScannerPresented = true
+        } else if let nextTimedAlarm = alarmVM.getNextUpcomingAlarm() {
+            delayedSampleMinutes = Int(
+                ceil(nextTimedAlarm.time.timeIntervalSince(initialAlarmTime) / 60)
+            )
+            postWakeupAlertType = .delayedSample
+            showPostWakeupAlert = true
+        }
     }
 
     private var postWakeupAlertTitle: String {
@@ -260,6 +306,28 @@ struct WakeupView: View {
         }
     }
 
+    private var previousDayUnfinishedMessage: String {
+        String(
+            format: localizedAppString("The study day that started at %@ still has missing samples. Please choose whether you want to continue the current study day or finish it and start a new study day today, %@."),
+            formattedStudyDateTime(alarmVM.pendingUnfinishedStudyDayStartTimeForWakeupConfirmation() ?? alarmVM.dateOfLastInitialAlarm),
+            formattedStudyDate(Date())
+        )
+    }
+
+    private func formattedStudyDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private func formattedStudyDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
     private func hasOverdueSample(before wakeupTime: Date) -> Bool {
         alarmVM.timedAlarms.contains { alarm in
             guard alarm.isActive, alarm.isTriggered, !alarm.isScanned else {
@@ -268,6 +336,72 @@ struct WakeupView: View {
 
             return wakeupTime.timeIntervalSince(alarm.time) > overdueSampleGracePeriod
         }
+    }
+
+    private var previousWakeupTimeSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("When did you wake up?")
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+
+                DatePicker("Wakeup time", selection: $previousWakeupTime, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Wakeup")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showPreviousWakeupTimeSheet = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Continue") {
+                        recordPreviousWakeup()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func recordPreviousWakeup() {
+        initialAlarmTime = resolvedPreviousWakeupTime()
+        pendingWakeupConfirmationTime = nil
+        showPreviousWakeupTimeSheet = false
+
+        if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+            showPreviousDayUnfinishedAlert = true
+            return
+        }
+
+        performWakeupConfirmation()
+    }
+
+    private func resolvedPreviousWakeupTime() -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        let selectedComponents = calendar.dateComponents([.hour, .minute], from: previousWakeupTime)
+        var currentDayComponents = calendar.dateComponents([.year, .month, .day], from: now)
+        currentDayComponents.hour = selectedComponents.hour
+        currentDayComponents.minute = selectedComponents.minute
+        currentDayComponents.second = 0
+
+        guard let selectedTimeToday = calendar.date(from: currentDayComponents) else {
+            return now
+        }
+
+        if selectedTimeToday > now {
+            return calendar.date(byAdding: .day, value: -1, to: selectedTimeToday) ?? selectedTimeToday
+        }
+
+        return selectedTimeToday
     }
 }
 
@@ -279,6 +413,7 @@ struct WakeupView: View {
         isScannerPresented: .constant(false),
         scannerSource: .constant(nil),
         pendingWakeupConfirmationTime: .constant(nil),
+        showPreviousDayUnfinishedAlert: .constant(false),
         onDelayedSampleAcknowledged: {}
     )
     .environmentObject(alarmVM)

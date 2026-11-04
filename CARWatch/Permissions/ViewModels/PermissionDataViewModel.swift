@@ -2,7 +2,7 @@ import Foundation
 
 class PermissionDataViewModel : ObservableObject {
     
-    @Published var permissionData = PermissionData(notificationPermissionGranted: false, notificationPermissionDialogHandled: false, cameraPermissionGranted: false, cameraPermissionDialogHandled: false) {
+    @Published var permissionData = PermissionData(notificationPermissionGranted: false, notificationPermissionDialogHandled: false, alarmPermissionGranted: false, alarmPermissionDialogHandled: false, cameraPermissionGranted: false, cameraPermissionDialogHandled: false) {
         didSet {
             savePermissionData()
         }
@@ -30,6 +30,15 @@ class PermissionDataViewModel : ObservableObject {
     func setNotificationPermissionDialogHandled(){
         permissionData = permissionData.setNotificationPermissionDialogHandled()
     }
+
+    func setAlarmPermission(isGranted: Bool) {
+        UserDefaults.standard.set(isGranted, forKey: AppConstants.alarmKitPermissionGrantedKey)
+        permissionData = permissionData.setAlarmPermission(isGranted: isGranted)
+    }
+
+    func setAlarmPermissionDialogHandled() {
+        permissionData = permissionData.setAlarmPermissionDialogHandled()
+    }
     
     func setCameraPermission(isGranted: Bool) {
         permissionData = permissionData.setCameraPermission(isGranted: isGranted)
@@ -43,6 +52,18 @@ class PermissionDataViewModel : ObservableObject {
         if let encodedPermissionData = try? JSONEncoder().encode(permissionData) {
             UserDefaults.standard.set(encodedPermissionData, forKey: permissionDataKey)
         }
+    }
+
+    func resetPermissionChecksForReregistration() {
+        UserDefaults.standard.set(false, forKey: AppConstants.alarmKitPermissionGrantedKey)
+        permissionData = PermissionData(
+            notificationPermissionGranted: false,
+            notificationPermissionDialogHandled: false,
+            alarmPermissionGranted: false,
+            alarmPermissionDialogHandled: false,
+            cameraPermissionGranted: false,
+            cameraPermissionDialogHandled: false
+        )
     }
     
     func checkNotificationPermission(completion: (() -> Void)? = nil) {
@@ -61,6 +82,16 @@ class PermissionDataViewModel : ObservableObject {
                 }
                 completion?()
             }
+        }
+    }
+
+    func checkAlarmPermission(completion: (() -> Void)? = nil) {
+        NotificationManager.instance.requestAlarmAuthorization { isHandled, isGranted in
+            if isHandled {
+                self.setAlarmPermissionDialogHandled()
+            }
+            self.setAlarmPermission(isGranted: isGranted)
+            completion?()
         }
     }
     

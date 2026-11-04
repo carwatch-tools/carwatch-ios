@@ -4,6 +4,9 @@ import UIKit
 struct AppConstants {
     static let privacyPolicyURL = URL(string: "https://carwatch-tools.github.io/privacy/")!
     static let demoOngoingStudyModeKey = "demo_ongoing_study_mode"
+    static let demoOngoingStudyVariantKey = "demo_ongoing_study_variant"
+    static let pendingAlarmKitOpenIdentifierKey = "pending_alarmkit_open_identifier"
+    static let alarmKitPermissionGrantedKey = "alarmkit_permission_granted"
 }
 
 struct PermissionConstants {
@@ -29,6 +32,7 @@ struct AlarmConstants {
     static let initialAlarmId = -1
     static let timedAlarmId = "timed"
     static let eveningAlarmId = 815
+    static let studyDayCutoffHours = 18
     
     static let eveningAlarmLoggerPrefix = "A"
 }
@@ -132,13 +136,18 @@ func postAccessibilityScreenChanged(_ argument: Any? = nil) {
 
 struct LocalizationConstants {
     static let languageStorageKey = "selectedLanguageCode"
+    static let supportedLanguageCodes = ["en", "de", "fr"]
 
     static var defaultLanguageCode: String {
         let preferredCode = Locale.preferredLanguages
             .compactMap { Locale(identifier: $0).language.languageCode?.identifier }
             .first
 
-        return preferredCode == "de" ? "de" : "en"
+        guard let preferredCode, supportedLanguageCodes.contains(preferredCode) else {
+            return "en"
+        }
+
+        return preferredCode
     }
 }
 
@@ -146,13 +155,14 @@ struct MenuConstants {
     static let killButtonClickCountActivate: Int = 5
     static let killButtonClickCountAlert: Int = 2
     enum ToastType {
-        case clickToKill, killSuccess, zipLogsFailed
+        case clickToKill, killSuccess, zipLogsFailed, studyDayFinished
     }
 }
 
 extension Notification.Name {
     static let notificationTapped = Notification.Name("NotificationTapped")
     static let foregroundNotificationReceived = Notification.Name("ForegroundNotificationReceived")
+    static let alarmKitOpenActionTapped = Notification.Name("AlarmKitOpenActionTapped")
 }
 
 struct QrParserConstants {
@@ -198,6 +208,7 @@ struct LoggerConstants {
     public static let loggerExtraBarcodeValue = "barcode_value"
     public static let loggerExtraOtherBarcodes = "other_barcodes"
     public static let loggerExtraDayCounter = "day_counter"
+    public static let loggerExtraDayFinishReason = "reason"
     public static let loggerExtraParticipantId = "participant_id"
     public static let loggerExtraScannedDay = "day_scanned"
     public static let loggerExtraExpectedDay = "day_expected"

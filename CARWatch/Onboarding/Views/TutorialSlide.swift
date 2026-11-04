@@ -4,6 +4,7 @@ struct TutorialSlide: View {
     let imageName : String
     let titleText : LocalizedStringKey
     let explanationText : LocalizedStringKey
+    var showsSampleStatusSymbols: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -22,8 +23,8 @@ struct TutorialSlide: View {
                         Image(imageName)
                             .resizable()
                             .scaledToFit()
+                            .clipShape(RoundedRectangle(cornerRadius: StyleConstants.roundedCornerRadius))
                             .frame(maxHeight: imageHeight)
-                            .cornerRadius(StyleConstants.roundedCornerRadius)
                             .shadow(radius: StyleConstants.shadowRadius)
                             .padding(onboardingPadding)
                             .accessibilityHidden(true)
@@ -40,8 +41,13 @@ struct TutorialSlide: View {
                             Text(titleText)
                                 .font(.title.weight(.bold))
                                 .accessibilityAddTraits(.isHeader)
-                            Text(explanationText)
-                                .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                            if showsSampleStatusSymbols {
+                                sampleStatusExplanationText
+                                    .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                            } else {
+                                Text(explanationText)
+                                    .font(.system(size: StyleConstants.explanationFontSize(for: size)))
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityElement(children: .combine)
@@ -59,12 +65,23 @@ struct TutorialSlide: View {
             .padding(.horizontal, onboardingPadding)
         }
     }
+
+    private var sampleStatusExplanationText: Text {
+        Text("The symbols show the sample status: recorded ")
+            + Text(Image(systemName: "checkmark.circle")).foregroundColor(.green)
+            + Text(" overdue ")
+            + Text(Image(systemName: "exclamationmark.arrow.circlepath")).foregroundColor(.orange)
+            + Text(" and missed ")
+            + Text(Image(systemName: "xmark.circle")).foregroundColor(.red)
+            + Text(". Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.")
+    }
 }
 
 #Preview {
     TutorialSlide(
         imageName: "sampleListSymbols",
         titleText: "Track your alarms",
-        explanationText: "The symbols next to the alarm time show whether a sample has been taken (green checkmark) or was already due (orange exclamation mark). Remaining samples are scheduled for later. Pressing the 'Scan sample' button opens the barcode scanner for the respective sample."
+        explanationText: "The symbols show the sample status: recorded (green checkmark), overdue (orange symbol), or missed after the study day was finished (red X). Future samples are shown without warning symbols. Pressing the 'Take sample' button opens the barcode scanner for the respective sample.",
+        showsSampleStatusSymbols: true
     )
 }

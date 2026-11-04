@@ -1,18 +1,79 @@
 import SwiftUI
 import UserNotifications
+#if canImport(AlarmKit)
+import AlarmKit
+import AppIntents
+#endif
+
+#if canImport(AlarmKit)
+@available(iOS 26.0, *)
+private struct SampleAlarmMetadata: AlarmMetadata {
+    let notificationIdentifier: String
+    let salivaId: String?
+}
+
+@available(iOS 26.0, *)
+struct OpenSampleAlarmIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Open CARWatch"
+    static var isDiscoverable: Bool = false
+    static var authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
+    static var supportedModes: IntentModes {
+        .foreground(.immediate)
+    }
+
+    @Parameter(title: "Reminder Identifier")
+    var notificationIdentifier: String
+
+    init() {
+        notificationIdentifier = ""
+    }
+
+    init(notificationIdentifier: String) {
+        self.notificationIdentifier = notificationIdentifier
+    }
+
+    func perform() async throws -> some IntentResult {
+        UserDefaults.standard.set(notificationIdentifier, forKey: AppConstants.pendingAlarmKitOpenIdentifierKey)
+        await MainActor.run {
+            NotificationCenter.default.post(name: .alarmKitOpenActionTapped, object: nil)
+        }
+        return .result()
+    }
+}
+#endif
 
 class NotificationManager {
     static let instance = NotificationManager() // Singleton
     var authorizationStatus: UNAuthorizationStatus = .denied
+
+    func hasAlarmKitAccess() -> Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            return AlarmManager.shared.authorizationState == .authorized
+        }
+#endif
+        return false
+    }
     
-    func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int) {
+    func scheduleCalendarBasedNotification(id: String, salivaId: String?, day: Int,  hour: Int, minute: Int, second: Int) {
+        let dateComponents = DateComponents(day: day, hour: hour, minute: minute, second: second)
+        scheduleCalendarBasedNotification(id: id, salivaId: salivaId, dateComponents: dateComponents)
+    }
+
+    func scheduleCalendarBasedNotification(id: String, salivaId: String?, date: Date) {
+        let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        scheduleCalendarBasedNotification(id: id, salivaId: salivaId, dateComponents: dateComponents)
+    }
+
+    private func scheduleCalendarBasedNotification(id: String, salivaId: String?, dateComponents: DateComponents) {
+        if scheduleAlarmKitAlarm(id: id, salivaId: salivaId, dateComponents: dateComponents) {
+            return
+        }
+
         let content = UNMutableNotificationContent()
         content.title = notificationTitle(for: salivaId)
+        content.body = notificationBody(for: salivaId)
         content.sound = UNNotificationSound(named:UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
-        var dateComponents = DateComponents()
-        dateComponents.day = day
-        dateComponents.hour = hour
-        dateComponents.minute = minute
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
@@ -32,35 +93,298 @@ class NotificationManager {
             salivaId
         )
     }
+
+    private func alarmKitTitle(for salivaId: String?) -> String {
+        guard let salivaId else {
+            return notificationTitle(for: nil)
+        }
+
+        return String(
+            format: localizedAppString("Sample #%@ is due!"),
+            salivaId
+        )
+    }
+
+    private func notificationBody(for salivaId: String?) -> String {
+        guard salivaId == nil, isAlarmKitUnavailable() else {
+            return ""
+        }
+
+        return localizedAppString("Alarm access is turned off. Please set your own wakeup alarm.")
+    }
     
-    func cancelNotificationsById(alarmId: Int) {
+    func cancelNotificationsById(alarmId: Int, studyDay: Int? = nil) {
+        var baseNotificationIds = [String]()
         var notificationIds = [String]()
         for i in 0...NotificationConstants.numberOfSubsequentNotifications-1 {
             let notificationId = "\(alarmId)_\(i)"
+            baseNotificationIds.append(notificationId)
             notificationIds.append(notificationId)
+            if let studyDay {
+                notificationIds.append("\(notificationId)_day\(studyDay)")
+            }
         }
-        
+
+        cancelAlarmKitAlarms(withIdentifiers: notificationIds)
+        if studyDay == nil {
+            cancelAlarmKitAlarmsMatching(baseIdentifiers: baseNotificationIds)
+        }
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: notificationIds)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: notificationIds)
+
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            let dayScopedNotificationIds = requests
+                .map(\.identifier)
+                .filter { identifier in
+                    self.shouldCancelIdentifier(
+                        identifier,
+                        baseIdentifiers: baseNotificationIds,
+                        exactIdentifiers: notificationIds,
+                        studyDay: studyDay
+                    )
+                }
+
+            self.cancelAlarmKitAlarms(withIdentifiers: dayScopedNotificationIds)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: dayScopedNotificationIds)
+        }
+
+        UNUserNotificationCenter.current().getDeliveredNotifications { notifications in
+            let dayScopedNotificationIds = notifications
+                .map(\.request.identifier)
+                .filter { identifier in
+                    self.shouldCancelIdentifier(
+                        identifier,
+                        baseIdentifiers: baseNotificationIds,
+                        exactIdentifiers: notificationIds,
+                        studyDay: studyDay
+                    )
+                }
+
+            UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: dayScopedNotificationIds)
+        }
         
-        print("Canceling notifications: \(notificationIds)")
         var msg = [String: Any]()
         msg[LoggerConstants.loggerExtraAlarmId] = alarmId
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmCancel, message: msg)
     }
+
+    private func shouldCancelIdentifier(
+        _ identifier: String,
+        baseIdentifiers: [String],
+        exactIdentifiers: [String],
+        studyDay: Int?
+    ) -> Bool {
+        if exactIdentifiers.contains(identifier) {
+            return true
+        }
+
+        guard studyDay == nil else {
+            return false
+        }
+
+        return baseIdentifiers.contains { identifier.hasPrefix("\($0)_day") }
+    }
     
     func cancelAllNotifications() {
+        cancelAllAlarmKitAlarms()
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
         
         Logger.instance.log(tag: LoggerConstants.loggerActionAlarmKillAll, message: [String: Any]())
     }
+
+    private func scheduleAlarmKitAlarm(id: String, salivaId: String?, dateComponents: DateComponents) -> Bool {
+#if canImport(AlarmKit)
+        guard #available(iOS 26.0, *) else {
+            return false
+        }
+
+        guard shouldUseAlarmKit() else {
+            return false
+        }
+
+        guard let date = nextDate(matching: dateComponents) else {
+            return false
+        }
+
+        let title = alarmKitTitle(for: salivaId)
+        let alarmId = alarmKitId(for: id)
+        let metadata = SampleAlarmMetadata(notificationIdentifier: id, salivaId: salivaId)
+        let stopButton = AlarmButton(
+            text: LocalizedStringResource("Stop"),
+            textColor: .white,
+            systemImageName: "stop.fill"
+        )
+        let openButton = AlarmButton(
+            text: LocalizedStringResource("Open CARWatch"),
+            textColor: .white,
+            systemImageName: "barcode.viewfinder"
+        )
+        let presentation = AlarmPresentation(
+            alert: AlarmPresentation.Alert(
+                title: LocalizedStringResource(String.LocalizationValue(title)),
+                stopButton: stopButton,
+                secondaryButton: openButton,
+                secondaryButtonBehavior: .custom
+            )
+        )
+        let attributes: AlarmAttributes<SampleAlarmMetadata> = AlarmAttributes(
+            presentation: presentation,
+            metadata: metadata,
+            tintColor: Color.accentColor
+        )
+        let configuration: AlarmManager.AlarmConfiguration<SampleAlarmMetadata> = AlarmManager.AlarmConfiguration.alarm(
+            schedule: AlarmKit.Alarm.Schedule.fixed(date),
+            attributes: attributes,
+            secondaryIntent: OpenSampleAlarmIntent(notificationIdentifier: id),
+            sound: .default
+        )
+
+        rememberAlarmKitIdentifier(id)
+        Task {
+            do {
+                _ = try await AlarmManager.shared.schedule(id: alarmId, configuration: configuration)
+            } catch {
+                self.forgetAlarmKitIdentifier(id)
+                self.scheduleFallbackNotification(id: id, title: title, salivaId: salivaId, dateComponents: dateComponents)
+            }
+        }
+        return true
+#else
+        return false
+#endif
+    }
+
+#if canImport(AlarmKit)
+    @available(iOS 26.0, *)
+    private func shouldUseAlarmKit() -> Bool {
+        switch AlarmManager.shared.authorizationState {
+        case .authorized:
+            return true
+        case .denied:
+            UserDefaults.standard.set(false, forKey: AppConstants.alarmKitPermissionGrantedKey)
+            return false
+        case .notDetermined:
+            return UserDefaults.standard.bool(forKey: AppConstants.alarmKitPermissionGrantedKey)
+        @unknown default:
+            return false
+        }
+    }
+#endif
+
+    private func isAlarmKitUnavailable() -> Bool {
+        !hasAlarmKitAccess()
+    }
+
+    private func scheduleFallbackNotification(id: String, title: String, salivaId: String?, dateComponents: DateComponents) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = notificationBody(for: salivaId)
+        content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: "dummy_ringtone.caf"))
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func nextDate(matching dateComponents: DateComponents) -> Date? {
+        Calendar.current.nextDate(
+            after: Date().addingTimeInterval(-60),
+            matching: dateComponents,
+            matchingPolicy: .nextTime,
+            direction: .forward
+        )
+    }
+
+    private var alarmKitIdentifierStorageKey: String {
+        "alarmKitNotificationIdentifiers"
+    }
+
+    private func rememberAlarmKitIdentifier(_ identifier: String) {
+        var identifiers = Set(UserDefaults.standard.stringArray(forKey: alarmKitIdentifierStorageKey) ?? [])
+        identifiers.insert(identifier)
+        UserDefaults.standard.set(Array(identifiers), forKey: alarmKitIdentifierStorageKey)
+    }
+
+    private func forgetAlarmKitIdentifier(_ identifier: String) {
+        var identifiers = Set(UserDefaults.standard.stringArray(forKey: alarmKitIdentifierStorageKey) ?? [])
+        identifiers.remove(identifier)
+        UserDefaults.standard.set(Array(identifiers), forKey: alarmKitIdentifierStorageKey)
+    }
+
+    private func cancelAlarmKitAlarms(withIdentifiers identifiers: [String]) {
+#if canImport(AlarmKit)
+        guard #available(iOS 26.0, *) else {
+            return
+        }
+
+        for identifier in identifiers {
+            do {
+                try AlarmManager.shared.cancel(id: alarmKitId(for: identifier))
+                forgetAlarmKitIdentifier(identifier)
+            } catch {
+            }
+        }
+#endif
+    }
+
+    private func cancelAlarmKitAlarmsMatching(baseIdentifiers: [String]) {
+#if canImport(AlarmKit)
+        guard #available(iOS 26.0, *) else {
+            return
+        }
+
+        let identifiers = UserDefaults.standard.stringArray(forKey: alarmKitIdentifierStorageKey) ?? []
+        let matchingIdentifiers = identifiers.filter { identifier in
+            baseIdentifiers.contains { identifier == $0 || identifier.hasPrefix("\($0)_day") }
+        }
+        cancelAlarmKitAlarms(withIdentifiers: matchingIdentifiers)
+#endif
+    }
+
+    private func cancelAllAlarmKitAlarms() {
+#if canImport(AlarmKit)
+        guard #available(iOS 26.0, *) else {
+            return
+        }
+
+        let identifiers = UserDefaults.standard.stringArray(forKey: alarmKitIdentifierStorageKey) ?? []
+        for identifier in identifiers {
+            do {
+                try AlarmManager.shared.cancel(id: alarmKitId(for: identifier))
+            } catch {
+            }
+        }
+        UserDefaults.standard.removeObject(forKey: alarmKitIdentifierStorageKey)
+#endif
+    }
+
+#if canImport(AlarmKit)
+    @available(iOS 26.0, *)
+    private func alarmKitId(for identifier: String) -> AlarmKit.Alarm.ID {
+        var bytes = Array("CARWatchAlarmKit".utf8)
+        bytes = Array(bytes.prefix(16))
+
+        for (offset, byte) in identifier.utf8.enumerated() {
+            let index = offset % bytes.count
+            bytes[index] = bytes[index] &+ byte &+ UInt8(truncatingIfNeeded: offset &* 31)
+        }
+
+        bytes[6] = (bytes[6] & 0x0F) | 0x50
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+
+        return UUID(uuid: (
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11],
+            bytes[12], bytes[13], bytes[14], bytes[15]
+        ))
+    }
+#endif
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     // handle notification when app is in the foreground (as they are ignored per default)
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("Notification received with identifier \(notification.request.identifier)")
         NotificationCenter.default.post(
             name: .foregroundNotificationReceived,
             object: nil,

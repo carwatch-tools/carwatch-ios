@@ -17,7 +17,7 @@ struct RegistrationView: View {
     @State private var isPrivacyPolicyPresented: Bool = false
 
     private var hasRequiredPermissions: Bool {
-        permissionDataVM.permissionData.cameraPermissionGranted && permissionDataVM.permissionData.notificationPermissionGranted
+        permissionDataVM.permissionData.cameraPermissionGranted
     }
 
     private var hasRequiredPermissionToProceed: Bool {
@@ -28,34 +28,93 @@ struct RegistrationView: View {
         permissionDataVM.permissionData.notificationPermissionDialogHandled && !permissionDataVM.permissionData.notificationPermissionGranted
     }
 
+    private var shouldShowAlarmWarning: Bool {
+        permissionDataVM.permissionData.alarmPermissionDialogHandled && !permissionDataVM.permissionData.alarmPermissionGranted
+    }
+
     private var shouldShowPermissionWarning: Bool {
-        shouldShowNotificationWarning || shouldShowCameraSettingsButton
+        shouldShowNotificationWarning || shouldShowAlarmWarning || shouldShowCameraSettingsButton
     }
 
     private var permissionWarningText: LocalizedStringKey {
-        shouldShowNotificationWarning
-        ? "Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times."
-        : "Some permissions are disabled. You can update them in Settings."
+        if shouldShowNotificationWarning && shouldShowAlarmWarning {
+            return "Reminders and alarm access are turned off. You will need to set alarms yourself and collect samples at the specified times."
+        }
+
+        if shouldShowAlarmWarning {
+            return "Alarm access is turned off. CARWatch wakeup alarms may not ring. Please set your own wakeup alarm."
+        }
+
+        if shouldShowNotificationWarning {
+            return "Notifications are turned off. You will need to set alarms yourself and collect samples at the specified times."
+        }
+
+        return "Some permissions are disabled. You can update them in Settings."
     }
 
     private var shouldShowCameraSettingsButton: Bool {
         permissionDataVM.permissionData.cameraPermissionDialogHandled && !permissionDataVM.permissionData.cameraPermissionGranted
     }
 
+    private var canRequestAlarmPermission: Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            return true
+        }
+#endif
+        return false
+    }
+
+    private var shouldRequestPermissions: Bool {
+        !hasRequiredPermissionToProceed
+            || !permissionDataVM.permissionData.notificationPermissionDialogHandled
+            || (canRequestAlarmPermission && !permissionDataVM.permissionData.alarmPermissionDialogHandled)
+    }
+
     private var shouldShowPermissionContinueButton: Bool {
         permissionDataVM.permissionData.cameraPermissionDialogHandled || hasRequiredPermissionToProceed
     }
 
-    private var alternateLanguageCode: String {
-        selectedLanguageCode == "en" ? "de" : "en"
+    private func requestPermissionsAndProceedWhenReady() {
+        permissionButtonTapped = true
+        permissionDataVM.checkCameraPermission {
+            permissionDataVM.checkNotificationPermission {
+                permissionDataVM.checkAlarmPermission {
+                    if hasRequiredPermissionToProceed {
+                        pageIndex = qrConfigurationPageIndex
+                    }
+                }
+            }
+        }
     }
 
-    private var alternateLanguageLabel: String {
-        selectedLanguageCode == "en" ? "DE" : "EN"
+    private var currentLanguageDisplayCode: String {
+        languageDisplayCode(for: selectedLanguageCode)
     }
 
-    private var alternateLanguageAccessibilityLabel: String {
-        selectedLanguageCode == "en" ? localizedAppString("Switch language to German") : localizedAppString("Switch language to English")
+    private func languageDisplayCode(for languageCode: String) -> String {
+        languageCode.uppercased()
+    }
+
+    private func languageAccessibilityLabel(for languageCode: String) -> String {
+        switch languageCode {
+        case "de":
+            return localizedAppString("Switch language to German")
+        case "fr":
+            return localizedAppString("Switch language to French")
+        default:
+            return localizedAppString("Switch language to English")
+        }
+    }
+
+    private func selectLanguage(_ languageCode: String) {
+        guard selectedLanguageCode != languageCode else {
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            selectedLanguageCode = languageCode
+        }
     }
 
     private var consentPageIndex: Int { 1 }
@@ -63,7 +122,7 @@ struct RegistrationView: View {
     private var permissionPageIndex: Int { 2 }
 
     private var qrConfigurationPageIndex: Int {
-        sessionVM.isReregistration ? 2 : 3
+        3
     }
 
     private func welcomeLogoMaxHeight(for size: CGSize) -> CGFloat {
@@ -106,7 +165,7 @@ struct RegistrationView: View {
         case consentPageIndex:
             return localizedAppString("Study Participation Notice")
         case permissionPageIndex:
-            return sessionVM.isReregistration ? localizedAppString("Configure the App") : localizedAppString("Unlock Features")
+            return localizedAppString("Unlock Features")
         case qrConfigurationPageIndex:
             return localizedAppString("Configure the App")
         default:
@@ -142,7 +201,7 @@ struct RegistrationView: View {
             .onAppear {
                 focusCurrentHeader()
             }
-            .onChange(of: pageIndex) { _ in
+            .onChange(of: pageIndex) {
                 focusCurrentHeader()
             }
     }
@@ -155,11 +214,7 @@ struct RegistrationView: View {
         case consentPageIndex:
             consentView
         case permissionPageIndex:
-            if sessionVM.isReregistration {
-                qrConfigurationView
-            } else {
-                permissionView
-            }
+            permissionView
         case qrConfigurationPageIndex:
             qrConfigurationView
         default:
@@ -169,20 +224,34 @@ struct RegistrationView: View {
 
     @ViewBuilder
     private func languageToggleButton() -> some View {
-        Button {
-            selectedLanguageCode = alternateLanguageCode
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "globe")
-                Text(alternateLanguageLabel)
-                    .fontWeight(.semibold)
+        Menu {
+            ForEach(LocalizationConstants.supportedLanguageCodes, id: \.self) { languageCode in
+                Button {
+                    selectLanguage(languageCode)
+                } label: {
+                    if selectedLanguageCode == languageCode {
+                        Label(languageDisplayCode(for: languageCode), systemImage: "checkmark")
+                    } else {
+                        Text(languageDisplayCode(for: languageCode))
+                    }
+                }
+                .accessibilityLabel(languageAccessibilityLabel(for: languageCode))
             }
-            .padding(.horizontal, 12)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                Text(currentLanguageDisplayCode)
+                    .fontWeight(.semibold)
+                    .frame(width: 28)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .padding(.horizontal, 8)
             .padding(.vertical, 8)
         }
         .buttonStyle(.bordered)
         .tint(.blue)
-        .accessibilityLabel(alternateLanguageAccessibilityLabel)
+        .accessibilityLabel(localizedAppString("Language"))
         .accessibilityHint(localizedAppString("Changes the app language for onboarding."))
     }
 
@@ -409,7 +478,7 @@ struct RegistrationView: View {
                             if shouldUseVerticalActionLayout {
                                 VStack(alignment: .trailing, spacing: 12) {
                                     Button("Continue") {
-                                        pageIndex = sessionVM.isReregistration ? qrConfigurationPageIndex : permissionPageIndex
+                                        pageIndex = permissionPageIndex
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .disabled(!hasAcceptedResearchConsent)
@@ -422,7 +491,7 @@ struct RegistrationView: View {
                                 HStack {
                                     Spacer()
                                     Button("Continue") {
-                                        pageIndex = sessionVM.isReregistration ? qrConfigurationPageIndex : permissionPageIndex
+                                        pageIndex = permissionPageIndex
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .disabled(!hasAcceptedResearchConsent)
@@ -450,7 +519,7 @@ struct RegistrationView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityAddTraits(.isHeader)
                             .accessibilityFocused($isCurrentHeaderFocused)
-                        Text("CARWatch requires camera access to scan sample barcodes. Notifications are optional, but recommended for reminder alarms.")
+                        Text("CARWatch requires camera access to scan sample barcodes. Notifications and alarm access are optional, but recommended for sample reminders.")
                             .font(.system(size: adaptiveExplanationFontSize))
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -482,19 +551,32 @@ struct RegistrationView: View {
                                     .font(.system(size: adaptiveExplanationFontSize))
                             }
                             .accessibilityElement(children: .combine)
-                        }
-                        if !hasRequiredPermissionToProceed {
-                            Button("Next") {
-                                permissionButtonTapped = true
-                                permissionDataVM.checkCameraPermission {
-                                    permissionDataVM.checkNotificationPermission()
+                            if canRequestAlarmPermission {
+                                HStack {
+                                    Image(systemName: "alarm.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .font(.system(size: adaptiveIconSize))
+                                        .foregroundStyle(.blue)
+                                        .opacity(StyleConstants.mainScreenIconOpacity)
+                                        .padding()
+                                        .frame(width: StyleConstants.isCompactScreen(for: screenSize) ? 64 : 80, alignment: .center)
+                                        .accessibilityHidden(true)
+                                    Text("Alarm access to ring for due samples, including when the phone is set to silent")
+                                        .font(.system(size: adaptiveExplanationFontSize))
                                 }
+                                .accessibilityElement(children: .combine)
+                            }
+                        }
+                        if shouldRequestPermissions {
+                            Button("Next") {
+                                requestPermissionsAndProceedWhenReady()
                             }
                             .padding()
                             .frame(alignment: .center)
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("registration.requestPermissions")
-                            .accessibilityHint(localizedAppString("Requests camera access and optional notification permissions."))
+                            .accessibilityHint(localizedAppString("Requests camera access, then optional notification and alarm permissions."))
                         }
                         if shouldShowPermissionWarning {
                             Text(permissionWarningText)
@@ -596,6 +678,12 @@ struct RegistrationView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
+
+                        Button("Open Demo Study History") {
+                            loadDemoStudyHistory()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
 #endif
                     }
                 }
@@ -604,54 +692,71 @@ struct RegistrationView: View {
     }
 
 #if DEBUG
-    private func loadDemoStudy() {
-        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
-        studyDataVM.studyData = StudyData(
+    private func makeCARWatchExampleStudyData() -> StudyData {
+        StudyData(
             isValid: true,
-            studyName: "Demo Cortisol Awakening Response Study",
-            salivaDistances: [0, 15, 30, 45],
+            studyName: "CARWatchExample",
+            salivaDistances: [0, 15, 15, 15],
             salivaTimes: [Time(hour: 12, minute: 0), Time(hour: 15, minute: 0)],
             startSample: "S1",
             studyDays: 3,
-            numParticipants: 200,
+            numParticipants: 1,
             hasEveningSample: true,
-            shareEmailAdress: "study@example.com",
+            shareEmailAdress: "joana.joanidopoulos@fau.de",
             isCheckDuplicatesEnabled: true,
-            participantId: "1001"
+            participantId: "VP_01"
         )
+    }
+
+    private func logDemoStudyLoaded() {
+        logDeviceProperties()
+        logAppMetadata()
+        logStudyData(studyData: studyDataVM.studyData)
+        logParticipantId(participantId: studyDataVM.studyData.participantId)
+    }
+
+    private func loadDemoStudy() {
+        UserDefaults.standard.set(false, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
         sessionVM.startStudyConfirmation()
     }
 
     private func loadDemoOngoingStudy() {
         UserDefaults.standard.set(true, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.removeObject(forKey: AppConstants.demoOngoingStudyVariantKey)
 
         permissionDataVM.permissionData = PermissionData(
             notificationPermissionGranted: true,
             notificationPermissionDialogHandled: true,
+            alarmPermissionGranted: true,
+            alarmPermissionDialogHandled: true,
             cameraPermissionGranted: true,
             cameraPermissionDialogHandled: true
         )
 
-        studyDataVM.studyData = StudyData(
-            isValid: true,
-            studyName: "Preview Study",
-            salivaDistances: [],
-            salivaTimes: [
-                Time(hour: 8, minute: 0),
-                Time(hour: 8, minute: 15),
-                Time(hour: 8, minute: 30),
-                Time(hour: 8, minute: 45),
-                Time(hour: 12, minute: 0),
-                Time(hour: 15, minute: 0)
-            ],
-            startSample: "S0",
-            studyDays: 1,
-            numParticipants: 1,
-            hasEveningSample: false,
-            shareEmailAdress: "preview@example.com",
-            isCheckDuplicatesEnabled: false,
-            participantId: "preview"
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
+
+        sessionVM.startStudy()
+    }
+
+    private func loadDemoStudyHistory() {
+        UserDefaults.standard.set(true, forKey: AppConstants.demoOngoingStudyModeKey)
+        UserDefaults.standard.set("history", forKey: AppConstants.demoOngoingStudyVariantKey)
+
+        permissionDataVM.permissionData = PermissionData(
+            notificationPermissionGranted: true,
+            notificationPermissionDialogHandled: true,
+            alarmPermissionGranted: true,
+            alarmPermissionDialogHandled: true,
+            cameraPermissionGranted: true,
+            cameraPermissionDialogHandled: true
         )
+
+        studyDataVM.studyData = makeCARWatchExampleStudyData()
+        logDemoStudyLoaded()
 
         sessionVM.startStudy()
     }
