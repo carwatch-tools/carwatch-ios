@@ -15,6 +15,7 @@ struct BedtimeView: View {
     @Binding var scannerSource: ScannerPresentationSource?
     @Binding var selectedTab: Int
     @Binding var finishedStudyDayToDisplay: Int?
+    @State private var showMuseSetup = false
     @State private var showStudyFinishedAlert: Bool = false
     @State private var showRemainingSamplesAlert: Bool = false
     @State private var pendingFinishAfterEveningSample = false
@@ -101,16 +102,9 @@ struct BedtimeView: View {
                             }
                             .frame(maxWidth: 320, alignment: .center)
 
-                            Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                                Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                                alarmVM.isDarkModeOn = !isDarkModeEnabled
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .tint(Color.orange)
-                            .accessibilityIdentifier("bedtime.lightsToggle")
-                            .accessibilityHint(localizedAppString("Toggles the bedtime screen between light and dark appearance."))
-                            .frame(maxWidth: .infinity, alignment: .center)
+                            lightsToggleButton
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            museSetupButton
                         }
                         .frame(maxWidth: 760, alignment: .leading)
                         .padding(.top, 12)
@@ -130,7 +124,7 @@ struct BedtimeView: View {
                             Text("Are you going to bed?")
                                 .font(.system(size: mainFontSize))
                                 .multilineTextAlignment(.center)
-                            Group {
+                            VStack(spacing: 24) {
                                 if shouldUseVerticalActionLayout {
                                     VStack(spacing: 12) {
                                         bedtimeYesButton
@@ -143,16 +137,10 @@ struct BedtimeView: View {
                                     }
                                     .frame(maxWidth: 320, alignment: .center)
                                 }
+
+                                lightsToggleButton
+                                museSetupButton
                             }
-                            .padding(.bottom)
-                            Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
-                                Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
-                                alarmVM.isDarkModeOn = !isDarkModeEnabled
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color.orange)
-                            .accessibilityIdentifier("bedtime.lightsToggle")
-                            .accessibilityHint(localizedAppString("Toggles the bedtime screen between light and dark appearance."))
                         }
                     }
                 }
@@ -162,6 +150,13 @@ struct BedtimeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(bedtimeBackgroundColor.ignoresSafeArea())
+        }
+        .sheet(isPresented: $showMuseSetup) {
+            MuseBedtimeView {
+                showMuseSetup = false
+                selectedTab = 1
+            }
+            .environmentObject(alarmVM)
         }
         .topToast(isPresented: $showToast, message: toastMessage)
         .alert(localizedAppString("Study Finished"), isPresented: $showStudyFinishedAlert) {
@@ -205,6 +200,25 @@ struct BedtimeView: View {
             }
         }
     }
+
+    private var lightsToggleButton: some View {
+        Button(isDarkModeEnabled ? "LIGHTS ON!" : "LIGHTS OUT!") {
+            Logger.instance.log(tag: isDarkModeEnabled ? LoggerConstants.loggerActionLightsOn : LoggerConstants.loggerActionLightsOut, message: [String: Any]())
+            alarmVM.isDarkModeOn = !isDarkModeEnabled
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .tint(Color.orange)
+        .accessibilityIdentifier("bedtime.lightsToggle")
+        .accessibilityHint(localizedAppString("Toggles the bedtime screen between light and dark appearance."))
+    }
+
+    private var museSetupButton: some View {
+        MuseEEGButton {
+            showMuseSetup = true
+        }
+    }
+
     private var bedtimeYesButton: some View {
         Button("YES") {
             if alarmVM.remainingDaytimeSampleCountForCurrentDay() > 0 {
@@ -283,6 +297,52 @@ struct BedtimeView: View {
             toastType = .feedbackToast
             showToast = true
         }
+    }
+}
+
+private struct MuseEEGButton: View {
+    @ObservedObject private var monitor = MuseOvernightMonitor.shared
+
+    let action: () -> Void
+
+    var body: some View {
+        if monitor.isConnected, let lastSignalAt = monitor.lastSignalAt {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let hasRecentEEG = context.date.timeIntervalSince(lastSignalAt) < 3
+                button(quality: hasRecentEEG ? monitor.channelQuality : [])
+            }
+        } else {
+            button(quality: [])
+        }
+    }
+
+    private func button(quality: [AthenaWakeDetector.ChannelQuality]) -> some View {
+        let electrodes = AthenaWakeDetector.electrodeNames
+        let usableElectrodes = zip(electrodes, quality).compactMap { name, quality in
+            quality == .usable ? name : nil
+        }
+
+        return Button(action: action) {
+            VStack(spacing: 6) {
+                Label("Muse EEG", systemImage: "waveform.path")
+                HStack(spacing: 8) {
+                    ForEach(electrodes, id: \.self) { electrode in
+                        Circle()
+                            .fill(usableElectrodes.contains(electrode) ? Color.green : Color.gray)
+                            .frame(width: 9, height: 9)
+                    }
+                }
+                .accessibilityHidden(true)
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .accessibilityIdentifier("bedtime.muse")
+        .accessibilityValue(
+            usableElectrodes.isEmpty
+                ? Text("No usable EEG channels")
+                : Text("Usable EEG channels include \(usableElectrodes.joined(separator: ", "))")
+        )
     }
 }
 

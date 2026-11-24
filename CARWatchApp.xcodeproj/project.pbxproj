@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AE0027A20000000000000005 /* MuseOvernightDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0027A10000000000000005 /* MuseOvernightDiagnostics.swift */; };
+		AE0027A20000000000000004 /* MuseSignalDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0027A10000000000000004 /* MuseSignalDiagnostics.swift */; };
+		AE0027A20000000000000003 /* MuseBedtimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0027A10000000000000003 /* MuseBedtimeView.swift */; };
+		AE0027A20000000000000002 /* MuseOvernightMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0027A10000000000000002 /* MuseOvernightMonitor.swift */; };
+		AE0027A20000000000000001 /* AthenaWakeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0027A10000000000000001 /* AthenaWakeDetector.swift */; };
 		4E1A06A62F79255900B9804C /* PrivacyPolicyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A06A52F79255900B9804C /* PrivacyPolicyView.swift */; };
 		4E535FB72F86495800C6B40B /* StudyConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E535FB62F86495800C6B40B /* StudyConfirmationView.swift */; };
 		4E535FB92F86557800C6B40B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */; };
@@ -50,6 +55,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AE0027A10000000000000005 /* MuseOvernightDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muse/MuseOvernightDiagnostics.swift; sourceTree = "<group>"; };
+		AE0027A10000000000000004 /* MuseSignalDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muse/MuseSignalDiagnostics.swift; sourceTree = "<group>"; };
+		AE0027A10000000000000003 /* MuseBedtimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muse/MuseBedtimeView.swift; sourceTree = "<group>"; };
+		AE0027A10000000000000002 /* MuseOvernightMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muse/MuseOvernightMonitor.swift; sourceTree = "<group>"; };
+		AE0027A10000000000000001 /* AthenaWakeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muse/AthenaWakeDetector.swift; sourceTree = "<group>"; };
 		4E1A06A52F79255900B9804C /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
 		4E535FB62F86495800C6B40B /* StudyConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyConfirmationView.swift; sourceTree = "<group>"; };
 		4E535FB82F86557800C6B40B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -308,6 +318,11 @@
 		91ED1E512C21D6AC0041751A /* CARWatch */ = {
 			isa = PBXGroup;
 			children = (
+				AE0027A10000000000000003 /* MuseBedtimeView.swift */,
+				AE0027A10000000000000004 /* MuseSignalDiagnostics.swift */,
+				AE0027A10000000000000005 /* MuseOvernightDiagnostics.swift */,
+				AE0027A10000000000000002 /* MuseOvernightMonitor.swift */,
+				AE0027A10000000000000001 /* AthenaWakeDetector.swift */,
 				4E907F922F7D2B0B003DEC3A /* PreviewContent */,
 				843C86C62C7E1E4C007AE1BC /* Onboarding */,
 				84CB0D9A2C4FFC8A004DF7EF /* HomeScreen */,
@@ -422,6 +437,11 @@
 				8420E0072C46B60E0061ABA0 /* CodeScanner.swift in Sources */,
 				84CB0D8D2C4FAAC8004DF7EF /* DateHandling.swift in Sources */,
 				847C38222C241E8C007548E8 /* Bedtime View.swift in Sources */,
+				AE0027A20000000000000003 /* MuseBedtimeView.swift in Sources */,
+				AE0027A20000000000000004 /* MuseSignalDiagnostics.swift in Sources */,
+				AE0027A20000000000000005 /* MuseOvernightDiagnostics.swift in Sources */,
+				AE0027A20000000000000002 /* MuseOvernightMonitor.swift in Sources */,
+				AE0027A20000000000000001 /* AthenaWakeDetector.swift in Sources */,
 				840C388C2C3E7A3F004DB9FE /* CameraManager.swift in Sources */,
 				845816F12C34730D00706038 /* AlarmViewModel.swift in Sources */,
 				843219132C3C156F0029A9DD /* NotificationManager.swift in Sources */,

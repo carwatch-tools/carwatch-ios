@@ -264,7 +264,9 @@ class AlarmViewModel : ObservableObject {
         studyDayCounter += 1
     }
 
-    func confirmWakeup(at wakeupTime: Date) {
+    func confirmWakeup(at wakeupTime: Date, usesMuseEstimate: Bool = false) {
+        let scheduledWakeup = wakeupAlarmSelectionTime()
+        MuseOvernightMonitor.shared.completeWakeup(at: wakeupTime, usedEstimate: usesMuseEstimate)
         let wasWakeupAlreadyTriggeredToday = Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: wakeupTime)
         let didFinishPreviousDay = finishPreviousDayForPendingWakeupIfNeeded()
         dateOfLastConfirmedWakeup = wakeupTime
@@ -289,7 +291,7 @@ class AlarmViewModel : ObservableObject {
         if didFinishPreviousDay {
             isEveningScanned = false
         }
-        scheduleAlarmNotificationsWithoutInitial()
+        scheduleAlarmNotificationsWithoutInitial(selectedFutureWakeupTime: scheduledWakeup)
     }
     
     func getAlarmById(alarmId: Int) -> Alarm? {
@@ -439,6 +441,21 @@ class AlarmViewModel : ObservableObject {
         pendingWakeupNotificationTimes.first ?? getInitialAlarm().time
     }
 
+    func nextBackupWakeup(after now: Date = Date()) -> (id: String, date: Date)? {
+        guard initialAlarm.isActive, !isStudyFinished() else { return nil }
+        let currentDay = max(1, studyDayCounter)
+        if !initialAlarm.isTriggered, initialAlarm.time > now {
+            return (notificationIdentifier(alarmId: initialAlarm.id, backupIndex: 0, studyDay: currentDay), initialAlarm.time)
+        }
+        guard let next = pendingWakeupNotificationTimes.enumerated().first(where: { $0.element > now }) else {
+            return nil
+        }
+        return (
+            notificationIdentifier(alarmId: initialAlarm.id, backupIndex: 0, studyDay: currentDay + 1 + next.offset),
+            next.element
+        )
+    }
+
     func updateWakeupAlarmSelection(time: Date) {
         if Calendar.current.isDate(dateOfLastInitialAlarm, inSameDayAs: Date()) {
             scheduleAlarmNotificationsWithoutInitial(selectedFutureWakeupTime: time)
@@ -542,6 +559,7 @@ class AlarmViewModel : ObservableObject {
     }
     
     func resetAlarmData() {
+        let scheduledWakeup = wakeupAlarmSelectionTime()
         /// called after a day is finished
         hasPendingDayReset = false
         isEveningScanned = false
@@ -562,7 +580,7 @@ class AlarmViewModel : ObservableObject {
         for alarm in timedAlarms {
             modifyAlarmById(alarm: Alarm(id: alarm.id, isActive: true, isScanned: false, isTriggered: false, time: alarm.time))
         }
-        updateAlarmTime(time: getInitialAlarm().time)
+        updateAlarmTime(time: scheduledWakeup)
     }
 
     @discardableResult

@@ -12,6 +12,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
 
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        MuseOvernightMonitor.shared.restoreMonitoring()
         return true
     }
 

@@ -4,6 +4,12 @@
 <dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>CARWatch connects to your Muse headband to estimate when you wake up.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>bluetooth-central</string>
+    </array>
     <key>NSAlarmKitUsageDescription</key>
     <string>CARWatch schedules alarms when study samples are due.</string>
 </dict>

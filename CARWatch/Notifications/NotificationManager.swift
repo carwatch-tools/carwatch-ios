@@ -209,6 +209,84 @@ class NotificationManager {
 
         let title = alarmKitTitle(for: salivaId)
         let alarmId = alarmKitId(for: id)
+        let configuration = alarmConfiguration(id: id, salivaId: salivaId, date: date, title: title)
+
+        rememberAlarmKitIdentifier(id)
+        Task {
+            do {
+                _ = try await AlarmManager.shared.schedule(id: alarmId, configuration: configuration)
+            } catch {
+                self.forgetAlarmKitIdentifier(id)
+                self.scheduleFallbackNotification(id: id, title: title, salivaId: salivaId, dateComponents: dateComponents)
+            }
+        }
+        return true
+#else
+        return false
+#endif
+    }
+
+    func isWakeupAlarmScheduled(id: String, at date: Date) -> Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *), hasAlarmKitAccess(),
+           let alarms = try? AlarmManager.shared.alarms {
+            return alarms.contains { alarm in
+                guard alarm.id == alarmKitId(for: id), case let .fixed(scheduledDate)? = alarm.schedule else {
+                    return false
+                }
+                return abs(scheduledDate.timeIntervalSince(date)) < 1
+            }
+        }
+#endif
+        return false
+    }
+
+    @MainActor
+    func scheduleMuseAlert(id: String, test: Bool = false) async -> String {
+        let title = localizedAppString(test ? "CARWatch Muse alarm test" : "Wake-up detected. Open CARWatch for sampling.")
+        let delay: TimeInterval = test ? 10 : 2
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *), hasAlarmKitAccess() {
+            let configuration = alarmConfiguration(
+                id: id, salivaId: nil, date: Date().addingTimeInterval(delay), title: title
+            )
+            do {
+                _ = try await AlarmManager.shared.schedule(id: alarmKitId(for: id), configuration: configuration)
+                rememberAlarmKitIdentifier(id)
+                return "alarm_kit"
+            } catch {
+                // An ordinary notification is still useful if the alarm cannot be scheduled.
+            }
+        }
+#endif
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            return "unavailable"
+        }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+        do {
+            try await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+            return "notification"
+        } catch {
+            return "unavailable"
+        }
+    }
+
+    func cancelMuseAlert(id: String) {
+        cancelAlarmKitAlarms(withIdentifiers: [id])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id])
+    }
+
+#if canImport(AlarmKit)
+    @available(iOS 26.0, *)
+    private func alarmConfiguration(
+        id: String, salivaId: String?, date: Date, title: String
+    ) -> AlarmManager.AlarmConfiguration<SampleAlarmMetadata> {
         let metadata = SampleAlarmMetadata(notificationIdentifier: id, salivaId: salivaId)
         let stopButton = AlarmButton(
             text: LocalizedStringResource("Stop"),
@@ -233,29 +311,14 @@ class NotificationManager {
             metadata: metadata,
             tintColor: Color.accentColor
         )
-        let configuration: AlarmManager.AlarmConfiguration<SampleAlarmMetadata> = AlarmManager.AlarmConfiguration.alarm(
+        return .alarm(
             schedule: AlarmKit.Alarm.Schedule.fixed(date),
             attributes: attributes,
             secondaryIntent: OpenSampleAlarmIntent(notificationIdentifier: id),
             sound: .default
         )
-
-        rememberAlarmKitIdentifier(id)
-        Task {
-            do {
-                _ = try await AlarmManager.shared.schedule(id: alarmId, configuration: configuration)
-            } catch {
-                self.forgetAlarmKitIdentifier(id)
-                self.scheduleFallbackNotification(id: id, title: title, salivaId: salivaId, dateComponents: dateComponents)
-            }
-        }
-        return true
-#else
-        return false
-#endif
     }
 
-#if canImport(AlarmKit)
     @available(iOS 26.0, *)
     private func shouldUseAlarmKit() -> Bool {
         switch AlarmManager.shared.authorizationState {

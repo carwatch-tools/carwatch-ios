@@ -63,6 +63,7 @@ class SessionViewModel : ObservableObject {
     
     func reregister() {
         /// reset all user and study data
+        MuseOvernightMonitor.shared.resetForStudy()
         NotificationManager.instance.cancelAllNotifications()
         currentState = .registration
         isReregistration = true

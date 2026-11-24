@@ -6,6 +6,8 @@ private enum PostWakeupAlertType {
 }
 
 struct WakeupView: View {
+    @ObservedObject private var muse = MuseOvernightMonitor.shared
+    @State private var selectedMuseEstimate: Date?
     private let overdueSampleGracePeriod: TimeInterval = 2 * 60
 
     @AccessibilityFocusState private var isWakeupHeaderFocused: Bool
@@ -87,6 +89,7 @@ struct WakeupView: View {
                                     wakeupYesButton
                                     wakeupNoButton
                                 }
+                                museEstimateButton
                                 previousWakeupButton
                             }
                             .frame(maxWidth: 320, alignment: .leading)
@@ -121,6 +124,7 @@ struct WakeupView: View {
                                         wakeupNoButton
                                     }
                                 }
+                                museEstimateButton
                                 previousWakeupButton
                             }
                         }
@@ -161,6 +165,9 @@ struct WakeupView: View {
                 isWakeupHeaderFocused = true
             }
         }
+        .onChange(of: showPreviousDayUnfinishedAlert) { _, isPresented in
+            if !isPresented { selectedMuseEstimate = nil }
+        }
         .onChange(of: showPostWakeupAlert) { _, isPresented in
             if isPresented {
                 postAccessibilityAnnouncement(postWakeupAccessibilityAnnouncement)
@@ -173,6 +180,29 @@ struct WakeupView: View {
         }
     }
     
+    @ViewBuilder
+    private var museEstimateButton: some View {
+        if let estimate = muse.estimate, Calendar.current.isDateInToday(estimate.onset),
+           !alarmVM.isWakeupConfirmedToday(), !alarmVM.isStudyFinished() {
+            Button {
+                selectedMuseEstimate = estimate.onset
+                initialAlarmTime = estimate.onset
+                if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
+                    showPreviousDayUnfinishedAlert = true
+                } else {
+                    performWakeupConfirmation()
+                }
+            } label: {
+                Label {
+                    Text("Use Muse estimate of \(estimate.onset, format: .dateTime.hour().minute())")
+                } icon: {
+                    Image(systemName: "waveform.path")
+                }
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
     private var wakeupYesButton: some View {
         Button("YES") {
             if alarmVM.isStudyFinished(){
@@ -257,7 +287,9 @@ struct WakeupView: View {
     }
 
     private func performWakeupConfirmation() {
-        alarmVM.confirmWakeup(at: initialAlarmTime)
+        let usesMuseEstimate = selectedMuseEstimate == initialAlarmTime
+        selectedMuseEstimate = nil
+        alarmVM.confirmWakeup(at: initialAlarmTime, usesMuseEstimate: usesMuseEstimate)
         if hasOverdueSample(before: initialAlarmTime) {
             postWakeupAlertType = .overdueSample
             showPostWakeupAlert = true

@@ -180,6 +180,7 @@ struct OngoingStudyView: View {
                 handleForegroundNotification(notification)
             }
             .onForeground {
+                MuseOvernightMonitor.shared.refresh()
                 updateAlarmStatus()
                 checkScannerStatus()
                 presentCutoffStudyDayChoiceIfNeeded()
@@ -733,8 +734,19 @@ struct OngoingStudyView: View {
                 appDelegate.resetNotificationNavigationState()
             }
 
+            if let identifier = appDelegate.lastNotificationIdentifier,
+               identifier.hasPrefix(MuseOvernightMonitor.alertPrefix) {
+                selectedTab = 0
+                return
+            }
+
             if let tappedAlarmId = tappedAlarmId() {
                 if tappedAlarmId == AlarmConstants.initialAlarmId {
+                    if let estimate = MuseOvernightMonitor.shared.estimate,
+                       Calendar.current.isDateInToday(estimate.onset), !alarmVM.isWakeupConfirmedToday() {
+                        selectedTab = 0
+                        return
+                    }
                     alarmVM.setUpcomingAlarmTriggered()
                     if alarmVM.shouldFinishPreviousDayOnWakeupConfirmation() {
                         initialAlarmTime = Date()
